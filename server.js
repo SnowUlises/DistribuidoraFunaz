@@ -403,8 +403,10 @@ async function generarPDF(pedido) {
 app.delete('/api/eliminar-pedido/:id', async (req, res) => {
   try {
     const id = req.params.id;
-    console.log(`🗑️ Intentando eliminar pedido ID: ${id}`);
+    const { recibido } = req.body; // Obtener el estado recibido del cuerpo de la solicitud
+    console.log(`🗑️ Intentando eliminar pedido ID: ${id}, recibido: ${recibido}`);
 
+    // Buscar el pedido en la base de datos
     const { data: pedido, error: pedidoError } = await supabase
       .from('pedidos')
       .select('*')
@@ -418,24 +420,31 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
       return res.status(404).json({ error: 'Pedido no encontrado' });
     }
 
-    for (const it of pedido.items || []) {
-      const prodId = it.id;
-      console.log(`🔄 Restaurando stock para producto ${prodId} (+${it.cantidad})`);
+    // Restaurar stock solo si el pedido NO está marcado como recibido
+    if (!recibido) {
+      for (const it of pedido.items || []) {
+        const prodId = it.id;
+        console.log(`🔄 Restaurando stock para producto ${prodId} (+${it.cantidad})`);
 
-      const { data: prod } = await supabase
-        .from('productos')
-        .select('*')
-        .eq('id', prodId)
-        .single();
+        const { data: prod } = await supabase
+          .from('productos')
+          .select('*')
+          .eq('id', prodId)
+          .single();
 
-      if (prod) {
-        const newStock = (Number(prod.stock) || 0) + (Number(it.cantidad) || 0);
-        await supabase.from('productos').update({ stock: newStock }).eq('id', prodId);
+        if (prod) {
+          const newStock = (Number(prod.stock) || 0) + (Number(it.cantidad) || 0);
+          await supabase.from('productos').update({ stock: newStock }).eq('id', prodId);
+        }
       }
+    } else {
+      console.log('🚫 Pedido marcado como recibido, no se restaura el stock');
     }
 
+    // Eliminar el pedido
     await supabase.from('pedidos').delete().eq('id', id);
 
+    // Eliminar el PDF asociado (si existe)
     const { error: delErr } = await supabase.storage
       .from('pedidos-pdf')
       .remove([`pedido_${id}.pdf`]);
@@ -443,7 +452,7 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
     if (delErr) console.warn('⚠️ Error borrando PDF:', delErr);
     else console.log(`🗑️ PDF pedido_${id}.pdf eliminado`);
 
-    res.json({ ok: true, mensaje: 'Pedido eliminado y stock restaurado', pedidoId: id });
+    res.json({ ok: true, mensaje: `Pedido eliminado${!recibido ? ' y stock restaurado' : ''}`, pedidoId: id });
   } catch (err) {
     console.error('❌ Exception en eliminar-pedido:', err);
     res.status(500).json({ error: 'Error interno' });
@@ -453,6 +462,7 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
