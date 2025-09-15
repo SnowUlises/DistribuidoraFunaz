@@ -77,114 +77,21 @@
     details[open] summary::before {
       transform: rotate(90deg);
     }
-    form {
-      max-width: 400px;
-    }
-    form input, form select, form button, form label {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 1em;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 1em;
-      box-sizing: border-box;
-      display: block;
-    }
-    form label {
-      font-weight: bold;
-      color: #555;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 0.5em;
-      width: auto;
-    }
-    form input[type=checkbox] {
-      width: auto;
-      margin-bottom: 0;
-    }
-    form button {
-      background: #4a90e2;
-      border: none;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.2s;
-      padding: 12px;
-    }
-    form button:hover {
-      background: #357ABD;
-    }
-    #listaAdmin {
-      max-width: 100%;
-    }
-    .producto-admin {
-      background: #fff;
-      border-radius: 8px;
-      padding: 1em;
-      margin-bottom: 1em;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-      display: flex;
-      align-items: center;
-      gap: 1em;
-      justify-content: space-between;
-      flex-wrap: wrap;
-    }
-    .producto-info {
-      flex: 1 1 320px;
-      min-width: 280px;
-    }
-    .producto-info input, .producto-info select {
-      width: 100%;
-      margin-top: 4px;
-      padding: 6px 8px;
-      font-size: 1em;
-    }
-    .producto-info label {
-      font-weight: normal;
-      margin-top: 0.4em;
-      color: #555;
-      display: flex;
-      align-items: center;
-      gap: 0.5em;
-    }
-    .btn-eliminar {
-      background: #d9534f;
-      border: none;
-      color: white;
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.2s;
-      height: 38px;
-      align-self: start;
-      margin-top: 1em;
-    }
-    .btn-eliminar:hover {
-      background: #c9302c;
-    }
-    #mensajeError {
-      margin-bottom: 1em;
-      color: red;
-      font-weight: bold;
-      max-width: 900px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    /* Usuarios */
-    .usuario-item {
+    .usuario-item, .peticion-item {
       background: #eef3f7;
       border-radius: 8px;
       margin-bottom: 1em;
       padding: 1em;
       box-shadow: inset 0 0 5px #bbb;
     }
-    .usuario-info {
-      margin-bottom: 0.8em;
-      font-size: 0.95em;
+    .peticion-details {
+      margin-bottom: 1em;
+      background: #fff;
+      padding: 1em;
+      border-radius: 8px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.08);
     }
-    details.user-details summary {
+    .peticion-details summary {
       font-size: 1.2em;
       font-weight: 600;
       cursor: pointer;
@@ -192,14 +99,17 @@
       margin-bottom: 0.5em;
       color: #3a3a3a;
     }
-    details.user-details {
-      margin-bottom: 1em;
-      background: #fff;
-      padding: 1em;
-      border-radius: 8px;
-      box-shadow: 0 1px 5px rgba(0,0,0,0.08);
+    .peticion-info {
+      margin-bottom: 0.8em;
+      font-size: 0.95em;
     }
-    /* Status styles */
+    .peticion-items {
+      margin-top: 0.5em;
+      padding-left: 1em;
+    }
+    .item {
+      margin: 0.5em 0;
+    }
     .status-container {
       display: flex;
       gap: 1em;
@@ -214,26 +124,60 @@
     .status-container input[type="checkbox"] {
       margin-right: 4px;
     }
-    /* NUEVO: estilos para sección Excel stock */
-    #excel-stock-section {
-      max-width: 100%;
-      margin-top: 1em;
-      background: #fff;
-      border-radius: 8px;
-      padding: 1em;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    .button-group {
+      display: flex;
+      gap: 0.5em;
+      margin-top: 0.5em;
     }
-    #excel-stock-section input[type="file"] { width: auto; margin-bottom: 0.5em; }
-    #excel-stock-section button { background: #4a90e2; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background 0.2s; width: 100%; }
-    #excel-stock-section button:hover { background: #357ABD; }
-    #stockPreview { max-height: 240px; overflow:auto; border:1px solid #eee; padding:8px; border-radius:6px; margin:8px 0; background:#fafafa; }
-    #stockPreview table { width:100%; border-collapse:collapse; }
-    #stockPreview th, #stockPreview td { padding:6px 8px; border-bottom:1px solid #eee; text-align:left; font-size:0.95em; }
-    #stockResult { margin-top:8px; font-size:0.95em; }
-    .helper { font-size:0.9em; color:#666; margin-top:6px; }
+    button.confirmar {
+      background: #28a745;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button.confirmar:hover {
+      background: #218838;
+    }
+    button.confirmar-plus {
+      background: #17a2b8;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button.confirmar-plus:hover {
+      background: #138496;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .status {
+      color: #d9534f;
+      font-weight: bold;
+      margin-top: 0.5em;
+    }
+    #mensajeError {
+      margin-bottom: 1em;
+      color: red;
+      font-weight: bold;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    footer {
+      text-align: center;
+      color: #777;
+      margin-top: 2em;
+    }
   </style>
-  <!-- SheetJS for Excel processing -->
-  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
   <header>Panel de administración</header>
@@ -242,607 +186,326 @@
     <div id="mensajeError"></div>
 
     <details>
-      <summary>Añadir producto</summary>
-      <form id="formAgregar" enctype="multipart/form-data">
-        <input type="text" id="nombre" placeholder="Nombre" required />
-        <input type="number" id="precio" placeholder="Precio" min="0" step="0.01" required />
-        <select id="categoria">
-          <option>Remedios</option>
-          <option>Cosméticos</option>
-          <option>Higiene</option>
-          <option>Otros</option>
-        </select>
-        <label>Stock:
-  <input type="number" id="stock" value="0" min="0" required />
-</label>
-        <input type="file" id="imagen-nuevo" name="imagen" accept=".png,.jpg,.jpeg" />
-        <button type="submit">Agregar producto</button>
-      </form>
-    </details>
-
-    <details>
-      <summary>Crear pedido desde archivo</summary>
-      <div style="margin-top:10px;">
-        <input type="file" id="pedidoArchivo" accept=".txt" />
-        <button id="btnPrevisualizarPedido">Previsualizar pedido</button>
-        <button id="btnEnviarPedidoArchivo">Enviar pedido</button>
-        <div id="previsualizacionPedido" style="margin-top:10px;"></div>
-      </div>
-    </details>
-
-    <details>
-      <summary>Administrar productos</summary>
-      <div id="listaAdmin"></div>
-    </details>
-
-    <details>
-      <summary>Actualizar precios (Próximamente)</summary>
-      <div>
-        <label for="inputJson">Seleccionar productos.json:</label>
-        <input type="file" id="inputJson" accept=".json">
-      </div>
-      <div>
-        <label for="inputExcel">Seleccionar precios.xlsx:</label>
-        <input type="file" id="inputExcel" accept=".xlsx,.xls">
-      </div>
-      <button id="btnCargarExcel">Actualizar y Descargar productos.json</button>
-    </details>
-
-    <!-- NUEVO: sección para actualizar stock desde Excel -->
-    <details>
-      <summary>Actualizar stock desde Excel</summary>
-      <div id="excel-stock-section">
-        <p class="helper">Formato: primera columna = NOMBRE (igual a producto.nombre), segunda columna = STOCK A SUMAR (entero). Puede tener encabezado.</p>
-
-        <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
-          <input id="inputStockExcel" type="file" accept=".xlsx,.xls,.csv" />
-          <div style="flex:1;">
-            <div id="stockFileName" style="font-size:0.95em;color:#333;"></div>
-          </div>
-        </div>
-
-        <div id="stockPreview" style="display:none;">
-          <strong>Vista previa (nombre → cantidad a sumar):</strong>
-          <div id="stockPreviewWrap"></div>
-        </div>
-
-        <div style="display:flex; gap:8px; margin-top:8px;">
-          <button id="btnConfirmStock" style="flex:1;background:#28a745;color:white;" disabled>Confirmar</button>
-          <button id="btnCancelStock" style="flex:1;background:#d9534f;color:white;">Cancelar</button>
-        </div>
-
-        <div id="stockResult"></div>
-      </div>
-    </details>
-
-    <details>
       <summary>Usuarios y pedidos</summary>
       <div id="listaUsuarios"></div>
     </details>
+
+    <details>
+      <summary>Peticiones</summary>
+      <div id="listaPeticiones"></div>
+    </details>
   </main>
 
+  <footer>
+    Distribuidora Funaz
+  </footer>
+
   <script>
-  // Admin panel script corregido y consistente con el backend en Render
-  const apiBase = 'https://distribuidorafunaz-a2o6.onrender.com/api';
+    const apiBase = 'https://distribuidorafunaz-a2o6.onrender.com/api';
 
-  // seguridad mínima: solo admin
-  const user = localStorage.getItem('loggedUser');
-  if (user !== 'admin') {
-    window.location.href = 'index.html';
-  }
-
-  // estados locales
-  let productos = [];
-  let estadosPedidos = JSON.parse(localStorage.getItem('estadosPedidos') || '{}');
-
-  function guardarEstados() {
-    localStorage.setItem('estadosPedidos', JSON.stringify(estadosPedidos));
-  }
-
-  // toggleGuardado y toggleRecibido reciben el elemento checkbox (el) para evitar depender de event global
-  function toggleGuardado(usuario, idx, el) {
-    const key = `${usuario}-${idx}`;
-    const nuevo = !!el.checked;
-    const confirmado = confirm(nuevo
-      ? '¿Marcar pedido como guardado?'
-      : '¿Desmarcar pedido guardado?');
-    if (!confirmado) { el.checked = !nuevo; return; }
-    estadosPedidos[key] = { ...estadosPedidos[key], guardado: nuevo };
-    guardarEstados();
-  }
-
-  function toggleRecibido(usuario, idx, el) {
-    const key = `${usuario}-${idx}`;
-    const nuevo = !!el.checked;
-    const confirmado = confirm(nuevo
-      ? '¿Marcar pedido como recibido?'
-      : '¿Desmarcar pedido recibido?');
-    if (!confirmado) { el.checked = !nuevo; return; }
-    estadosPedidos[key] = { ...estadosPedidos[key], recibido: nuevo };
-    guardarEstados();
-  }
-
-  function mostrarError(msg) {
-    const el = document.getElementById('mensajeError');
-    if (el) el.textContent = msg;
-    else console.warn('mensajeError no encontrado:', msg);
-  }
-
-  // Cargar productos desde la API del backend
-  async function cargarProductos() {
-    try {
-      const res = await fetch(`${apiBase}/productos`, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      productos = await res.json();
-      mostrarProductos();
-    } catch (err) {
-      console.error('Error cargando productos:', err);
-      mostrarError('No se pudieron cargar los productos. Revisa la consola.');
+    // Security check
+    const user = localStorage.getItem('loggedUser');
+    if (user !== 'admin') {
+      window.location.href = 'index.html';
     }
-  }
 
-  function mostrarProductos() {
-    const lista = document.getElementById('listaAdmin');
-    if (!lista) return;
-    lista.innerHTML = '';
+    // States
+    let estadosPedidos = JSON.parse(localStorage.getItem('estadosPedidos') || '{}');
+    const usedButtons = JSON.parse(localStorage.getItem('usedButtons')) || {};
 
-    productos.forEach((p, i) => {
-      const detalle = document.createElement('details');
-      detalle.className = 'producto-admin';
+    function guardarEstados() {
+      localStorage.setItem('estadosPedidos', JSON.stringify(estadosPedidos));
+    }
 
-      detalle.innerHTML = `
-        <summary>${p.nombre}</summary>
-        <div class="producto-info" style="margin-top: 10px;">
-          <b>ID:</b> ${p.id} <br>
-          <label>Nombre:<input type="text" value="${(p.nombre||'').replace(/"/g,'&quot;')}" id="nombre-${i}" /></label>
-          <label>Precio:<input type="number" value="${Number(p.precio||0).toFixed(2)}" id="precio-${i}" min="0" step="0.01" /></label>
-          <label>Categoría:
-            <select id="categoria-${i}">
-              <option ${p.categoria==='Remedios'?'selected':''}>Remedios</option>
-              <option ${p.categoria==='Cosméticos'?'selected':''}>Cosméticos</option>
-              <option ${p.categoria==='Higiene'?'selected':''}>Higiene</option>
-              <option ${p.categoria==='Otros'?'selected':''}>Otros</option>
-            </select>
-          </label>
-          <label>Stock:  <input type="number" id="stock-${i}" value="${p.stock || 0}" min="0" /></label>
-          <p style="font-size:0.9em;color:#555">Imagen:<code>/imagenes/${p.id}.jpg</code></p>
-          <button onclick="actualizarProducto(${p.id},${i})">Guardar cambios</button>
-          <button onclick="borrarImagen(${p.id})" style="margin-left:8px;background:#d9534f;color:#fff;padding:8px 12px;border:none;border-radius:6px;cursor:pointer;">Borrar imagen</button>
-          <button class="btn-eliminar" onclick="eliminarProducto(${p.id})">Eliminar</button>
-        </div>
-      `;
-      lista.appendChild(detalle);
-    });
-  }
+    function saveUsedButtons() {
+      localStorage.setItem('usedButtons', JSON.stringify(usedButtons));
+    }
 
-  // Agregar producto (usa API)
-  async function agregarProducto(e) {
-    e.preventDefault();
-    mostrarError('');
-    try {
-      const nombre = document.getElementById('nombre').value.trim();
-      const precio = parseFloat(document.getElementById('precio').value);
-      const categoria = document.getElementById('categoria').value;
-      const stock = parseInt(document.getElementById('stock').value) || 0;
-      const archivoImagen = document.getElementById('imagen-nuevo').files[0];
-      if (!nombre || isNaN(precio) || precio < 0) { mostrarError('Completa correctamente el nombre y el precio.'); return; }
+    function mostrarError(msg) {
+      const el = document.getElementById('mensajeError');
+      if (el) el.textContent = msg;
+      else console.warn('mensajeError no encontrado:', msg);
+    }
 
-      let nuevo = null;
+    // Toggle functions
+    function toggleGuardado(usuario, idx, el) {
+      const key = `${usuario}-${idx}`;
+      const nuevo = !!el.checked;
+      const confirmado = confirm(nuevo
+        ? '¿Marcar pedido como guardado?'
+        : '¿Desmarcar pedido guardado?');
+      if (!confirmado) { el.checked = !nuevo; return; }
+      estadosPedidos[key] = { ...estadosPedidos[key], guardado: nuevo };
+      guardarEstados();
+    }
+
+    function toggleRecibido(usuario, idx, el) {
+      const key = `${usuario}-${idx}`;
+      const nuevo = !!el.checked;
+      const confirmado = confirm(nuevo
+        ? '¿Marcar pedido como recibido?'
+        : '¿Desmarcar pedido recibido?');
+      if (!confirmado) { el.checked = !nuevo; return; }
+      estadosPedidos[key] = { ...estadosPedidos[key], recibido: nuevo };
+      guardarEstados();
+    }
+
+    // Load usuarios y pedidos (unchanged)
+    async function cargarUsuarios() {
+      const res = await fetch(`${apiBase}/pedidos`);
+      const pedidosRaw = await res.json();
+      const listaPedidos = document.getElementById('listaUsuarios');
+      if (!listaPedidos) return;
+      listaPedidos.innerHTML = '';
+
+      const pedidosPorUsuario = {};
+      pedidosRaw.forEach(p => {
+        const user = p.user;
+        if (!pedidosPorUsuario[user]) pedidosPorUsuario[user] = [];
+        pedidosPorUsuario[user].push(p);
+      });
+
+      Object.entries(pedidosPorUsuario).forEach(([userName, userPedidos]) => {
+        userPedidos.sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
+
+        const userDiv = document.createElement('details');
+        userDiv.className = 'user-details';
+
+        let pedidosHTML = '<ul>';
+        userPedidos.forEach((pedido, index) => {
+          const items = Array.isArray(pedido.items) ? pedido.items : [];
+          const pedidoId = pedido.id ?? `${userName}-${index}`;
+          const key = `${userName}-${index}`;
+          const estado = estadosPedidos[key] || {};
+
+          const total = items.reduce((sum, p) => {
+            const precio = p.precio_unitario ?? p.precio ?? 0;
+            return sum + precio * (p.cantidad ?? 1);
+          }, 0);
+
+          pedidosHTML += `<li>
+            <div class="pedido-line">
+              <strong>Pedido #${index + 1}</strong> (ID: ${pedidoId}) - <b>Total: $${total.toFixed(2)}</b>
+            </div>
+            <ul>
+              ${(items.map(p => {
+                const precio = p.precio_unitario ?? p.precio ?? 0;
+                return `<li>${p.nombre} x${p.cantidad ?? 1} - $${precio.toFixed(2)}</li>`;
+              })).join('')}
+            </ul>
+            <div class="pedido-actions">
+              <button onclick="eliminarPedido('${pedidoId}')">Eliminar pedido</button>
+              <button class="guardar-btn" data-pedidoid="${pedidoId}" data-username="${userName}" data-index="${index}">
+                Guardar pedido
+              </button>
+              <span class="guardar-status" id="guardar-status-${pedidoId}" aria-hidden="true">
+                ${estado.guardado ? '✅ Guardado' : ''}
+              </span>
+            </div>
+            <div class='status-container'>
+              <label><input type='checkbox' ${estado.guardado ? 'checked' : ''} onchange="toggleGuardado('${userName}',${index}, this)"> Guardado</label>
+              <label><input type='checkbox' ${estado.recibido ? 'checked' : ''} onchange="toggleRecibido('${userName}',${index}, this)"> Recibido</label>
+            </div>
+          </li>`;
+        });
+        pedidosHTML += '</ul>';
+
+        userDiv.innerHTML = `<summary>${userName}</summary>
+          <div class='usuario-item'>${pedidosHTML}</div>`;
+
+        listaPedidos.appendChild(userDiv);
+
+        userDiv.querySelectorAll('.guardar-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const pedidoId = btn.dataset.pedidoid;
+            const username = btn.dataset.username;
+            const idx = Number(btn.dataset.index);
+            const statusSpan = document.getElementById(`guardar-status-${pedidoId}`);
+            if (statusSpan) statusSpan.textContent = '⏳ Guardando...';
+            try {
+              await guardarPedido(pedidoId);
+              if (statusSpan) statusSpan.textContent = '✅ Guardado';
+              const key = `${username}-${idx}`;
+              estadosPedidos[key] = estadosPedidos[key] || {};
+              estadosPedidos[key].guardado = true;
+              localStorage.setItem('estadosPedidos', JSON.stringify(estadosPedidos));
+            } catch (err) {
+              if (statusSpan) statusSpan.textContent = '❌ Error';
+              console.error(err);
+              alert('Error al guardar el pedido.');
+            }
+          });
+        });
+      });
+    }
+
+    async function guardarPedido(pedidoId) {
       try {
-        const res = await fetch(`${apiBase}/productos`, {
+        const r = await fetch(`${apiBase}/pedidos/${pedidoId}/pdf`);
+        if (!r.ok) throw new Error(`Error del servidor: ${r.status}`);
+        const data = await r.json();
+        if (data.ok && data.pdf) {
+          window.open(data.pdf, '_blank');
+        } else {
+          alert('No se pudo generar el PDF');
+        }
+      } catch (err) {
+        console.error('No se pudo generar el PDF:', err);
+        alert('Error generando PDF');
+      }
+    }
+
+    async function eliminarPedido(pedidoId) {
+      if (!confirm('¿Eliminar este pedido?')) return;
+      try {
+        const res = await fetch(`${apiBase}/eliminar-pedido/${encodeURIComponent(pedidoId)}`, { method: 'DELETE' });
+        if (!res.ok) {
+          console.warn('Error del servidor al eliminar pedido:', res.status, await res.text().catch(()=>''));
+          alert('No se pudo eliminar el pedido en el servidor.');
+          return;
+        }
+      } catch (err) {
+        console.warn('Error al llamar al endpoint de eliminación:', err);
+        alert('Error de red al eliminar pedido');
+        return;
+      }
+      await cargarPedidos();
+      cargarUsuarios();
+      alert('Pedido eliminado correctamente.');
+    }
+
+    async function cargarPedidos() {
+      try {
+        const res = await fetch(`${apiBase}/pedidos`);
+        if (!res.ok) return console.warn('No se pudieron cargar pedidos', res.status);
+        const data = await res.json();
+        localStorage.setItem('pedidos', JSON.stringify(data));
+      } catch (err) {
+        console.error('Error cargando pedidos:', err);
+      }
+    }
+
+    // Format money
+    function formatMoney(n) {
+      try {
+        return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n);
+      } catch (e) {
+        return '$' + Number(n).toFixed(2);
+      }
+    }
+
+    // Load Peticiones
+    async function cargarPeticiones() {
+      try {
+        const res = await fetch(`${apiBase}/peticiones`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const peticiones = await res.json();
+        const listaPeticiones = document.getElementById('listaPeticiones');
+        if (!listaPeticiones) return;
+        listaPeticiones.innerHTML = '';
+
+        if (peticiones.length === 0) {
+          listaPeticiones.innerHTML = '<p>No hay peticiones registradas.</p>';
+          return;
+        }
+
+        peticiones.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)); // Sort newest to oldest
+        peticiones.forEach(peticion => {
+          const peticionDiv = document.createElement('details');
+          peticionDiv.className = 'peticion-details';
+          const isUsed = usedButtons[peticion.id];
+          peticionDiv.innerHTML = `
+            <summary>Petición ID: ${peticion.id} - Nombre: ${peticion.nombre} - Fecha: ${new Date(peticion.fecha).toLocaleDateString('es-AR')}</summary>
+            <div class="peticion-item">
+              <div class="peticion-info">
+                <strong>Teléfono:</strong> ${peticion.telefono}
+                <strong>Total:</strong> ${formatMoney(peticion.total)}
+                <div class="peticion-items">
+                  ${peticion.items.map(item => `
+                    <div class="item">
+                      ${item.nombre}: ${item.cantidad} x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}
+                    </div>
+                  `).join('')}
+                </div>
+                ${isUsed ? `<div class="status">Estado: ${isUsed === 'normal' ? 'Confirmado' : 'Confirmado +7%'}</div>` : `
+                  <div class="button-group">
+                    <button class="confirmar" onclick="confirmarPeticion(${peticion.id}, false)">Confirmar Pedido</button>
+                    <button class="confirmar-plus" onclick="confirmarPeticion(${peticion.id}, true)">Confirmar Pedido +7%</button>
+                  </div>
+                `}
+              </div>
+            </div>
+          `;
+          listaPeticiones.appendChild(peticionDiv);
+        });
+      } catch (err) {
+        console.error('Error cargando peticiones:', err);
+        mostrarError('No se pudieron cargar las peticiones.');
+      }
+    }
+
+    // Confirm and Delete Peticion
+    async function confirmarPeticion(peticionId, addSevenPercent) {
+      try {
+        if (usedButtons[peticionId]) {
+          alert('Este pedido ya ha sido confirmado.');
+          return;
+        }
+
+        // Fetch peticion details
+        const res = await fetch(`${apiBase}/peticiones`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const peticiones = await res.json();
+        const peticion = peticiones.find(p => p.id == peticionId);
+        if (!peticion) throw new Error('Petición no encontrada');
+
+        // Prepare pedido items
+        const pedidoItems = peticion.items.map(item => ({
+          id: item.id,
+          cantidad: item.cantidad,
+          precio: addSevenPercent ? item.precio_unitario * 1.07 : item.precio_unitario
+        }));
+
+        // Send to guardar-pedidos
+        const payload = {
+          user: peticion.nombre,
+          pedido: pedidoItems
+        };
+        console.log('Sending to guardar-pedidos:', JSON.stringify(payload, null, 2));
+        const saveRes = await fetch(`${apiBase}/guardar-pedidos`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nombre, precio, categoria, stock })
+          body: JSON.stringify(payload)
         });
-        if (!res.ok) {
-          const errBody = await res.text().catch(()=>null);
-          throw new Error(errBody || `HTTP ${res.status}`);
+        if (!saveRes.ok) {
+          const txt = await saveRes.json().catch(() => ({ error: `HTTP ${saveRes.status}` }));
+          throw new Error(txt.error || `HTTP ${saveRes.status}`);
         }
-        nuevo = await res.json();
+
+        // Delete from Peticiones
+        const deleteRes = await fetch(`${apiBase}/peticiones/${peticionId}`, {
+          method: 'DELETE'
+        });
+        if (!deleteRes.ok) {
+          const txt = await deleteRes.json().catch(() => ({ error: `HTTP ${deleteRes.status}` }));
+          throw new Error(txt.error || `HTTP ${deleteRes.status}`);
+        }
+
+        // Mark as used (for safety, though petition is deleted)
+        usedButtons[peticionId] = addSevenPercent ? 'plus7' : 'normal';
+        saveUsedButtons();
+        alert(`Petición ${addSevenPercent ? 'confirmada con +7%' : 'confirmada'} y eliminada con éxito.`);
+        await Promise.all([cargarPedidos(), cargarPeticiones()]); // Refresh both lists
       } catch (err) {
-        console.warn('No se pudo crear producto en /api/productos:', err);
-        alert('No se pudo crear producto en el servidor. Si estás en modo estático, descarga el JSON y súbelo manualmente.');
-        return;
+        console.error('Error confirmando petición:', err);
+        mostrarError(`No se pudo confirmar la petición: ${err.message}`);
       }
-
-      if (archivoImagen) {
-        const formData = new FormData();
-        formData.append('imagen', archivoImagen);
-        try {
-          const resImg = await fetch(`${apiBase}/upload/${nuevo.id}`, { method: 'POST', body: formData });
-          if (!resImg.ok) console.warn('Error al subir la imagen para id', nuevo.id, resImg.status);
-        } catch (e) { console.warn('Upload error', e); }
-      }
-
-      document.getElementById('formAgregar')?.reset();
-      await cargarProductos();
-    } catch (err) {
-      console.error(err);
-      mostrarError('Error inesperado al agregar producto');
     }
-  }
 
-  // Actualizar producto
-  async function actualizarProducto(id, i) {
-    try {
-      const nombre = document.getElementById(`nombre-${i}`).value.trim();
-      const precio = parseFloat(document.getElementById(`precio-${i}`).value);
-      const categoria = document.getElementById(`categoria-${i}`).value;
-      const stock = parseInt(document.getElementById(`stock-${i}`).value) || 0;
-      if (!nombre || isNaN(precio) || precio < 0) { alert('Completa correctamente el nombre y el precio para actualizar.'); return; }
-
-      try {
-        const res = await fetch(`${apiBase}/productos/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nombre, precio, categoria, stock })
-        });
-        if (!res.ok) {
-          const txt = await res.text().catch(()=>null);
-          throw new Error(txt || `HTTP ${res.status}`);
-        }
-      } catch (err) {
-        console.warn('PUT /api/productos failed:', err);
-        alert('No se pudo actualizar en el servidor. Si estás en modo estático, actualiza el JSON manualmente.');
-        return;
-      }
-
-      await cargarProductos();
-    } catch (err) {
-      console.error(err);
-      alert('Error inesperado al actualizar producto');
-    }
-  }
-
-  // Eliminar producto
-  async function eliminarProducto(id) {
-    if (!confirm('¿Eliminar este producto?')) return;
-    try {
-      const res = await fetch(`${apiBase}/productos/${id}`, { method: 'DELETE' });
-      if (!res.ok) {
-        console.warn('DELETE /api/productos returned', res.status);
-        alert('No se pudo eliminar en el servidor. Si estás en modo estático, elimina manualmente del JSON.');
-        return;
-      }
-      await cargarProductos();
-    } catch (err) {
-      console.error(err);
-      alert('Error inesperado al eliminar producto');
-    }
-  }
-
-  // Borrar imagen
-  async function borrarImagen(id) {
-    if (!confirm('¿Borrar imagen de este producto?')) return;
-    try {
-      const res = await fetch(`${apiBase}/upload/${id}`, { method: 'DELETE' });
-      if (!res.ok) {
-        console.warn('DELETE /api/upload returned', res.status);
-        alert('No se pudo borrar la imagen en el servidor.');
-        return;
-      }
-      await cargarProductos();
-    } catch (err) {
-      console.error(err);
-      alert('Error inesperado al borrar imagen');
-    }
-  }
-
-  // Cargar usuarios y pedidos desde localStorage (mantengo tu esquema)
-async function cargarUsuarios() {
-  const res = await fetch(`${apiBase}/pedidos`);
-  const pedidosRaw = await res.json();
-  const listaPedidos = document.getElementById('listaUsuarios'); // renombralo en HTML si querés
-  if (!listaPedidos) return;
-  listaPedidos.innerHTML = '';
-
-  // Agrupar pedidos por usuario
-  const pedidosPorUsuario = {};
-  pedidosRaw.forEach(p => {
-    const user = p.user;
-    if (!pedidosPorUsuario[user]) pedidosPorUsuario[user] = [];
-    pedidosPorUsuario[user].push(p);
-  });
-
-  Object.entries(pedidosPorUsuario).forEach(([userName, userPedidos]) => {
-    // Orden descendente por fecha si existe
-    userPedidos.sort((a,b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
-
-    const userDiv = document.createElement('details');
-    userDiv.className = 'user-details';
-
-    let pedidosHTML = '<ul>';
-    userPedidos.forEach((pedido, index) => {
-      const items = Array.isArray(pedido.items) ? pedido.items : [];
-      const pedidoId = pedido.id ?? `${userName}-${index}`;
-      const key = `${userName}-${index}`;
-      const estado = estadosPedidos[key] || {};
-
-      const total = items.reduce((sum, p) => {
-        const precio = p.precio_unitario ?? p.precio ?? 0;
-        return sum + precio * (p.cantidad ?? 1);
-      }, 0);
-
-      pedidosHTML += `<li>
-        <div class="pedido-line">
-          <strong>Pedido #${index + 1}</strong> (ID: ${pedidoId}) - <b>Total: $${total.toFixed(2)}</b>
-        </div>
-        <ul>
-          ${(items.map(p => {
-            const precio = p.precio_unitario ?? p.precio ?? 0;
-            return `<li>${p.nombre} x${p.cantidad ?? 1} - $${precio.toFixed(2)}</li>`;
-          })).join('')}
-        </ul>
-        <div class="pedido-actions">
-          <button onclick="eliminarPedido('${pedidoId}')">Eliminar pedido</button>
-          <button class="guardar-btn" data-pedidoid="${pedidoId}" data-username="${userName}" data-index="${index}">
-            Guardar pedido
-          </button>
-          <span class="guardar-status" id="guardar-status-${pedidoId}" aria-hidden="true">
-            ${estado.guardado ? '✅ Guardado' : ''}
-          </span>
-        </div>
-        <div class='status-container'>
-          <label><input type='checkbox' ${estado.guardado ? 'checked' : ''} onchange="toggleGuardado('${userName}',${index}, this)"> Guardado</label>
-          <label><input type='checkbox' ${estado.recibido ? 'checked' : ''} onchange="toggleRecibido('${userName}',${index}, this)"> Recibido</label>
-        </div>
-      </li>`;
-    });
-    pedidosHTML += '</ul>';
-
-    userDiv.innerHTML = `<summary>${userName}</summary>
-      <div class='usuario-item'>${pedidosHTML}</div>`;
-
-    listaPedidos.appendChild(userDiv);
-
-    // enganchar listeners a "Guardar pedido"
-    userDiv.querySelectorAll('.guardar-btn').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const pedidoId = btn.dataset.pedidoid;
-        const username = btn.dataset.username;
-        const idx = Number(btn.dataset.index);
-        const statusSpan = document.getElementById(`guardar-status-${pedidoId}`);
-        if (statusSpan) statusSpan.textContent = '⏳ Guardando...';
-        try {
-          await guardarPedido(pedidoId);
-          if (statusSpan) statusSpan.textContent = '✅ Guardado';
-          const key = `${username}-${idx}`;
-          estadosPedidos[key] = estadosPedidos[key] || {};
-          estadosPedidos[key].guardado = true;
-          localStorage.setItem('estadosPedidos', JSON.stringify(estadosPedidos));
-        } catch (err) {
-          if (statusSpan) statusSpan.textContent = '❌ Error';
-          console.error(err);
-          alert('Error al guardar el pedido.');
-        }
-      });
-    });
-  });
-}
-
-
-
-
-
-/* ---------------------------
-  Función para guardar/obtener PDF desde backend
-   - Intenta obtener directamente un PDF vía GET a /pedidos/:id/pdf
-   - Si falla (404/405) intenta un POST fallback a /pedidos/:id/guardar
-   - Ajusta los endpoints si tu backend usa otro path.
-   --------------------------- */
-async function guardarPedido(pedidoId) {
-  try {
-    const r = await fetch(`${apiBase}/pedidos/${pedidoId}/pdf`);
-    if (!r.ok) throw new Error(`Error del servidor: ${r.status}`);
-    const data = await r.json();
-    if (data.ok && data.pdf) {
-      window.open(data.pdf, '_blank');
-    } else {
-      alert('No se pudo generar el PDF');
-    }
-  } catch (err) {
-    console.error('No se pudo generar el PDF:', err);
-    alert('Error generando PDF');
-  }
-}
-
-async function cargarPedidos() {
-  try {
-    const res = await fetch(`${apiBase}/pedidos`);
-    if (!res.ok) return console.warn('No se pudieron cargar pedidos', res.status);
-    const data = await res.json();
-    localStorage.setItem('pedidos', JSON.stringify(data));
-  } catch (err) {
-    console.error('Error cargando pedidos:', err);
-  }
-}
-  // Eliminar pedido (intenta servidor y luego borra local)
-  // Eliminar pedido por ID (usa el endpoint del server.js)
-async function eliminarPedido(pedidoId) {
-  if (!confirm('¿Eliminar este pedido?')) return;
-
-  try {
-    const res = await fetch(`${apiBase}/eliminar-pedido/${encodeURIComponent(pedidoId)}`, { method: 'DELETE' });
-    if (!res.ok) {
-      console.warn('Error del servidor al eliminar pedido:', res.status, await res.text().catch(()=>''));
-      alert('No se pudo eliminar el pedido en el servidor.');
-      return;
-    }
-  } catch (err) {
-    console.warn('Error al llamar al endpoint de eliminación:', err);
-    alert('Error de red al eliminar pedido');
-    return;
-  }
-
-  // recargar vista
-  await cargarPedidos();
-  await cargarProductos();
-  cargarUsuarios();
-  alert('Pedido eliminado correctamente.');
-}
-
-
-
-  // Descargar (generar PDF en servidor) pedido
-  async function descargarPedido(usuario, index) {
-    const pedidos = JSON.parse(localStorage.getItem('pedidos') || '{}');
-    const datosUsuarios = JSON.parse(localStorage.getItem('userData') || '{}');
-    const pedido = pedidos[usuario]?.[index];
-    const info = datosUsuarios[usuario] || {};
-    if (!pedido) return alert('No se encontró el pedido');
-    try {
-      const res = await fetch(`${apiBase}/guardar-pedido`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ usuario, index, pedido, info })
-      });
-      const msg = await res.text();
-      alert(msg);
-    } catch (err) {
-      console.warn('No se pudo guardar en servidor /api/guardar-pedido:', err);
-      alert('Pedido guardado localmente. No se pudo enviar al servidor.');
-    }
-  }
-
-  // Cargar Excel -> productos.json generator (mantengo tu implementación)
-  async function cargarExcel() {
-    /* ... tu implementación tal como la tenías ... */
-    // (la dejé igual, asumí que ya funciona y depende de XLSX)
-  }
-
-  // Bloque para previsualizar y enviar pedido por archivo (lo dejé igual, solo cambié PUT hacia apiBase)
-  (function(){
-    const archivoInput = document.getElementById('pedidoArchivo');
-    const btnPrevisualizar = document.getElementById('btnPrevisualizarPedido');
-    const btnEnviarPedidoArchivo = document.getElementById('btnEnviarPedidoArchivo');
-    const previsualizacion = document.getElementById('previsualizacionPedido');
-
-    let pedidoTemporal = [];
-
-    // previsualizar (igual que antes)
-    btnPrevisualizar?.addEventListener('click', () => {
-      if (!archivoInput?.files?.[0]) { alert('Selecciona un archivo'); return; }
-      const reader = new FileReader();
-      reader.onload = () => {
-        const lines = reader.result.split('\n').map(l=>l.trim()).filter(l=>l);
-        previsualizacion.innerHTML = '';
-        pedidoTemporal = [];
-
-        lines.forEach((linea) => {
-          const partes = linea.split(' ').filter(Boolean);
-          if (partes.length < 2) return;
-          const cantidad = parseInt(partes[0], 10);
-          if (Number.isNaN(cantidad) || cantidad <= 0) return;
-          const nombre = partes.slice(1).join(' ').trim();
-          const prod = productos.find(p => (p.nombre||'').toString().trim().toLowerCase() === nombre.toLowerCase());
-
-          const row = document.createElement('div');
-          row.style.padding = '6px';
-          row.style.marginBottom = '6px';
-          row.style.borderRadius = '6px';
-          row.style.color = '#111';
-
-          if (!prod) {
-  row.style.background = '#ffcccc';
-  row.textContent = `${cantidad} x ${nombre} — NO ENCONTRADO`;
-} else {
-  // Permitir pedir aunque no haya stock
-  row.style.background = '#ccffcc';
-  row.textContent = `${cantidad} x ${prod.nombre} — se agregarán ${cantidad} (stock actual: ${prod.stock})`;
-  pedidoTemporal.push({ id: prod.id, nombre: prod.nombre, cantidad: cantidad });
-}
-          previsualizacion.appendChild(row);
-        });
-
-        if (pedidoTemporal.length === 0) {
-          const empty = document.createElement('div');
-          empty.textContent = 'No se encontraron productos válidos para agregar.';
-          previsualizacion.appendChild(empty);
-        }
-      };
-      reader.readAsText(archivoInput.files[0]);
-    });
-
-    btnEnviarPedidoArchivo?.addEventListener('click', async () => {
-      if (pedidoTemporal.length === 0) return alert('Previsualiza el pedido primero y asegúrate de que haya productos para agregar.');
-
-      const pedidos = JSON.parse(localStorage.getItem('pedidos')||'{}');
-      const usuario = 'admin';
-      pedidos[usuario] = pedidos[usuario] || [];
-      pedidos[usuario].push(pedidoTemporal.map(it => ({ id: it.id, nombre: it.nombre, cantidad: it.cantidad })));
-      localStorage.setItem('pedidos', JSON.stringify(pedidos));
-
-      for (const item of pedidoTemporal) {
-        if (!item.cantidad || item.cantidad <= 0) continue;
-        const prod = productos.find(p => p.id === item.id);
-        if (!prod) continue;
-        prod.stock = (Number(prod.stock) || 0) - Number(item.cantidad);
-        try {
-          const res = await fetch(`${apiBase}/productos/${prod.id}`, {
-            method:'PUT',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify(prod)
-          });
-          if (!res.ok) console.warn('PUT failed for', prod.id, res.status);
-        } catch (err) {
-          console.warn('Error actualizando stock para', prod.id, err);
-        }
-      }
-
-      alert('Pedido creado y stock actualizado.');
-      pedidoTemporal = [];
-      previsualizacion.innerHTML = '';
-      await gitPushCambios('productos.json');
-      await cargarProductos();
-      cargarUsuarios();
-    });
-  })();
-
-  /* ------------------ Actualizar stock desde Excel (cliente) ------------------ */
-  // (dejé las funciones parseStockFile, renderStockPreview, etc. tal como las tenías;
-  //  sólo asegurate que en confirmStockUpdate use apiBase para los PUTs — lo hice en la sección original)
-  async function confirmStockUpdate() {
-    // (implementación igual a la tuya pero usando fetch(`${apiBase}/productos`) y PUT `${apiBase}/productos/${id}`)
-    // Para ahorrar espacio, asumí que usás la función original y la actualizás con `${apiBase}` como en otros lugares.
-    // Si querés, te la pego completa aquí también.
-    alert('Usa la versión incluida en tu archivo, revisa que los PUT usen apiBase.');
-  }
-
-  // listeners/form bindings
-  document.getElementById('btnCargarExcel')?.addEventListener('click', cargarExcel);
-  document.getElementById('formAgregar')?.addEventListener('submit', agregarProducto);
-  window.onload = () => { cargarProductos(); cargarUsuarios(); };
-
-</script>
+    // Initialize
+    (async function init() {
+      await Promise.all([cargarPedidos(), cargarPeticiones(), cargarUsuarios()]);
+    })();
+  </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
