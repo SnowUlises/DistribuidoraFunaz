@@ -252,136 +252,173 @@
 
     // Load usuarios y pedidos (unchanged)
     async function cargarUsuarios() {
-      const res = await fetch(`${apiBase}/pedidos`);
-      const pedidosRaw = await res.json();
-      const listaPedidos = document.getElementById('listaUsuarios');
-      if (!listaPedidos) return;
-      listaPedidos.innerHTML = '';
+      try {
+        const listaPedidos = document.getElementById('listaUsuarios');
+        if (!listaPedidos) {
+          console.error('Elemento listaUsuarios no encontrado en el DOM');
+          mostrarError('Error: listaUsuarios no encontrado en el DOM');
+          return;
+        }
+        listaPedidos.innerHTML = '<p>Cargando pedidos...</p>';
 
-      const pedidosPorUsuario = {};
-      pedidosRaw.forEach(p => {
-        const user = p.user;
-        if (!pedidosPorUsuario[user]) pedidosPorUsuario[user] = [];
-        pedidosPorUsuario[user].push(p);
-      });
+        const res = await fetch(`${apiBase}/pedidos`, { cache: 'no-store' });
+        if (!res.ok) {
+          console.warn('Error al cargar pedidos:', res.status, await res.text().catch(() => ''));
+          mostrarError(`Error al cargar pedidos de ${apiBase}/pedidos: HTTP ${res.status}`);
+          listaPedidos.innerHTML = '<p>No se pudieron cargar los pedidos.</p>';
+          return;
+        }
+        const pedidosRaw = await res.json();
+        console.log('Pedidos cargados:', pedidosRaw);
 
-      Object.entries(pedidosPorUsuario).forEach(([userName, userPedidos]) => {
-        userPedidos.sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
-
-        const userDiv = document.createElement('details');
-        userDiv.className = 'user-details';
-
-        let pedidosHTML = '<ul>';
-        userPedidos.forEach((pedido, index) => {
-          const items = Array.isArray(pedido.items) ? pedido.items : [];
-          const pedidoId = pedido.id ?? `${userName}-${index}`;
-          const key = `${userName}-${index}`;
-          const estado = estadosPedidos[key] || {};
-
-          const total = items.reduce((sum, p) => {
-            const precio = p.precio_unitario ?? p.precio ?? 0;
-            return sum + precio * (p.cantidad ?? 1);
-          }, 0);
-
-          pedidosHTML += `<li>
-            <div class="pedido-line">
-              <strong>Pedido #${index + 1}</strong> (ID: ${pedidoId}) - <b>Total: $${total.toFixed(2)}</b>
-            </div>
-            <ul>
-              ${(items.map(p => {
-                const precio = p.precio_unitario ?? p.precio ?? 0;
-                return `<li>${p.nombre} x${p.cantidad ?? 1} - $${precio.toFixed(2)}</li>`;
-              })).join('')}
-            </ul>
-            <div class="pedido-actions">
-              <button onclick="eliminarPedido('${pedidoId}')">Eliminar pedido</button>
-              <button class="guardar-btn" data-pedidoid="${pedidoId}" data-username="${userName}" data-index="${index}">
-                Guardar pedido
-              </button>
-              <span class="guardar-status" id="guardar-status-${pedidoId}" aria-hidden="true">
-                ${estado.guardado ? '✅ Guardado' : ''}
-              </span>
-            </div>
-            <div class='status-container'>
-              <label><input type='checkbox' ${estado.guardado ? 'checked' : ''} onchange="toggleGuardado('${userName}',${index}, this)"> Guardado</label>
-              <label><input type='checkbox' ${estado.recibido ? 'checked' : ''} onchange="toggleRecibido('${userName}',${index}, this)"> Recibido</label>
-            </div>
-          </li>`;
+        const pedidosPorUsuario = {};
+        pedidosRaw.forEach(p => {
+          const user = p.user || 'Invitado';
+          if (!pedidosPorUsuario[user]) pedidosPorUsuario[user] = [];
+          pedidosPorUsuario[user].push(p);
         });
-        pedidosHTML += '</ul>';
 
-        userDiv.innerHTML = `<summary>${userName}</summary>
-          <div class='usuario-item'>${pedidosHTML}</div>`;
+        listaPedidos.innerHTML = '';
+        if (Object.keys(pedidosPorUsuario).length === 0) {
+          listaPedidos.innerHTML = '<p>No hay pedidos registrados.</p>';
+          return;
+        }
 
-        listaPedidos.appendChild(userDiv);
+        Object.entries(pedidosPorUsuario).forEach(([userName, userPedidos]) => {
+          userPedidos.sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
 
-        userDiv.querySelectorAll('.guardar-btn').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            const pedidoId = btn.dataset.pedidoid;
-            const username = btn.dataset.username;
-            const idx = Number(btn.dataset.index);
-            const statusSpan = document.getElementById(`guardar-status-${pedidoId}`);
-            if (statusSpan) statusSpan.textContent = '⏳ Guardando...';
-            try {
-              await guardarPedido(pedidoId);
-              if (statusSpan) statusSpan.textContent = '✅ Guardado';
-              const key = `${username}-${idx}`;
-              estadosPedidos[key] = estadosPedidos[key] || {};
-              estadosPedidos[key].guardado = true;
-              localStorage.setItem('estadosPedidos', JSON.stringify(estadosPedidos));
-            } catch (err) {
-              if (statusSpan) statusSpan.textContent = '❌ Error';
-              console.error(err);
-              alert('Error al guardar el pedido.');
-            }
+          const userDiv = document.createElement('details');
+          userDiv.className = 'user-details';
+
+          let pedidosHTML = '<ul>';
+          userPedidos.forEach((pedido, index) => {
+            const items = Array.isArray(pedido.items) ? pedido.items : [];
+            const pedidoId = pedido.id ?? `${userName}-${index}`;
+            const key = `${userName}-${index}`;
+            const estado = estadosPedidos[key] || {};
+
+            const total = items.reduce((sum, p) => {
+              const precio = p.precio_unitario ?? p.precio ?? 0;
+              return sum + precio * (p.cantidad ?? 1);
+            }, 0);
+
+            pedidosHTML += `<li>
+              <div class="pedido-line">
+                <strong>Pedido #${index + 1}</strong> (ID: ${pedidoId}) - <b>Total: $${total.toFixed(2)}</b>
+              </div>
+              <ul>
+                ${(items.map(p => {
+                  const precio = p.precio_unitario ?? p.precio ?? 0;
+                  return `<li>${p.nombre} x${p.cantidad ?? 1} - $${precio.toFixed(2)}</li>`;
+                })).join('')}
+              </ul>
+              <div class="pedido-actions">
+                <button onclick="eliminarPedido('${pedidoId}')">Eliminar pedido</button>
+                <button class="guardar-btn" data-pedidoid="${pedidoId}" data-username="${userName}" data-index="${index}">
+                  Guardar pedido
+                </button>
+                <span class="guardar-status" id="guardar-status-${pedidoId}" aria-hidden="true">
+                  ${estado.guardado ? '✅ Guardado' : ''}
+                </span>
+              </div>
+              <div class='status-container'>
+                <label><input type='checkbox' ${estado.guardado ? 'checked' : ''} onchange="toggleGuardado('${userName}',${index}, this)"> Guardado</label>
+                <label><input type='checkbox' ${estado.recibido ? 'checked' : ''} onchange="toggleRecibido('${userName}',${index}, this)"> Recibido</label>
+              </div>
+            </li>`;
+          });
+          pedidosHTML += '</ul>';
+
+          userDiv.innerHTML = `<summary>${userName}</summary>
+            <div class='usuario-item'>${pedidosHTML}</div>`;
+
+          listaPedidos.appendChild(userDiv);
+
+          userDiv.querySelectorAll('.guardar-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const pedidoId = btn.dataset.pedidoid;
+              const username = btn.dataset.username;
+              const idx = Number(btn.dataset.index);
+              const statusSpan = document.getElementById(`guardar-status-${pedidoId}`);
+              if (statusSpan) statusSpan.textContent = '⏳ Guardando...';
+              try {
+                await guardarPedido(pedidoId);
+                if (statusSpan) statusSpan.textContent = '✅ Guardado';
+                const key = `${username}-${idx}`;
+                estadosPedidos[key] = estadosPedidos[key] || {};
+                estadosPedidos[key].guardado = true;
+                guardarEstados();
+              } catch (err) {
+                if (statusSpan) statusSpan.textContent = '❌ Error';
+                console.error('Error al guardar pedido:', err);
+                mostrarError(`Error al guardar pedido ${pedidoId}: ${err.message}`);
+              }
+            });
           });
         });
-      });
+      } catch (err) {
+        console.error('Error en cargarUsuarios:', err);
+        mostrarError('Error inesperado al cargar usuarios y pedidos.');
+        const listaPedidos = document.getElementById('listaUsuarios');
+        if (listaPedidos) listaPedidos.innerHTML = '<p>Error al cargar pedidos.</p>';
+      }
     }
 
     async function guardarPedido(pedidoId) {
       try {
-        const r = await fetch(`${apiBase}/pedidos/${pedidoId}/pdf`);
-        if (!r.ok) throw new Error(`Error del servidor: ${r.status}`);
+        const r = await fetch(`${apiBase}/pedidos/${pedidoId}/pdf`, { cache: 'no-store' });
+        if (!r.ok) {
+          const txt = await r.text().catch(() => '');
+          throw new Error(`Error del servidor: ${r.status} ${txt}`);
+        }
         const data = await r.json();
         if (data.ok && data.pdf) {
           window.open(data.pdf, '_blank');
         } else {
-          alert('No se pudo generar el PDF');
+          throw new Error('No se pudo generar el PDF');
         }
       } catch (err) {
         console.error('No se pudo generar el PDF:', err);
-        alert('Error generando PDF');
+        throw err; // Re-throw to be caught by caller
       }
     }
 
     async function eliminarPedido(pedidoId) {
       if (!confirm('¿Eliminar este pedido?')) return;
       try {
-        const res = await fetch(`${apiBase}/eliminar-pedido/${encodeURIComponent(pedidoId)}`, { method: 'DELETE' });
+        const res = await fetch(`${apiBase}/eliminar-pedido/${encodeURIComponent(pedidoId)}`, {
+          method: 'DELETE',
+          cache: 'no-store'
+        });
         if (!res.ok) {
-          console.warn('Error del servidor al eliminar pedido:', res.status, await res.text().catch(()=>''));
-          alert('No se pudo eliminar el pedido en el servidor.');
+          const txt = await res.text().catch(() => '');
+          console.warn('Error del servidor al eliminar pedido:', res.status, txt);
+          mostrarError(`No se pudo eliminar el pedido en ${apiBase}/eliminar-pedido/${pedidoId}: HTTP ${res.status}`);
           return;
         }
+        await cargarPedidos();
+        await cargarUsuarios();
+        alert('Pedido eliminado correctamente.');
       } catch (err) {
-        console.warn('Error al llamar al endpoint de eliminación:', err);
-        alert('Error de red al eliminar pedido');
-        return;
+        console.error('Error al eliminar pedido:', err);
+        mostrarError(`Error de red al eliminar pedido: ${err.message}`);
       }
-      await cargarPedidos();
-      cargarUsuarios();
-      alert('Pedido eliminado correctamente.');
     }
 
     async function cargarPedidos() {
       try {
-        const res = await fetch(`${apiBase}/pedidos`);
-        if (!res.ok) return console.warn('No se pudieron cargar pedidos', res.status);
+        const res = await fetch(`${apiBase}/pedidos`, { cache: 'no-store' });
+        if (!res.ok) {
+          console.warn('No se pudieron cargar pedidos:', res.status, await res.text().catch(() => ''));
+          mostrarError(`Error al cargar pedidos de ${apiBase}/pedidos: HTTP ${res.status}`);
+          return;
+        }
         const data = await res.json();
         localStorage.setItem('pedidos', JSON.stringify(data));
+        console.log('Pedidos guardados en localStorage:', data);
       } catch (err) {
         console.error('Error cargando pedidos:', err);
+        mostrarError(`Error de red al cargar pedidos: ${err.message}`);
       }
     }
 
@@ -397,19 +434,31 @@
     // Load Peticiones
     async function cargarPeticiones() {
       try {
-        const res = await fetch(`${apiBase}/peticiones`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const peticiones = await res.json();
         const listaPeticiones = document.getElementById('listaPeticiones');
-        if (!listaPeticiones) return;
-        listaPeticiones.innerHTML = '';
+        if (!listaPeticiones) {
+          console.error('Elemento listaPeticiones no encontrado en el DOM');
+          mostrarError('Error: listaPeticiones no encontrado en el DOM');
+          return;
+        }
+        listaPeticiones.innerHTML = '<p>Cargando peticiones...</p>';
 
+        const res = await fetch(`${apiBase}/peticiones`, { cache: 'no-store' });
+        if (!res.ok) {
+          console.warn('Error al cargar peticiones:', res.status, await res.text().catch(() => ''));
+          mostrarError(`Error al cargar peticiones de ${apiBase}/peticiones: HTTP ${res.status}`);
+          listaPeticiones.innerHTML = '<p>No se pudieron cargar las peticiones.</p>';
+          return;
+        }
+        const peticiones = await res.json();
+        console.log('Peticiones cargadas:', peticiones);
+
+        listaPeticiones.innerHTML = '';
         if (peticiones.length === 0) {
           listaPeticiones.innerHTML = '<p>No hay peticiones registradas.</p>';
           return;
         }
 
-        peticiones.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)); // Sort newest to oldest
+        peticiones.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
         peticiones.forEach(peticion => {
           const peticionDiv = document.createElement('details');
           peticionDiv.className = 'peticion-details';
@@ -439,8 +488,10 @@
           listaPeticiones.appendChild(peticionDiv);
         });
       } catch (err) {
-        console.error('Error cargando peticiones:', err);
-        mostrarError('No se pudieron cargar las peticiones.');
+        console.error('Error en cargarPeticiones:', err);
+        mostrarError(`Error inesperado al cargar peticiones: ${err.message}`);
+        const listaPeticiones = document.getElementById('listaPeticiones');
+        if (listaPeticiones) listaPeticiones.innerHTML = '<p>Error al cargar peticiones.</p>';
       }
     }
 
@@ -453,8 +504,11 @@
         }
 
         // Fetch peticion details
-        const res = await fetch(`${apiBase}/peticiones`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const res = await fetch(`${apiBase}/peticiones`, { cache: 'no-store' });
+        if (!res.ok) {
+          const txt = await res.text().catch(() => '');
+          throw new Error(`HTTP ${res.status}: ${txt}`);
+        }
         const peticiones = await res.json();
         const peticion = peticiones.find(p => p.id == peticionId);
         if (!peticion) throw new Error('Petición no encontrada');
@@ -471,11 +525,12 @@
           user: peticion.nombre,
           pedido: pedidoItems
         };
-        console.log('Sending to guardar-pedidos:', JSON.stringify(payload, null, 2));
+        console.log('Enviando a guardar-pedidos:', JSON.stringify(payload, null, 2));
         const saveRes = await fetch(`${apiBase}/guardar-pedidos`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
+          cache: 'no-store'
         });
         if (!saveRes.ok) {
           const txt = await saveRes.json().catch(() => ({ error: `HTTP ${saveRes.status}` }));
@@ -483,29 +538,43 @@
         }
 
         // Delete from Peticiones
+        console.log(`Eliminando petición ${peticionId}`);
         const deleteRes = await fetch(`${apiBase}/peticiones/${peticionId}`, {
-          method: 'DELETE'
+          method: 'DELETE',
+          cache: 'no-store'
         });
         if (!deleteRes.ok) {
           const txt = await deleteRes.json().catch(() => ({ error: `HTTP ${deleteRes.status}` }));
           throw new Error(txt.error || `HTTP ${deleteRes.status}`);
         }
 
-        // Mark as used (for safety, though petition is deleted)
+        // Mark as used (for safety)
         usedButtons[peticionId] = addSevenPercent ? 'plus7' : 'normal';
         saveUsedButtons();
         alert(`Petición ${addSevenPercent ? 'confirmada con +7%' : 'confirmada'} y eliminada con éxito.`);
-        await Promise.all([cargarPedidos(), cargarPeticiones()]); // Refresh both lists
+        await Promise.all([cargarPedidos(), cargarPeticiones(), cargarUsuarios()]);
       } catch (err) {
-        console.error('Error confirmando petición:', err);
-        mostrarError(`No se pudo confirmar la petición: ${err.message}`);
+        console.error('Error en confirmarPeticion:', err);
+        mostrarError(`No se pudo confirmar la petición ${peticionId}: ${err.message}`);
       }
     }
 
     // Initialize
-    (async function init() {
-      await Promise.all([cargarPedidos(), cargarPeticiones(), cargarUsuarios()]);
-    })();
+    async function init() {
+      try {
+        console.log('Iniciando carga de datos...');
+        await cargarPedidos(); // First, load pedidos to populate localStorage
+        await cargarUsuarios(); // Then, load usuarios which depends on pedidos
+        await cargarPeticiones(); // Finally, load peticiones
+        console.log('Inicialización completada');
+      } catch (err) {
+        console.error('Error en init:', err);
+        mostrarError('Error al inicializar la página. Revisa la consola para más detalles.');
+      }
+    }
+
+    // Run init on load
+    window.onload = init;
   </script>
 </body>
 </html>
