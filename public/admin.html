@@ -517,7 +517,7 @@
         const pedidoItems = peticion.items.map(item => ({
           id: item.id,
           cantidad: item.cantidad,
-          precio: addSevenPercent ? item.precio_unitario * 1.17 : item.precio_unitario
+          precio: addSevenPercent ? item.precio_unitario * 1.07 : item.precio_unitario
         }));
 
         // Send to guardar-pedidos
@@ -578,4 +578,5 @@
   </script>
 </body>
 </html>
+
 
