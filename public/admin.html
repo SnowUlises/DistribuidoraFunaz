@@ -109,6 +109,41 @@
     }
     .item {
       margin: 0.5em 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+    }
+    .item-controls {
+      display: flex;
+      gap: 0.5em;
+    }
+    .item-controls button {
+      padding: 4px 8px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9em;
+    }
+    .item-controls button.increase {
+      background: #28a745;
+      color: white;
+    }
+    .item-controls button.increase:hover {
+      background: #218838;
+    }
+    .item-controls button.decrease {
+      background: #ffc107;
+      color: black;
+    }
+    .item-controls button.decrease:hover {
+      background: #e0a800;
+    }
+    .item-controls button.delete {
+      background: #dc3545;
+      color: white;
+    }
+    .item-controls button.delete:hover {
+      background: #c82333;
     }
     .status-container {
       display: flex;
@@ -155,6 +190,19 @@
     button.confirmar-plus:hover {
       background: #138496;
     }
+    button.delete-peticion {
+      background: #dc3545;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button.delete-peticion:hover {
+      background: #c82333;
+    }
     button:disabled {
       background: #ccc;
       cursor: not-allowed;
@@ -184,49 +232,39 @@
   <main>
     <button class="btn-volver" onclick="location.href='index.html'">← Volver a tienda</button>
     <div id="mensajeError"></div>
-
     <details>
       <summary>Usuarios y pedidos</summary>
       <div id="listaUsuarios"></div>
     </details>
-
     <details>
       <summary>Peticiones</summary>
       <div id="listaPeticiones"></div>
     </details>
   </main>
-
   <footer>
     Distribuidora Funaz
   </footer>
-
   <script>
     const apiBase = 'https://distribuidorafunaz-a2o6.onrender.com/api';
-
     // Security check
     const user = localStorage.getItem('loggedUser');
     if (user !== 'admin') {
       window.location.href = 'index.html';
     }
-
     // States
     let estadosPedidos = JSON.parse(localStorage.getItem('estadosPedidos') || '{}');
     const usedButtons = JSON.parse(localStorage.getItem('usedButtons')) || {};
-
     function guardarEstados() {
       localStorage.setItem('estadosPedidos', JSON.stringify(estadosPedidos));
     }
-
     function saveUsedButtons() {
       localStorage.setItem('usedButtons', JSON.stringify(usedButtons));
     }
-
     function mostrarError(msg) {
       const el = document.getElementById('mensajeError');
       if (el) el.textContent = msg;
       else console.warn('mensajeError no encontrado:', msg);
     }
-
     // Toggle functions
     function toggleGuardado(usuario, idx, el) {
       const key = `${usuario}-${idx}`;
@@ -238,7 +276,6 @@
       estadosPedidos[key] = { ...estadosPedidos[key], guardado: nuevo };
       guardarEstados();
     }
-
     function toggleRecibido(usuario, idx, el) {
       const key = `${usuario}-${idx}`;
       const nuevo = !!el.checked;
@@ -249,7 +286,6 @@
       estadosPedidos[key] = { ...estadosPedidos[key], recibido: nuevo };
       guardarEstados();
     }
-
     // Load usuarios y pedidos (unchanged)
     async function cargarUsuarios() {
       try {
@@ -260,7 +296,6 @@
           return;
         }
         listaPedidos.innerHTML = '<p>Cargando pedidos...</p>';
-
         const res = await fetch(`${apiBase}/pedidos`, { cache: 'no-store' });
         if (!res.ok) {
           console.warn('Error al cargar pedidos:', res.status, await res.text().catch(() => ''));
@@ -270,38 +305,31 @@
         }
         const pedidosRaw = await res.json();
         console.log('Pedidos cargados:', pedidosRaw);
-
         const pedidosPorUsuario = {};
         pedidosRaw.forEach(p => {
           const user = p.user || 'Invitado';
           if (!pedidosPorUsuario[user]) pedidosPorUsuario[user] = [];
           pedidosPorUsuario[user].push(p);
         });
-
         listaPedidos.innerHTML = '';
         if (Object.keys(pedidosPorUsuario).length === 0) {
           listaPedidos.innerHTML = '<p>No hay pedidos registrados.</p>';
           return;
         }
-
         Object.entries(pedidosPorUsuario).forEach(([userName, userPedidos]) => {
           userPedidos.sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
-
           const userDiv = document.createElement('details');
           userDiv.className = 'user-details';
-
           let pedidosHTML = '<ul>';
           userPedidos.forEach((pedido, index) => {
             const items = Array.isArray(pedido.items) ? pedido.items : [];
             const pedidoId = pedido.id ?? `${userName}-${index}`;
             const key = `${userName}-${index}`;
             const estado = estadosPedidos[key] || {};
-
             const total = items.reduce((sum, p) => {
               const precio = p.precio_unitario ?? p.precio ?? 0;
               return sum + precio * (p.cantidad ?? 1);
             }, 0);
-
             pedidosHTML += `<li>
               <div class="pedido-line">
                 <strong>Pedido #${index + 1}</strong> (ID: ${pedidoId}) - <b>Total: $${total.toFixed(2)}</b>
@@ -328,12 +356,9 @@
             </li>`;
           });
           pedidosHTML += '</ul>';
-
           userDiv.innerHTML = `<summary>${userName}</summary>
             <div class='usuario-item'>${pedidosHTML}</div>`;
-
           listaPedidos.appendChild(userDiv);
-
           userDiv.querySelectorAll('.guardar-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
               const pedidoId = btn.dataset.pedidoid;
@@ -363,7 +388,6 @@
         if (listaPedidos) listaPedidos.innerHTML = '<p>Error al cargar pedidos.</p>';
       }
     }
-
     async function guardarPedido(pedidoId) {
       try {
         const r = await fetch(`${apiBase}/pedidos/${pedidoId}/pdf`, { cache: 'no-store' });
@@ -382,43 +406,37 @@
         throw err; // Re-throw to be caught by caller
       }
     }
-
     async function eliminarPedido(pedidoId, usuario, index) {
-  if (!confirm('¿Eliminar este pedido?')) return;
-  try {
-    // Obtener el estado del pedido
-    const key = `${usuario}-${index}`;
-    const estado = estadosPedidos[key] || {};
-    const esRecibido = estado.recibido || false;
-
-    // Enviar solicitud DELETE con información del estado recibido
-    const res = await fetch(`${apiBase}/eliminar-pedido/${encodeURIComponent(pedidoId)}`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ recibido: esRecibido }),
-      cache: 'no-store'
-    });
-
-    if (!res.ok) {
-      const txt = await res.text().catch(() => '');
-      console.warn('Error del servidor al eliminar pedido:', res.status, txt);
-      mostrarError(`No se pudo eliminar el pedido en ${apiBase}/eliminar-pedido/${pedidoId}: HTTP ${res.status}`);
-      return;
+      if (!confirm('¿Eliminar este pedido?')) return;
+      try {
+        // Obtener el estado del pedido
+        const key = `${usuario}-${index}`;
+        const estado = estadosPedidos[key] || {};
+        const esRecibido = estado.recibido || false;
+        // Enviar solicitud DELETE con información del estado recibido
+        const res = await fetch(`${apiBase}/eliminar-pedido/${encodeURIComponent(pedidoId)}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ recibido: esRecibido }),
+          cache: 'no-store'
+        });
+        if (!res.ok) {
+          const txt = await res.text().catch(() => '');
+          console.warn('Error del servidor al eliminar pedido:', res.status, txt);
+          mostrarError(`No se pudo eliminar el pedido en ${apiBase}/eliminar-pedido/${pedidoId}: HTTP ${res.status}`);
+          return;
+        }
+        // Eliminar el estado del pedido de estadosPedidos
+        delete estadosPedidos[key];
+        guardarEstados();
+        await cargarPedidos();
+        await cargarUsuarios();
+        alert('Pedido eliminado correctamente.');
+      } catch (err) {
+        console.error('Error al eliminar pedido:', err);
+        mostrarError(`Error de red al eliminar pedido: ${err.message}`);
+      }
     }
-
-    // Eliminar el estado del pedido de estadosPedidos
-    delete estadosPedidos[key];
-    guardarEstados();
-
-    await cargarPedidos();
-    await cargarUsuarios();
-    alert('Pedido eliminado correctamente.');
-  } catch (err) {
-    console.error('Error al eliminar pedido:', err);
-    mostrarError(`Error de red al eliminar pedido: ${err.message}`);
-  }
-}
-
     async function cargarPedidos() {
       try {
         const res = await fetch(`${apiBase}/pedidos`, { cache: 'no-store' });
@@ -435,7 +453,6 @@
         mostrarError(`Error de red al cargar pedidos: ${err.message}`);
       }
     }
-
     // Format money
     function formatMoney(n) {
       try {
@@ -444,8 +461,7 @@
         return '$' + Number(n).toFixed(2);
       }
     }
-
-    // Load Peticiones
+    // Modified Peticiones
     async function cargarPeticiones() {
       try {
         const listaPeticiones = document.getElementById('listaPeticiones');
@@ -455,7 +471,6 @@
           return;
         }
         listaPeticiones.innerHTML = '<p>Cargando peticiones...</p>';
-
         const res = await fetch(`${apiBase}/peticiones`, { cache: 'no-store' });
         if (!res.ok) {
           console.warn('Error al cargar peticiones:', res.status, await res.text().catch(() => ''));
@@ -465,35 +480,41 @@
         }
         const peticiones = await res.json();
         console.log('Peticiones cargadas:', peticiones);
-
         listaPeticiones.innerHTML = '';
         if (peticiones.length === 0) {
           listaPeticiones.innerHTML = '<p>No hay peticiones registradas.</p>';
           return;
         }
-
         peticiones.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
         peticiones.forEach(peticion => {
           const peticionDiv = document.createElement('details');
           peticionDiv.className = 'peticion-details';
           const isUsed = usedButtons[peticion.id];
+          // Store modified items in data attribute
+          peticionDiv.dataset.items = JSON.stringify(peticion.items);
           peticionDiv.innerHTML = `
             <summary>Petición ID: ${peticion.id} - Nombre: ${peticion.nombre} - Fecha: ${new Date(peticion.fecha).toLocaleDateString('es-AR')}</summary>
             <div class="peticion-item">
               <div class="peticion-info">
                 <strong>Teléfono:</strong> ${peticion.telefono}
-                <strong>Total:</strong> ${formatMoney(peticion.total)}
-                <div class="peticion-items">
-                  ${peticion.items.map(item => `
-                    <div class="item">
-                      ${item.nombre}: ${item.cantidad} x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}
+                <strong>Total:</strong> <span id="total-${peticion.id}">${formatMoney(peticion.total)}</span>
+                <div class="peticion-items" id="items-${peticion.id}">
+                  ${peticion.items.map((item, index) => `
+                    <div class="item" data-item-index="${index}">
+                      <span>${item.nombre}: <span id="cantidad-${peticion.id}-${index}">${item.cantidad}</span> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}</span>
+                      <div class="item-controls">
+                        <button class="increase" onclick="modificarCantidad('${peticion.id}', ${index}, 1)">+</button>
+                        <button class="decrease" onclick="modificarCantidad('${peticion.id}', ${index}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
+                        <button class="delete" onclick="eliminarItemPeticion('${peticion.id}', ${index})">Eliminar</button>
+                      </div>
                     </div>
                   `).join('')}
                 </div>
-                ${isUsed ? `<div class="status">Estado: ${isUsed === 'normal' ? 'Confirmado' : 'Confirmado +7%'}</div>` : `
+                ${isUsed ? `<div class="status">Estado: ${isUsed === 'normal' ? 'Confirmado' : 'Confirmado -3%'}</div>` : `
                   <div class="button-group">
                     <button class="confirmar" onclick="confirmarPeticion(${peticion.id}, false)">Confirmar Pedido</button>
-                    <button class="confirmar-plus" onclick="confirmarPeticion(${peticion.id}, true)">Confirmar Pedido +7%</button>
+                    <button class="confirmar-plus" onclick="confirmarPeticion(${peticion.id}, true)">Confirmar Pedido -3%</button>
+                    <button class="delete-peticion" onclick="eliminarPeticion(${peticion.id})">Eliminar Petición</button>
                   </div>
                 `}
               </div>
@@ -508,35 +529,103 @@
         if (listaPeticiones) listaPeticiones.innerHTML = '<p>Error al cargar peticiones.</p>';
       }
     }
-
-    // Confirm and Delete Peticion
+    // New function to modify item quantity
+    function modificarCantidad(peticionId, itemIndex, change) {
+      const peticionDiv = document.querySelector(`.peticion-details[data-items][id="items-${peticionId}"]`);
+      if (!peticionDiv) return;
+      let items = JSON.parse(peticionDiv.dataset.items);
+      const item = items[itemIndex];
+      if (!item) return;
+      item.cantidad = Math.max(1, (item.cantidad || 1) + change);
+      item.subtotal = item.cantidad * item.precio_unitario;
+      // Update dataset
+      peticionDiv.dataset.items = JSON.stringify(items);
+      // Update display
+      const cantidadSpan = document.getElementById(`cantidad-${peticionId}-${itemIndex}`);
+      if (cantidadSpan) cantidadSpan.textContent = item.cantidad;
+      const itemDiv = document.querySelector(`#items-${peticionId} .item[data-item-index="${itemIndex}"] span`);
+      if (itemDiv) {
+        itemDiv.innerHTML = `${item.nombre}: <span id="cantidad-${peticionId}-${itemIndex}">${item.cantidad}</span> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}`;
+      }
+      // Update decrease button state
+      const decreaseBtn = document.querySelector(`#items-${peticionId} .item[data-item-index="${itemIndex}"] .decrease`);
+      if (decreaseBtn) decreaseBtn.disabled = item.cantidad <= 1;
+      // Update total
+      const total = items.reduce((sum, it) => sum + it.subtotal, 0);
+      const totalSpan = document.getElementById(`total-${peticionId}`);
+      if (totalSpan) totalSpan.textContent = formatMoney(total);
+    }
+    // New function to delete item from petition
+    function eliminarItemPeticion(peticionId, itemIndex) {
+      if (!confirm('¿Eliminar este item de la petición?')) return;
+      const peticionDiv = document.querySelector(`.peticion-details[data-items][id="items-${peticionId}"]`);
+      if (!peticionDiv) return;
+      let items = JSON.parse(peticionDiv.dataset.items);
+      items = items.filter((_, idx) => idx !== itemIndex);
+      // Update dataset
+      peticionDiv.dataset.items = JSON.stringify(items);
+      // Re-render items
+      const itemsContainer = document.getElementById(`items-${peticionId}`);
+      if (itemsContainer) {
+        itemsContainer.innerHTML = items.map((item, index) => `
+          <div class="item" data-item-index="${index}">
+            <span>${item.nombre}: <span id="cantidad-${peticionId}-${index}">${item.cantidad}</span> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}</span>
+            <div class="item-controls">
+              <button class="increase" onclick="modificarCantidad('${peticionId}', ${index}, 1)">+</button>
+              <button class="decrease" onclick="modificarCantidad('${peticionId}', ${index}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
+              <button class="delete" onclick="eliminarItemPeticion('${peticionId}', ${index})">Eliminar</button>
+            </div>
+          </div>
+        `).join('');
+        // Update total
+        const total = items.reduce((sum, it) => sum + it.subtotal, 0);
+        const totalSpan = document.getElementById(`total-${peticionId}`);
+        if (totalSpan) totalSpan.textContent = formatMoney(total);
+      }
+    }
+    // New function to delete petition
+    async function eliminarPeticion(peticionId) {
+      if (!confirm('¿Eliminar esta petición?')) return;
+      try {
+        const deleteRes = await fetch(`${apiBase}/peticiones/${peticionId}`, {
+          method: 'DELETE',
+          cache: 'no-store'
+        });
+        if (!deleteRes.ok) {
+          const txt = await deleteRes.json().catch(() => ({ error: `HTTP ${deleteRes.status}` }));
+          throw new Error(txt.error || `HTTP ${deleteRes.status}`);
+        }
+        alert('Petición eliminada con éxito.');
+        await cargarPeticiones();
+      } catch (err) {
+        console.error('Error al eliminar petición:', err);
+        mostrarError(`No se pudo eliminar la petición ${peticionId}: ${err.message}`);
+      }
+    }
+    // Modified Confirm Peticion
     async function confirmarPeticion(peticionId, addSevenPercent) {
       try {
         if (usedButtons[peticionId]) {
           alert('Este pedido ya ha sido confirmado.');
           return;
         }
-
-        // Fetch peticion details
-        const res = await fetch(`${apiBase}/peticiones`, { cache: 'no-store' });
-        if (!res.ok) {
-          const txt = await res.text().catch(() => '');
-          throw new Error(`HTTP ${res.status}: ${txt}`);
+        // Get modified items from DOM
+        const peticionDiv = document.querySelector(`.peticion-details[data-items][id="items-${peticionId}"]`);
+        if (!peticionDiv) throw new Error('Petición no encontrada en el DOM');
+        const items = JSON.parse(peticionDiv.dataset.items);
+        if (!items || items.length === 0) {
+          alert('No hay items en la petición para confirmar.');
+          return;
         }
-        const peticiones = await res.json();
-        const peticion = peticiones.find(p => p.id == peticionId);
-        if (!peticion) throw new Error('Petición no encontrada');
-
-        // Prepare pedido items
-        const pedidoItems = peticion.items.map(item => ({
+        // Prepare pedido items with modified quantities
+        const pedidoItems = items.map(item => ({
           id: item.id,
           cantidad: item.cantidad,
-          precio: addSevenPercent ? item.precio_unitario * 1.0636 : item.precio_unitario
+          precio: addSevenPercent ? item.precio_unitario * 0.97 : item.precio_unitario
         }));
-
         // Send to guardar-pedidos
         const payload = {
-          user: peticion.nombre,
+          user: document.querySelector(`.peticion-details summary`).textContent.split(' - ')[1].split(' - ')[0],
           pedido: pedidoItems
         };
         console.log('Enviando a guardar-pedidos:', JSON.stringify(payload, null, 2));
@@ -550,7 +639,6 @@
           const txt = await saveRes.json().catch(() => ({ error: `HTTP ${saveRes.status}` }));
           throw new Error(txt.error || `HTTP ${saveRes.status}`);
         }
-
         // Delete from Peticiones
         console.log(`Eliminando petición ${peticionId}`);
         const deleteRes = await fetch(`${apiBase}/peticiones/${peticionId}`, {
@@ -561,38 +649,30 @@
           const txt = await deleteRes.json().catch(() => ({ error: `HTTP ${deleteRes.status}` }));
           throw new Error(txt.error || `HTTP ${deleteRes.status}`);
         }
-
-        // Mark as used (for safety)
+        // Mark as used
         usedButtons[peticionId] = addSevenPercent ? 'plus7' : 'normal';
         saveUsedButtons();
-        alert(`Petición ${addSevenPercent ? 'confirmada con +7%' : 'confirmada'} y eliminada con éxito.`);
+        alert(`Petición ${addSevenPercent ? 'confirmada con -3%' : 'confirmada'} y eliminada con éxito.`);
         await Promise.all([cargarPedidos(), cargarPeticiones(), cargarUsuarios()]);
       } catch (err) {
         console.error('Error en confirmarPeticion:', err);
         mostrarError(`No se pudo confirmar la petición ${peticionId}: ${err.message}`);
       }
     }
-
     // Initialize
     async function init() {
       try {
         console.log('Iniciando carga de datos...');
-        await cargarPedidos(); // First, load pedidos to populate localStorage
-        await cargarUsuarios(); // Then, load usuarios which depends on pedidos
-        await cargarPeticiones(); // Finally, load peticiones
+        await cargarPedidos();
+        await cargarUsuarios();
+        await cargarPeticiones();
         console.log('Inicialización completada');
       } catch (err) {
         console.error('Error en init:', err);
         mostrarError('Error al inicializar la página. Revisa la consola para más detalles.');
       }
     }
-
-    // Run init on load
     window.onload = init;
   </script>
 </body>
 </html>
-
-
-
-
