@@ -383,27 +383,41 @@
       }
     }
 
-    async function eliminarPedido(pedidoId) {
-      if (!confirm('¿Eliminar este pedido?')) return;
-      try {
-        const res = await fetch(`${apiBase}/eliminar-pedido/${encodeURIComponent(pedidoId)}`, {
-          method: 'DELETE',
-          cache: 'no-store'
-        });
-        if (!res.ok) {
-          const txt = await res.text().catch(() => '');
-          console.warn('Error del servidor al eliminar pedido:', res.status, txt);
-          mostrarError(`No se pudo eliminar el pedido en ${apiBase}/eliminar-pedido/${pedidoId}: HTTP ${res.status}`);
-          return;
-        }
-        await cargarPedidos();
-        await cargarUsuarios();
-        alert('Pedido eliminado correctamente.');
-      } catch (err) {
-        console.error('Error al eliminar pedido:', err);
-        mostrarError(`Error de red al eliminar pedido: ${err.message}`);
-      }
+    async function eliminarPedido(pedidoId, usuario, index) {
+  if (!confirm('¿Eliminar este pedido?')) return;
+  try {
+    // Obtener el estado del pedido
+    const key = `${usuario}-${index}`;
+    const estado = estadosPedidos[key] || {};
+    const esRecibido = estado.recibido || false;
+
+    // Enviar solicitud DELETE con información del estado recibido
+    const res = await fetch(`${apiBase}/eliminar-pedido/${encodeURIComponent(pedidoId)}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recibido: esRecibido }),
+      cache: 'no-store'
+    });
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      console.warn('Error del servidor al eliminar pedido:', res.status, txt);
+      mostrarError(`No se pudo eliminar el pedido en ${apiBase}/eliminar-pedido/${pedidoId}: HTTP ${res.status}`);
+      return;
     }
+
+    // Eliminar el estado del pedido de estadosPedidos
+    delete estadosPedidos[key];
+    guardarEstados();
+
+    await cargarPedidos();
+    await cargarUsuarios();
+    alert('Pedido eliminado correctamente.');
+  } catch (err) {
+    console.error('Error al eliminar pedido:', err);
+    mostrarError(`Error de red al eliminar pedido: ${err.message}`);
+  }
+}
 
     async function cargarPedidos() {
       try {
@@ -578,6 +592,7 @@
   </script>
 </body>
 </html>
+
 
 
 
