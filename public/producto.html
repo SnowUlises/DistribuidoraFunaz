@@ -67,163 +67,294 @@
   <div id="mensajeAgregado"></div>
 
   <script>
-    let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+    let carrito = [];
     let producto = null;
+    let cantidadInput = null;
+    let productos = [];
+
+    // Initialize carrito from localStorage
+    function initCarrito() {
+      try {
+        const storedCarrito = localStorage.getItem('carrito');
+        carrito = storedCarrito ? JSON.parse(storedCarrito) : [];
+        if (!Array.isArray(carrito)) {
+          console.warn('Carrito en localStorage no es un array, inicializando como vacío');
+          carrito = [];
+          localStorage.setItem('carrito', JSON.stringify(carrito));
+        }
+        console.log('Carrito inicializado:', carrito);
+      } catch (err) {
+        console.error('Error al parsear carrito de localStorage:', err);
+        carrito = [];
+        localStorage.setItem('carrito', JSON.stringify(carrito));
+      }
+    }
 
     function actualizarContadorCarrito() {
+      const listaCarrito = document.getElementById('listaCarrito');
+      const btnCarritoHeader = document.getElementById('btnCarritoHeader');
+      if (!listaCarrito || !btnCarritoHeader) {
+        console.error('Elementos listaCarrito o btnCarritoHeader no encontrados');
+        return;
+      }
       const total = carrito.reduce((acc, i) => acc + (i.cantidad || 0), 0);
-      document.getElementById('btnCarritoHeader').textContent = `Carrito (${total})`;
+      btnCarritoHeader.textContent = `Carrito (${total})`;
+      console.log('Contador de carrito actualizado:', total);
     }
 
-   let cantidadInput; // variable global
+    async function cargarProducto() {
+      const id = new URLSearchParams(location.search).get('id');
+      if (!id) {
+        mostrarError('Producto no encontrado.');
+        return;
+      }
 
-async function cargarProducto() {
-  const id = new URLSearchParams(location.search).get('id');
-  if (!id) return mostrarError('Producto no encontrado.');
+      try {
+        const res = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/productos', { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}: No se pudo cargar productos`);
+        productos = await res.json();
+        producto = productos.find(p => p.id == id);
+        if (!producto) throw new Error('Producto no encontrado');
 
-  try {
-    const res = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/productos', { cache: 'no-store' });
-    if (!res.ok) throw new Error('No se pudo cargar productos');
-    const productos = await res.json();
-    producto = productos.find(p => p.id == id);
-    if (!producto) throw new Error('Producto no encontrado');
+        console.log('Producto cargado:', producto);
 
-    const check = producto.stock > 0 ? '<span class="checkmark checked"></span>' : '<span class="checkmark"></span>';
+        const check = producto.stock > 0 ? '<span class="checkmark checked"></span>' : '<span class="checkmark"></span>';
+        const existingItem = carrito.find(p => p.id == id);
+        const initialCantidad = existingItem ? existingItem.cantidad : 1;
 
-    document.getElementById('detalle').innerHTML = `
-      <div class="imagen-container">
-        <img src="imagenes/${producto.id}.png" onerror="this.onerror=null; this.src='imagenes/placeholder.png'" alt="Producto" />
-      </div>
-      <div class="detalle">
-        <div>
-          <div class="nombre">${producto.nombre}</div>
-          <div class="precio">$${(producto.precio * 1.17).toFixed(2)}</div>
-          <div class="stock" id="stockDisplay">
-            ${check} Stock: ${producto.stock}
+        document.getElementById('detalle').innerHTML = `
+          <div class="imagen-container">
+            <img src="imagenes/${producto.id}.png" onerror="this.onerror=null; this.src='imagenes/placeholder.png'" alt="Producto" />
           </div>
-        </div>
-        <div class="acciones">
-          <input type="number" id="cantidad" value="1" min="1" />
-          <button class="agregar" id="btnAgregar" onclick="agregarAlCarrito()">Agregar al carrito</button>
-        </div>
-      </div>
-    `;
+          <div class="detalle">
+            <div>
+              <div class="nombre">${producto.nombre}</div>
+              <div class="precio">$${(producto.precio * 1.17).toFixed(2)}</div>
+              <div class="stock" id="stockDisplay">
+                ${check} Stock: ${producto.stock}
+              </div>
+            </div>
+            <div class="acciones">
+              <input type="number" id="cantidad" value="${initialCantidad}" min="1" />
+              <button class="agregar" id="btnAgregar" onclick="agregarAlCarrito()">Agregar al carrito</button>
+            </div>
+          </div>
+        `;
 
-    // guardamos input en global
-    cantidadInput = document.getElementById('cantidad');
-    cantidadInput.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      let valor = parseInt(cantidadInput.value);
-      if (e.deltaY < 0) valor += 1; // rueda arriba → suma
-      else valor = Math.max(1, valor - 1); // rueda abajo → no baja de 1
-      cantidadInput.value = valor;
-});
+        cantidadInput = document.getElementById('cantidad');
+        if (cantidadInput) {
+          cantidadInput.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            let valor = parseInt(cantidadInput.value) || 1;
+            if (e.deltaY < 0) valor += 1; // rueda arriba → suma
+            else valor = Math.max(1, valor - 1); // rueda abajo → no baja de 1
+            cantidadInput.value = valor;
+          });
+          cantidadInput.addEventListener('input', () => {
+            if (parseInt(cantidadInput.value) < 1) cantidadInput.value = 1;
+          });
+        } else {
+          console.error('Elemento cantidad no encontrado después de cargar producto');
+        }
 
-    actualizarContadorCarrito();
-  } catch (err) {
-    console.error(err);
-    mostrarError('Error cargando producto.');
-  }
-}
+        actualizarContadorCarrito();
+        actualizarCarrito();
+      } catch (err) {
+        console.error('Error en cargarProducto:', err);
+        mostrarError(`Error cargando producto: ${err.message}`);
+      }
+    }
 
     function mostrarError(msg) {
-      document.getElementById('detalle').innerHTML = `<p style="color:red;font-weight:bold;">${msg}</p>`;
+      const detalle = document.getElementById('detalle');
+      if (detalle) {
+        detalle.innerHTML = `<p style="color:red;font-weight:bold;">${msg}</p>`;
+      } else {
+        console.error('Elemento detalle no encontrado para mostrar error:', msg);
+      }
     }
 
+    function agregarAlCarrito() {
+      if (!producto || !cantidadInput) {
+        console.error('Producto o cantidadInput no definidos');
+        mostrarError('Error: Producto no cargado o input no disponible');
+        return;
+      }
 
+      let cantidad = parseInt(cantidadInput.value);
+      if (isNaN(cantidad) || cantidad < 1) {
+        console.warn('Cantidad inválida:', cantidadInput.value);
+        cantidadInput.value = 1;
+        return;
+      }
 
-function agregarAlCarrito() {
-  if (!cantidadInput) return; 
-  let cantidad = parseInt(cantidadInput.value);
-  if (isNaN(cantidad) || cantidad < 1) return; // cantidad siempre >=1
+      const existente = carrito.find(p => p.id === producto.id);
+      const cantidadAnterior = existente ? existente.cantidad : 0;
+      const diferencia = cantidad - cantidadAnterior;
 
-  const existente = carrito.find(p => p.id === producto.id);
-  if (existente) existente.cantidad += cantidad;
-  else carrito.push({ id: producto.id, nombre: producto.nombre, precio: producto.precio, cantidad });
+      if (existente) {
+        existente.cantidad = cantidad;
+      } else {
+        carrito.push({ id: producto.id, nombre: producto.nombre, precio: producto.precio, cantidad });
+      }
 
-  // Stock puede ser negativo
-  producto.stock -= cantidad; 
-  updateStockDisplay();
+      producto.stock -= diferencia; // Adjust stock based on difference
+      if (producto.stock < 0) {
+        console.warn(`Stock negativo para ${producto.nombre}: ${producto.stock}`);
+      }
+      updateStockDisplay();
 
-  localStorage.setItem('carrito', JSON.stringify(carrito));
-  actualizarCarrito();
-  actualizarContadorCarrito();
-  mostrarMensaje(producto.nombre, cantidad);
-}
+      try {
+        localStorage.setItem('carrito', JSON.stringify(carrito));
+        console.log('Carrito guardado en localStorage:', carrito);
+      } catch (err) {
+        console.error('Error al guardar carrito en localStorage:', err);
+      }
 
+      actualizarCarrito();
+      actualizarContadorCarrito();
+      mostrarMensaje(producto.nombre, cantidad);
+    }
 
     function updateStockDisplay() {
-  const stockEl = document.getElementById('stockDisplay');
-  const check = producto.stock > 0 ? '<span class="checkmark checked"></span>' : '<span class="checkmark"></span>';
-  stockEl.innerHTML = `${check} Stock: ${producto.stock}`;
-}
+      const stockEl = document.getElementById('stockDisplay');
+      if (stockEl && producto) {
+        const check = producto.stock > 0 ? '<span class="checkmark checked"></span>' : '<span class="checkmark"></span>';
+        stockEl.innerHTML = `${check} Stock: ${producto.stock}`;
+      } else {
+        console.warn('stockDisplay o producto no disponibles para actualizar');
+      }
+    }
 
     function mostrarMensaje(nombre, cantidad) {
       const msg = document.getElementById('mensajeAgregado');
-      msg.innerHTML = `Se agregó:<br><span class="producto-nombre">${nombre} x${cantidad}</span>`;
-      msg.style.display = 'block';
-      clearTimeout(msg.timeoutId);
-      msg.timeoutId = setTimeout(() => msg.style.display = 'none', 2000);
+      if (msg) {
+        msg.innerHTML = `Se agregó:<br><span class="producto-nombre">${nombre} x${cantidad}</span>`;
+        msg.style.display = 'block';
+        clearTimeout(msg.timeoutId);
+        msg.timeoutId = setTimeout(() => msg.style.display = 'none', 2000);
+      } else {
+        console.warn('mensajeAgregado no encontrado');
+      }
     }
 
     function toggleCarrito() {
-      const c = document.getElementById('carritoDesplegable');
-      c.style.display = c.style.display === 'block' ? 'none' : 'block';
-      if (c.style.display === 'block') actualizarCarrito();
+      const carritoDesplegable = document.getElementById('carritoDesplegable');
+      if (carritoDesplegable) {
+        carritoDesplegable.style.display = carritoDesplegable.style.display === 'block' ? 'none' : 'block';
+        if (carritoDesplegable.style.display === 'block') {
+          actualizarCarrito();
+        }
+      } else {
+        console.error('carritoDesplegable no encontrado');
+      }
     }
 
     function actualizarCarrito() {
       const lista = document.getElementById('listaCarrito');
+      if (!lista) {
+        console.error('listaCarrito no encontrado');
+        return;
+      }
       lista.innerHTML = '';
-      carrito = JSON.parse(localStorage.getItem('carrito')) || [];
-      if (carrito.length === 0) return lista.innerHTML = '<p>Carrito vacío.</p>';
 
-      carrito.forEach((item, idx) => {
+      if (carrito.length === 0) {
+        lista.innerHTML = '<p>Carrito vacío.</p>';
+        return;
+      }
+
+      carrito.forEach(item => {
+        const prod = productos.find(p => p.id === item.id) || item;
         const div = document.createElement('div');
         div.className = 'item-carrito';
-        div.innerHTML = `<span>${item.nombre}</span><span class="cantidad">x${item.cantidad}</span><button onclick="removerDelCarrito(${idx})">X</button>`;
+        div.innerHTML = `
+          <span>${prod.nombre} x${item.cantidad}</span>
+          <button onclick="removerDelCarrito(${item.id})">X</button>
+        `;
         lista.appendChild(div);
       });
+      console.log('Carrito actualizado:', carrito);
     }
 
-    function removerDelCarrito(index) {
-      carrito.splice(index, 1);
-      localStorage.setItem('carrito', JSON.stringify(carrito));
+    function removerDelCarrito(id) {
+      const itemIndex = carrito.findIndex(i => i.id === id);
+      if (itemIndex < 0) {
+        console.warn('Item no encontrado en carrito:', id);
+        return;
+      }
+
+      const item = carrito[itemIndex];
+      if (producto && item.id === producto.id) {
+        producto.stock += item.cantidad; // Restore stock
+        updateStockDisplay();
+      }
+
+      carrito.splice(itemIndex, 1);
+      try {
+        localStorage.setItem('carrito', JSON.stringify(carrito));
+        console.log('Item removido, carrito actualizado:', carrito);
+      } catch (err) {
+        console.error('Error al guardar carrito tras remover:', err);
+      }
+
       actualizarCarrito();
       actualizarContadorCarrito();
     }
 
-    function verCarrito() { location.href = 'carrito.html'; }
+    function verCarrito() {
+      location.href = 'carrito.html';
+    }
 
     function vaciarCarrito() {
-      if (!confirm('Vaciar todo el carrito?')) return;
+      if (!confirm('¿Vaciar todo el carrito?')) return;
+      if (producto) {
+        carrito.forEach(item => {
+          if (item.id === producto.id) {
+            producto.stock += item.cantidad; // Restore stock
+          }
+        });
+        updateStockDisplay();
+      }
       carrito = [];
-      localStorage.setItem('carrito', JSON.stringify(carrito));
+      try {
+        localStorage.setItem('carrito', JSON.stringify(carrito));
+        console.log('Carrito vaciado');
+      } catch (err) {
+        console.error('Error al vaciar carrito en localStorage:', err);
+      }
       actualizarCarrito();
       actualizarContadorCarrito();
     }
 
+    // Handle cross-tab updates
     window.addEventListener('storage', (e) => {
       if (e.key === 'carrito') {
-        carrito = JSON.parse(e.newValue) || [];
-        actualizarCarrito();
-        actualizarContadorCarrito();
+        try {
+          carrito = JSON.parse(e.newValue) || [];
+          console.log('Carrito actualizado desde storage event:', carrito);
+          actualizarCarrito();
+          actualizarContadorCarrito();
+          // Update input field if product is loaded
+          if (producto && cantidadInput) {
+            const existingItem = carrito.find(p => p.id === producto.id);
+            cantidadInput.value = existingItem ? existingItem.cantidad : 1;
+          }
+        } catch (err) {
+          console.error('Error al parsear carrito desde storage event:', err);
+          carrito = [];
+          localStorage.setItem('carrito', JSON.stringify(carrito));
+        }
       }
     });
 
-    actualizarCarrito();
-    actualizarContadorCarrito();
-    cargarProducto();
+    // Initialize on DOM load
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM cargado, inicializando carrito y producto');
+      initCarrito();
+      actualizarCarrito();
+      actualizarContadorCarrito();
+      cargarProducto();
+    });
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
