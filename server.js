@@ -18,6 +18,24 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY
 const PDF_PATH = path.join(process.cwd(), 'public', 'pedidos-pdf');
 if (!fs.existsSync(PDF_PATH)) fs.mkdirSync(PDF_PATH, { recursive: true });
 
+app.delete('/api/peticiones/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { error } = await supabase
+      .from('Peticiones')
+      .delete()
+      .eq('id', id);
+    if (error) {
+      console.error('❌ Supabase delete error:', error);
+      return res.status(500).json({ error: `Error al eliminar la petición: ${error.message}` });
+    }
+    res.json({ ok: true, mensaje: 'Petición eliminada' });
+  } catch (err) {
+    console.error('❌ Exception en DELETE /api/peticiones:', err);
+    res.status(500).json({ error: err.message || 'Error interno del servidor' });
+  }
+});
+
 /* -----------------------------
  📦 LISTAR PRODUCTOS
 ----------------------------- */
@@ -435,6 +453,7 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
