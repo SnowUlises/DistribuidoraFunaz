@@ -202,75 +202,102 @@ app.post('/api/guardar-pedidos', async (req, res) => {
 });
 
 app.post('/api/Enviar-Peticion', async (req, res) => {
-  try {
-    const { nombre, telefono, items: pedidoItems, total: providedTotal } = req.body;
+    try {
+        console.log('Received payload:', JSON.stringify(req.body, null, 2)); // Log payload for debugging
+        const { nombre, telefono, items: pedidoItems, total: providedTotal } = req.body;
 
-    if (!nombre || !telefono || !Array.isArray(pedidoItems) || pedidoItems.length === 0)
-      return res.status(400).json({ error: 'Petición inválida' });
+        // Validate input
+        if (!nombre || !telefono || !Array.isArray(pedidoItems) || pedidoItems.length === 0) {
+            return res.status(400).json({ error: 'Petición inválida: nombre, telefono, o items faltantes' });
+        }
 
-    let total = 0;
-    const processedItems = [];
+        // Convert telefono to integer
+        const telefonoNum = parseInt(telefono.replace(/\D/g, '')); // Remove non-digits
+        if (isNaN(telefonoNum)) {
+            return res.status(400).json({ error: 'Número de teléfono inválido' });
+        }
 
-    for (const it of pedidoItems) {
-      const prodId = it.id;
-      const { data: prod, error: prodError } = await supabase
-        .from('productos')
-        .select('*')
-        .eq('id', prodId)
-        .single();
+        let total = 0;
+        const processedItems = [];
 
-      if (prodError) {
-        console.warn('⚠️ Producto no encontrado:', prodError);
-        continue;
-      }
-      if (!prod) continue;
+        // Process each item
+        for (const it of pedidoItems) {
+            const prodId = it.id;
+            if (!prodId) {
+                console.warn(`⚠️ Item sin ID: ${JSON.stringify(it)}`);
+                continue;
+            }
 
-      const cantidadFinal = Number(it.cantidad) || 0;
+            // Fetch product
+            const { data: prod, error: prodError } = await supabase
+                .from('productos')
+                .select('*')
+                .eq('id', prodId)
+                .single();
 
-      const precioUnitario = Number(it.precio ?? it.precio_unitario ?? prod.precio) || 0;
-      const subtotal = cantidadFinal * precioUnitario;
-      total += subtotal;
+            if (prodError || !prod) {
+                console.warn(`⚠️ Producto no encontrado para ID ${prodId}:`, prodError?.message || 'No product');
+                continue;
+            }
 
-      processedItems.push({
-        id: prodId,
-        nombre: prod.nombre,
-        cantidad: cantidadFinal,
-        precio_unitario: precioUnitario,
-        subtotal
-      });
+            const cantidadFinal = Number(it.cantidad) || 0;
+            if (cantidadFinal <= 0) {
+                console.warn(`⚠️ Cantidad inválida para producto ${prodId}: ${it.cantidad}`);
+                continue;
+            }
+
+            const precioUnitario = Number(it.precio ?? prod.precio) || 0;
+            const subtotal = cantidadFinal * precioUnitario;
+            total += subtotal;
+
+            processedItems.push({
+                id: prodId,
+                nombre: prod.nombre,
+                cantidad: cantidadFinal,
+                precio_unitario: precioUnitario,
+                subtotal
+            });
+        }
+
+        if (processedItems.length === 0) {
+            return res.status(400).json({ error: 'No hay items válidos para la petición' });
+        }
+
+        // Round total to integer for int8 column
+        const totalInt = Math.round(total);
+
+        // Insert into Peticiones table
+        const payload = {
+            nombre,
+            telefono: telefonoNum,
+            items: processedItems,
+            total: totalInt,
+            fecha: new Date().toISOString()
+        };
+        console.log('💾 Guardando petición:', payload);
+
+        const { data, error } = await supabase
+            .from('Peticiones')
+            .insert([payload])
+            .select()
+            .single();
+
+        if (error) {
+            console.error('❌ Supabase insert error:', error);
+            return res.status(500).json({ error: `Error al guardar la petición: ${error.message}` });
+        }
+
+        const returnedId = data?.id;
+        res.json({
+            ok: true,
+            mensaje: 'Petición guardada',
+            id: returnedId
+        });
+    } catch (err) {
+        console.error('❌ Exception en Enviar-Peticion:', err);
+        res.status(500).json({ error: err.message || 'Error interno del servidor' });
     }
-
-    if (processedItems.length === 0)
-      return res.status(400).json({ error: 'No hay items válidos para la petición' });
-
-    const payload = { nombre, telefono, items: processedItems, total };
-
-    console.log('💾 Guardando petición:', payload);
-
-    const { data, error } = await supabase
-      .from('Peticiones')
-      .insert([payload])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('❌ Supabase insert error:', error);
-      return res.status(500).json({ error });
-    }
-
-    const returnedId = data?.id;
-
-    res.json({
-      ok: true,
-      mensaje: 'Petición guardada',
-      id: returnedId
-    });
-  } catch (err) {
-    console.error('❌ Exception en Enviar-Peticion:', err);
-    res.status(500).json({ error: err.message || err });
-  }
 });
-
 
 
 async function generarPDF(pedido) {
@@ -408,6 +435,7 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
