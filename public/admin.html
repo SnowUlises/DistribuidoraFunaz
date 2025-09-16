@@ -253,7 +253,7 @@
     }
     // States
     let estadosPedidos = JSON.parse(localStorage.getItem('estadosPedidos') || '{}');
-    const usedButtons = JSON.parse(localStorage.getItem('usedButtons') || {});
+    const usedButtons = JSON.parse(localStorage.getItem('usedButtons') || '{}');
     function guardarEstados() {
       localStorage.setItem('estadosPedidos', JSON.stringify(estadosPedidos));
     }
@@ -341,7 +341,7 @@
                 })).join('')}
               </ul>
               <div class="pedido-actions">
-                <button onclick="eliminarPedido('${pedidoId}')">Eliminar pedido</button>
+                <button onclick="eliminarPedido('${pedidoId}', '${userName}', ${index})">Eliminar pedido</button>
                 <button class="guardar-btn" data-pedidoid="${pedidoId}" data-username="${userName}" data-index="${index}">
                   Guardar pedido
                 </button>
