@@ -258,744 +258,739 @@
     Distribuidora Funaz
   </footer>
   <script>
-    const apiBase = 'https://distribuidorafunaz-a2o6.onrender.com/api';
-    // Security check
-    const user = localStorage.getItem('loggedUser');
-    if (user !== 'admin') {
-      window.location.href = 'index.html';
-    }
-    // States
-    let estadosPedidos = JSON.parse(localStorage.getItem('estadosPedidos') || '{}');
-    const usedButtons = JSON.parse(localStorage.getItem('usedButtons') || '{}');
-    let productos = [];
-    function guardarEstados() {
-      localStorage.setItem('estadosPedidos', JSON.stringify(estadosPedidos));
-    }
-    function saveUsedButtons() {
-      localStorage.setItem('usedButtons', JSON.stringify(usedButtons));
-    }
-    function mostrarError(msg) {
-      const el = document.getElementById('mensajeError');
-      if (el) el.textContent = msg;
-      else console.warn('mensajeError no encontrado:', msg);
-    }
-    // Toggle functions
-    function toggleGuardado(usuario, idx, el) {
-      const key = `${usuario}-${idx}`;
-      const nuevo = !!el.checked;
-      const confirmado = confirm(nuevo
-        ? '¿Marcar pedido como guardado?'
-        : '¿Desmarcar pedido guardado?');
-      if (!confirmado) { el.checked = !nuevo; return; }
-      estadosPedidos[key] = { ...estadosPedidos[key], guardado: nuevo };
-      guardarEstados();
-    }
-    function toggleRecibido(usuario, idx, el) {
-      const key = `${usuario}-${idx}`;
-      const nuevo = !!el.checked;
-      const confirmado = confirm(nuevo
-        ? '¿Marcar pedido como recibido?'
-        : '¿Desmarcar pedido recibido?');
-      if (!confirmado) { el.checked = !nuevo; return; }
-      estadosPedidos[key] = { ...estadosPedidos[key], recibido: nuevo };
-      guardarEstados();
-    }
-    // Load usuarios y pedidos (unchanged)
-    async function cargarUsuarios() {
-  try {
-    const listaPedidos = document.getElementById('listaUsuarios');
-    if (!listaPedidos) {
-      console.error('Elemento listaUsuarios no encontrado en el DOM');
-      mostrarError('Error: listaUsuarios no encontrado en el DOM');
-      return;
-    }
-    listaPedidos.innerHTML = '<p>Cargando pedidos...</p>';
-    const res = await fetch(`${apiBase}/pedidos`, { cache: 'no-store' });
-    if (!res.ok) {
-      console.warn('Error al cargar pedidos:', res.status, await res.text().catch(() => ''));
-      mostrarError(`Error al cargar pedidos de ${apiBase}/pedidos: HTTP ${res.status}`);
-      listaPedidos.innerHTML = '<p>No se pudieron cargar los pedidos.</p>';
-      return;
-    }
-    const pedidosRaw = await res.json();
-    console.log('Pedidos cargados:', pedidosRaw);
-    const pedidosPorUsuario = {};
-    pedidosRaw.forEach(p => {
-      const user = p.user || 'Invitado';
-      if (!pedidosPorUsuario[user]) pedidosPorUsuario[user] = [];
-      pedidosPorUsuario[user].push(p);
-    });
-    listaPedidos.innerHTML = '';
-    if (Object.keys(pedidosPorUsuario).length === 0) {
-      listaPedidos.innerHTML = '<p>No hay pedidos registrados.</p>';
-      return;
-    }
-    Object.entries(pedidosPorUsuario).forEach(([userName, userPedidos]) => {
-      userPedidos.sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
-      const userDiv = document.createElement('details');
-      userDiv.className = 'user-details';
-      let pedidosHTML = '<ul>';
-      userPedidos.forEach((pedido, index) => {
-        const items = Array.isArray(pedido.items) ? pedido.items : [];
-        const pedidoId = pedido.id ?? `${userName}-${index}`;
-        const key = `${userName}-${index}`;
-        const estado = estadosPedidos[key] || {};
-        const total = items.reduce((sum, p) => {
-          const precio = p.precio_unitario ?? p.precio ?? 0;
-          return sum + precio * (p.cantidad ?? 1);
-        }, 0);
-        pedidosHTML += `
-          <li>
-            <div class="pedido-item" id="pedido-${pedidoId}" data-items="${JSON.stringify(items)}" data-original-items="${JSON.stringify(items)}">
-              <div class="pedido-line">
-                <strong>Pedido #${index + 1}</strong> (ID: ${pedidoId}) - <b>Total: <span id="total-${pedidoId}">${formatMoney(total)}</span></b>
-              </div>
-              <div class="peticion-items" id="items-${pedidoId}">
-                ${items.map((item, itemIndex) => {
-                  let stockWarning = '';
-                  const product = productos.find(p => p.id === item.id);
-                  if (product && item.cantidad > (product.stock || 0)) {
-                    stockWarning = '<span style="color: red;"> Falta stock</span>';
-                  }
-                  return `
+  const apiBase = 'https://distribuidorafunaz-a2o6.onrender.com/api';
+  // Security check
+  const user = localStorage.getItem('loggedUser');
+  if (user !== 'admin') {
+    window.location.href = 'index.html';
+  }
+  // States
+  let estadosPedidos = JSON.parse(localStorage.getItem('estadosPedidos') || '{}');
+  const usedButtons = JSON.parse(localStorage.getItem('usedButtons') || '{}');
+  let productos = [];
+  function guardarEstados() {
+    localStorage.setItem('estadosPedidos', JSON.stringify(estadosPedidos));
+  }
+  function saveUsedButtons() {
+    localStorage.setItem('usedButtons', JSON.stringify(usedButtons));
+  }
+  function mostrarError(msg) {
+    const el = document.getElementById('mensajeError');
+    if (el) el.textContent = msg;
+    else console.warn('mensajeError no encontrado:', msg);
+  }
+  function toggleGuardado(usuario, idx, el) {
+    const key = `${usuario}-${idx}`;
+    const nuevo = !!el.checked;
+    const confirmado = confirm(nuevo
+      ? '¿Marcar pedido como guardado?'
+      : '¿Desmarcar pedido guardado?');
+    if (!confirmado) { el.checked = !nuevo; return; }
+    estadosPedidos[key] = { ...estadosPedidos[key], guardado: nuevo };
+    guardarEstados();
+  }
+  function toggleRecibido(usuario, idx, el) {
+    const key = `${usuario}-${idx}`;
+    const nuevo = !!el.checked;
+    const confirmado = confirm(nuevo
+      ? '¿Marcar pedido como recibido?'
+      : '¿Desmarcar pedido recibido?');
+    if (!confirmado) { el.checked = !nuevo; return; }
+    estadosPedidos[key] = { ...estadosPedidos[key], recibido: nuevo };
+    guardarEstados();
+  }
+  async function cargarUsuarios() {
+    try {
+      const listaPedidos = document.getElementById('listaUsuarios');
+      if (!listaPedidos) {
+        console.error('Elemento listaUsuarios no encontrado en el DOM');
+        mostrarError('Error: listaUsuarios no encontrado en el DOM');
+        return;
+      }
+      listaPedidos.innerHTML = '<p>Cargando pedidos...</p>';
+      const res = await fetch(`${apiBase}/pedidos`, { cache: 'no-store' });
+      if (!res.ok) {
+        console.warn('Error al cargar pedidos:', res.status, await res.text().catch(() => ''));
+        mostrarError(`Error al cargar pedidos de ${apiBase}/pedidos: HTTP ${res.status}`);
+        listaPedidos.innerHTML = '<p>No se pudieron cargar los pedidos.</p>';
+        return;
+      }
+      const pedidosRaw = await res.json();
+      console.log('Pedidos API response:', JSON.stringify(pedidosRaw, null, 2));
+      const pedidosPorUsuario = {};
+      pedidosRaw.forEach(p => {
+        const user = p.user || 'Invitado';
+        if (!pedidosPorUsuario[user]) pedidosPorUsuario[user] = [];
+        // Parse items if it's a string
+        let items = Array.isArray(p.items) ? p.items : typeof p.items === 'string' ? JSON.parse(p.items || '[]') : [];
+        // Sanitize items
+        items = items.map(item => ({
+          id: item.id || 'unknown',
+          nombre: String(item.nombre || 'Sin nombre'),
+          cantidad: Number(item.cantidad) || 1,
+          precio_unitario: Number(item.precio_unitario || item.precio) || 0,
+          subtotal: Number(item.subtotal) || (Number(item.cantidad) * Number(item.precio_unitario || item.precio)) || 0
+        }));
+        pedidosPorUsuario[user].push({ ...p, items });
+      });
+      listaPedidos.innerHTML = '';
+      if (Object.keys(pedidosPorUsuario).length === 0) {
+        listaPedidos.innerHTML = '<p>No hay pedidos registrados.</p>';
+        return;
+      }
+      Object.entries(pedidosPorUsuario).forEach(([userName, userPedidos]) => {
+        userPedidos.sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
+        const userDiv = document.createElement('details');
+        userDiv.className = 'user-details';
+        let pedidosHTML = '<ul>';
+        userPedidos.forEach((pedido, index) => {
+          const items = pedido.items;
+          const pedidoId = pedido.id ?? `${userName}-${index}`;
+          const key = `${userName}-${index}`;
+          const estado = estadosPedidos[key] || {};
+          const total = items.reduce((sum, p) => sum + p.subtotal, 0);
+          pedidosHTML += `
+            <li>
+              <div class="pedido-item" id="pedido-${pedidoId}">
+                <div class="pedido-line">
+                  <strong>Pedido #${index + 1}</strong> (ID: ${pedidoId}) - <b>Total: <span id="total-${pedidoId}">${formatMoney(total)}</span></b>
+                </div>
+                <div class="peticion-items" id="items-${pedidoId}">
+                  ${items.map((item, itemIndex) => `
                     <div class="item" data-item-index="${itemIndex}">
-                      <span id="item-text-${pedidoId}-${itemIndex}">${item.nombre}: <span id="cantidad-${pedidoId}-${itemIndex}">${item.cantidad}</span> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}${stockWarning}</span>
+                      <span id="item-text-${pedidoId}-${itemIndex}">${item.nombre}: <span id="cantidad-${pedidoId}-${itemIndex}">${item.cantidad}</span> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}</span>
                       <div class="item-controls">
                         <button class="increase" onclick="modificarCantidadPedido('${pedidoId}', ${itemIndex}, 1)">+</button>
                         <button class="decrease" onclick="modificarCantidadPedido('${pedidoId}', ${itemIndex}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
                         <button class="delete" onclick="eliminarItemPedido('${pedidoId}', ${itemIndex})">Eliminar</button>
                       </div>
                     </div>
-                  `;
-                }).join('')}
+                  `).join('')}
+                </div>
+                <div class="pedido-actions">
+                  <button onclick="eliminarPedido('${pedidoId}', '${userName}', ${index})">Eliminar pedido</button>
+                  <button class="guardar-btn" data-pedidoid="${pedidoId}" data-username="${userName}" data-index="${index}">
+                    Guardar pedido
+                  </button>
+                  <button class="preview-pdf" onclick="previewPDFPedido('${pedidoId}')">Descargar PDF Preview</button>
+                  <button class="confirmar" onclick="guardarCambiosPedido('${pedidoId}')">Guardar Cambios</button>
+                  <span class="guardar-status" id="guardar-status-${pedidoId}" aria-hidden="true">
+                    ${estado.guardado ? '✅ Guardado' : ''}
+                  </span>
+                </div>
+                <div class='status-container'>
+                  <label><input type='checkbox' ${estado.guardado ? 'checked' : ''} onchange="toggleGuardado('${userName}',${index}, this)"> Guardado</label>
+                  <label><input type='checkbox' ${estado.recibido ? 'checked' : ''} onchange="toggleRecibido('${userName}',${index}, this)"> Recibido</label>
+                </div>
               </div>
-              <div class="pedido-actions">
-                <button onclick="eliminarPedido('${pedidoId}', '${userName}', ${index})">Eliminar pedido</button>
-                <button class="guardar-btn" data-pedidoid="${pedidoId}" data-username="${userName}" data-index="${index}">
-                  Guardar pedido
-                </button>
-                <button class="preview-pdf" onclick="previewPDFPedido('${pedidoId}')">Descargar PDF Preview</button>
-                <button class="confirmar" onclick="guardarCambiosPedido('${pedidoId}')">Guardar Cambios</button>
-                <span class="guardar-status" id="guardar-status-${pedidoId}" aria-hidden="true">
-                  ${estado.guardado ? '✅ Guardado' : ''}
-                </span>
-              </div>
-              <div class='status-container'>
-                <label><input type='checkbox' ${estado.guardado ? 'checked' : ''} onchange="toggleGuardado('${userName}',${index}, this)"> Guardado</label>
-                <label><input type='checkbox' ${estado.recibido ? 'checked' : ''} onchange="toggleRecibido('${userName}',${index}, this)"> Recibido</label>
-              </div>
-            </div>
-          </li>`;
-      });
-      pedidosHTML += '</ul>';
-      userDiv.innerHTML = `<summary>${userName}</summary>
-        <div class='usuario-item'>${pedidosHTML}</div>`;
-      listaPedidos.appendChild(userDiv);
-      userDiv.querySelectorAll('.guardar-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const pedidoId = btn.dataset.pedidoid;
-          const username = btn.dataset.username;
-          const idx = Number(btn.dataset.index);
-          const statusSpan = document.getElementById(`guardar-status-${pedidoId}`);
-          if (statusSpan) statusSpan.textContent = '⏳ Guardando...';
-          try {
-            await guardarPedido(pedidoId);
-            if (statusSpan) statusSpan.textContent = '✅ Guardado';
-            const key = `${username}-${idx}`;
-            estadosPedidos[key] = estadosPedidos[key] || {};
-            estadosPedidos[key].guardado = true;
-            guardarEstados();
-          } catch (err) {
-            if (statusSpan) statusSpan.textContent = '❌ Error';
-            console.error('Error al guardar pedido:', err);
-            mostrarError(`Error al guardar pedido ${pedidoId}: ${err.message}`);
+            </li>`;
+        });
+        pedidosHTML += '</ul>';
+        userDiv.innerHTML = `<summary>${userName}</summary>
+          <div class='usuario-item'>${pedidosHTML}</div>`;
+        listaPedidos.appendChild(userDiv);
+        // Set dataset.items programmatically
+        userPedidos.forEach((pedido, index) => {
+          const pedidoId = pedido.id ?? `${userName}-${index}`;
+          const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
+          if (pedidoDiv) {
+            pedidoDiv.dataset.items = JSON.stringify(pedido.items);
+            pedidoDiv.dataset.originalItems = JSON.stringify(pedido.items);
           }
         });
+        userDiv.querySelectorAll('.guardar-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const pedidoId = btn.dataset.pedidoid;
+            const username = btn.dataset.username;
+            const idx = Number(btn.dataset.index);
+            const statusSpan = document.getElementById(`guardar-status-${pedidoId}`);
+            if (statusSpan) statusSpan.textContent = '⏳ Guardando...';
+            try {
+              await guardarPedido(pedidoId);
+              if (statusSpan) statusSpan.textContent = '✅ Guardado';
+              const key = `${username}-${idx}`;
+              estadosPedidos[key] = estadosPedidos[key] || {};
+              estadosPedidos[key].guardado = true;
+              guardarEstados();
+            } catch (err) {
+              if (statusSpan) statusSpan.textContent = '❌ Error';
+              console.error('Error al guardar pedido:', err);
+              mostrarError(`Error al guardar pedido ${pedidoId}: ${err.message}`);
+            }
+          });
+        });
       });
-    });
-  } catch (err) {
-    console.error('Error en cargarUsuarios:', err);
-    mostrarError('Error inesperado al cargar usuarios y pedidos.');
-    const listaPedidos = document.getElementById('listaUsuarios');
-    if (listaPedidos) listaPedidos.innerHTML = '<p>Error al cargar pedidos.</p>';
+    } catch (err) {
+      console.error('Error en cargarUsuarios:', err);
+      mostrarError('Error inesperado al cargar usuarios y pedidos.');
+      const listaPedidos = document.getElementById('listaUsuarios');
+      if (listaPedidos) listaPedidos.innerHTML = '<p>Error al cargar pedidos.</p>';
+    }
   }
-}
-
-    function modificarCantidadPedido(pedidoId, itemIndex, change) {
-  console.log(`Modificando cantidad: pedidoId=${pedidoId}, itemIndex=${itemIndex}, change=${change}`);
-  const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-  if (!pedidoDiv) {
-    console.error(`Pedido ${pedidoId} no encontrado en el DOM`);
-    mostrarError(`Pedido ${pedidoId} no encontrado`);
-    return;
+  function modificarCantidadPedido(pedidoId, itemIndex, change) {
+    console.log(`Modificando cantidad: pedidoId=${pedidoId}, itemIndex=${itemIndex}, change=${change}`);
+    const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
+    if (!pedidoDiv) {
+      console.error(`Pedido ${pedidoId} no encontrado en el DOM`);
+      mostrarError(`Pedido ${pedidoId} no encontrado`);
+      return;
+    }
+    let items = JSON.parse(pedidoDiv.dataset.items || '[]');
+    if (!items[itemIndex]) {
+      console.error(`Item ${itemIndex} no encontrado en pedido ${pedidoId}`);
+      return;
+    }
+    items[itemIndex].cantidad = Math.max(1, (items[itemIndex].cantidad || 1) + change);
+    items[itemIndex].subtotal = items[itemIndex].cantidad * items[itemIndex].precio_unitario;
+    pedidoDiv.dataset.items = JSON.stringify(items);
+    const cantidadSpan = document.getElementById(`cantidad-${pedidoId}-${itemIndex}`);
+    const itemText = document.getElementById(`item-text-${pedidoId}-${itemIndex}`);
+    if (cantidadSpan && itemText) {
+      cantidadSpan.textContent = items[itemIndex].cantidad;
+      itemText.innerHTML = `${items[itemIndex].nombre}: <span id="cantidad-${pedidoId}-${itemIndex}">${items[itemIndex].cantidad}</span> x ${formatMoney(items[itemIndex].precio_unitario)} = ${formatMoney(items[itemIndex].subtotal)}`;
+    } else {
+      console.error(`Elementos cantidad-${pedidoId}-${itemIndex} o item-text-${pedidoId}-${itemIndex} no encontrados`);
+    }
+    const decreaseBtn = document.querySelector(`#items-${pedidoId} .item[data-item-index="${itemIndex}"] .decrease`);
+    if (decreaseBtn) {
+      decreaseBtn.disabled = items[itemIndex].cantidad <= 1;
+    }
+    const total = items.reduce((sum, it) => sum + it.subtotal, 0);
+    const totalSpan = document.getElementById(`total-${pedidoId}`);
+    if (totalSpan) {
+      totalSpan.textContent = formatMoney(total);
+    } else {
+      console.error(`Total span total-${pedidoId} no encontrado`);
+    }
   }
-  let items = JSON.parse(pedidoDiv.dataset.items || '[]');
-  if (!items[itemIndex]) {
-    console.error(`Item ${itemIndex} no encontrado en pedido ${pedidoId}`);
-    return;
-  }
-  items[itemIndex].cantidad = Math.max(1, (items[itemIndex].cantidad || 1) + change);
-  items[itemIndex].subtotal = items[itemIndex].cantidad * items[itemIndex].precio_unitario;
-  pedidoDiv.dataset.items = JSON.stringify(items);
-  const cantidadSpan = document.getElementById(`cantidad-${pedidoId}-${itemIndex}`);
-  const itemText = document.getElementById(`item-text-${pedidoId}-${itemIndex}`);
-  let stockWarning = '';
-  const product = productos.find(p => p.id === items[itemIndex].id);
-  if (product && items[itemIndex].cantidad > (product.stock || 0)) {
-    stockWarning = '<span style="color: red;"> Falta stock</span>';
-  }
-  if (cantidadSpan && itemText) {
-    cantidadSpan.textContent = items[itemIndex].cantidad;
-    itemText.innerHTML = `${items[itemIndex].nombre}: <span id="cantidad-${pedidoId}-${itemIndex}">${items[itemIndex].cantidad}</span> x ${formatMoney(items[itemIndex].precio_unitario)} = ${formatMoney(items[itemIndex].subtotal)}${stockWarning}`;
-  } else {
-    console.error(`Elementos cantidad-${pedidoId}-${itemIndex} o item-text-${pedidoId}-${itemIndex} no encontrados`);
-  }
-  const decreaseBtn = document.querySelector(`#items-${pedidoId} .item[data-item-index="${itemIndex}"] .decrease`);
-  if (decreaseBtn) {
-    decreaseBtn.disabled = items[itemIndex].cantidad <= 1;
-  }
-  const total = items.reduce((sum, it) => sum + it.subtotal, 0);
-  const totalSpan = document.getElementById(`total-${pedidoId}`);
-  if (totalSpan) {
-    totalSpan.textContent = formatMoney(total);
-  } else {
-    console.error(`Total span total-${pedidoId} no encontrado`);
-  }
-}
-
-function eliminarItemPedido(pedidoId, itemIndex) {
-  if (!confirm('¿Eliminar este item del pedido?')) return;
-  console.log(`Eliminando item: pedidoId=${pedidoId}, itemIndex=${itemIndex}`);
-  const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-  if (!pedidoDiv) {
-    console.error(`Pedido ${pedidoId} no encontrado en el DOM`);
-    mostrarError(`Pedido ${pedidoId} no encontrado`);
-    return;
-  }
-  let items = JSON.parse(pedidoDiv.dataset.items || '[]');
-  if (!items[itemIndex]) {
-    console.error(`Item ${itemIndex} no encontrado en pedido ${pedidoId}`);
-    return;
-  }
-  items = items.filter((_, idx) => idx !== itemIndex);
-  pedidoDiv.dataset.items = JSON.stringify(items);
-  const itemsContainer = document.getElementById(`items-${pedidoId}`);
-  if (itemsContainer) {
-    itemsContainer.innerHTML = items.length > 0 ? items.map((item, index) => {
-      let stockWarning = '';
-      const product = productos.find(p => p.id === item.id);
-      if (product && item.cantidad > (product.stock || 0)) {
-        stockWarning = '<span style="color: red;"> Falta stock</span>';
-      }
-      return `
+  function eliminarItemPedido(pedidoId, itemIndex) {
+    if (!confirm('¿Eliminar este item del pedido?')) return;
+    console.log(`Eliminando item: pedidoId=${pedidoId}, itemIndex=${itemIndex}`);
+    const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
+    if (!pedidoDiv) {
+      console.error(`Pedido ${pedidoId} no encontrado en el DOM`);
+      mostrarError(`Pedido ${pedidoId} no encontrado`);
+      return;
+    }
+    let items = JSON.parse(pedidoDiv.dataset.items || '[]');
+    if (!items[itemIndex]) {
+      console.error(`Item ${itemIndex} no encontrado en pedido ${pedidoId}`);
+      return;
+    }
+    items = items.filter((_, idx) => idx !== itemIndex);
+    pedidoDiv.dataset.items = JSON.stringify(items);
+    const itemsContainer = document.getElementById(`items-${pedidoId}`);
+    if (itemsContainer) {
+      itemsContainer.innerHTML = items.length > 0 ? items.map((item, index) => `
         <div class="item" data-item-index="${index}">
-          <span id="item-text-${pedidoId}-${index}">${item.nombre}: <span id="cantidad-${pedidoId}-${index}">${item.cantidad}</span> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}${stockWarning}</span>
+          <span id="item-text-${pedidoId}-${index}">${item.nombre}: <span id="cantidad-${pedidoId}-${index}">${item.cantidad}</span> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}</span>
           <div class="item-controls">
             <button class="increase" onclick="modificarCantidadPedido('${pedidoId}', ${index}, 1)">+</button>
             <button class="decrease" onclick="modificarCantidadPedido('${pedidoId}', ${index}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
             <button class="delete" onclick="eliminarItemPedido('${pedidoId}', ${index})">Eliminar</button>
           </div>
         </div>
-      `;
-    }).join('') : '<p>No hay items en este pedido.</p>';
+      `).join('') : '<p>No hay items en este pedido.</p>';
+      const total = items.reduce((sum, it) => sum + it.subtotal, 0);
+      const totalSpan = document.getElementById(`total-${pedidoId}`);
+      if (totalSpan) {
+        totalSpan.textContent = formatMoney(total);
+      }
+    } else {
+      console.error(`Items container items-${pedidoId} no encontrado`);
+    }
+  }
+  async function guardarCambiosPedido(pedidoId) {
+    if (!confirm('¿Guardar los cambios en este pedido?')) return;
+    console.log(`Guardando cambios para pedido ${pedidoId}`);
+    try {
+      const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
+      if (!pedidoDiv) {
+        throw new Error('Pedido no encontrado en el DOM');
+      }
+      const items = JSON.parse(pedidoDiv.dataset.items || '[]');
+      const originalItems = JSON.parse(pedidoDiv.dataset.originalItems || '[]');
+      if (!items || items.length === 0) {
+        alert('No hay items en el pedido para guardar.');
+        return;
+      }
+      const stockUpdates = [];
+      items.forEach(item => {
+        const originalItem = originalItems.find(oi => oi.id === item.id);
+        const originalCantidad = originalItem ? originalItem.cantidad : 0;
+        const cantidadDiferencia = item.cantidad - originalCantidad;
+        if (cantidadDiferencia > 0) {
+          stockUpdates.push({ id: item.id, cantidad: cantidadDiferencia });
+        }
+      });
+      const payload = {
+        items: items.map(item => ({
+          id: item.id,
+          nombre: item.nombre,
+          cantidad: item.cantidad,
+          precio_unitario: item.precio_unitario,
+          subtotal: item.cantidad * item.precio_unitario
+        })),
+        stockUpdates
+      };
+      console.log('💾 Enviando a actualizar-pedido:', JSON.stringify(payload, null, 2));
+      const res = await fetch(`${apiBase}/actualizar-pedido/${pedidoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        cache: 'no-store'
+      });
+      if (!res.ok) {
+        const txt = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+        throw new Error(txt.error || `HTTP ${res.status}`);
+      }
+      pedidoDiv.dataset.originalItems = JSON.stringify(items);
+      alert('Cambios guardados con éxito.');
+      await Promise.all([cargarPedidos(), cargarUsuarios()]);
+    } catch (err) {
+      console.error('Error al guardar cambios del pedido:', err);
+      mostrarError(`No se pudo guardar los cambios del pedido ${pedidoId}: ${err.message}`);
+    }
+  }
+  async function previewPDFPedido(pedidoId) {
+    try {
+      const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
+      if (!pedidoDiv) {
+        throw new Error('Pedido no encontrado en el DOM');
+      }
+      console.log('Raw dataset.items (pedido):', pedidoDiv.dataset.items);
+      let items;
+      try {
+        items = JSON.parse(pedidoDiv.dataset.items || '[]');
+      } catch (parseErr) {
+        console.error('Invalid JSON in dataset.items:', pedidoDiv.dataset.items, parseErr);
+        throw new Error('Formato de items inválido');
+      }
+      if (!Array.isArray(items) || items.length === 0) {
+        alert('No hay items en el pedido para previsualizar.');
+        return;
+      }
+      const userName = pedidoDiv.closest('.user-details').querySelector('summary').textContent;
+      const payload = {
+        user: userName,
+        items: items.map(item => ({
+          id: item.id || 'unknown',
+          nombre: String(item.nombre || 'Sin nombre'),
+          cantidad: Number(item.cantidad) || 1,
+          precio_unitario: Number(item.precio_unitario) || 0,
+          subtotal: Number(item.cantidad) * Number(item.precio_unitario) || 0
+        })),
+        total: items.reduce((sum, item) => sum + (Number(item.cantidad) * Number(item.precio_unitario)), 0),
+        fecha: new Date().toISOString()
+      };
+      console.log('📄 Enviando a generar-pdf-peticion:', JSON.stringify(payload, null, 2));
+      const saveRes = await fetch(`${apiBase}/generar-pdf-peticion`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        cache: 'no-store'
+      });
+      if (!saveRes.ok) {
+        const txt = await saveRes.json().catch(() => ({ error: `HTTP ${saveRes.status}` }));
+        throw new Error(txt.error || `HTTP ${saveRes.status}`);
+      }
+      const data = await saveRes.json();
+      if (data.ok && data.pdf) {
+        window.open(data.pdf, '_blank');
+      } else {
+        throw new Error('No se pudo generar el PDF de preview');
+      }
+    } catch (err) {
+      console.error('Error en previewPDFPedido:', err);
+      mostrarError(`No se pudo generar el PDF de preview para el pedido ${pedidoId}: ${err.message}`);
+    }
+  }
+  async function guardarPedido(pedidoId) {
+    try {
+      const r = await fetch(`${apiBase}/pedidos/${pedidoId}/pdf`, { cache: 'no-store' });
+      if (!r.ok) {
+        const txt = await r.text().catch(() => '');
+        throw new Error(`Error del servidor: ${r.status} ${txt}`);
+      }
+      const data = await r.json();
+      if (data.ok && data.pdf) {
+        window.open(data.pdf, '_blank');
+      } else {
+        throw new Error('No se pudo generar el PDF');
+      }
+    } catch (err) {
+      console.error('No se pudo generar el PDF:', err);
+      throw err;
+    }
+  }
+  async function eliminarPedido(pedidoId, usuario, index) {
+    if (!confirm('¿Eliminar este pedido?')) return;
+    try {
+      const key = `${usuario}-${index}`;
+      const estado = estadosPedidos[key] || {};
+      const esRecibido = estado.recibido || false;
+      console.log(`Eliminando pedido ${pedidoId}, recibido: ${esRecibido}`);
+      const res = await fetch(`${apiBase}/eliminar-pedido/${encodeURIComponent(pedidoId)}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recibido: esRecibido }),
+        cache: 'no-store'
+      });
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '');
+        console.warn('Error del servidor al eliminar pedido:', res.status, txt);
+        mostrarError(`No se pudo eliminar el pedido en ${apiBase}/eliminar-pedido/${pedidoId}: HTTP ${res.status}`);
+        return;
+      }
+      delete estadosPedidos[key];
+      guardarEstados();
+      await cargarPedidos();
+      await cargarUsuarios();
+      alert('Pedido eliminado correctamente.');
+    } catch (err) {
+      console.error('Error al eliminar pedido:', err);
+      mostrarError(`Error de red al eliminar pedido: ${err.message}`);
+    }
+  }
+  async function cargarPedidos() {
+    try {
+      const res = await fetch(`${apiBase}/pedidos`, { cache: 'no-store' });
+      if (!res.ok) {
+        console.warn('No se pudieron cargar pedidos:', res.status, await res.text().catch(() => ''));
+        mostrarError(`Error al cargar pedidos de ${apiBase}/pedidos: HTTP ${res.status}`);
+        return;
+      }
+      const data = await res.json();
+      localStorage.setItem('pedidos', JSON.stringify(data));
+      console.log('Pedidos guardados en localStorage:', data);
+    } catch (err) {
+      console.error('Error cargando pedidos:', err);
+      mostrarError(`Error de red al cargar pedidos: ${err.message}`);
+    }
+  }
+  function formatMoney(n) {
+    try {
+      return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n);
+    } catch (e) {
+      return '$' + Number(n).toFixed(2);
+    }
+  }
+  async function cargarProductos() {
+    try {
+      const res = await fetch(`${apiBase}/productos`, { cache: 'no-store' });
+      if (!res.ok) {
+        throw new Error(`Error al cargar productos: HTTP ${res.status}`);
+      }
+      productos = await res.json();
+      console.log('Productos cargados:', productos);
+    } catch (err) {
+      console.error('Error en cargarProductos:', err);
+      mostrarError('Error al cargar productos para verificación de stock.');
+    }
+  }
+  async function cargarPeticiones() {
+    try {
+      const listaPeticiones = document.getElementById('listaPeticiones');
+      if (!listaPeticiones) {
+        console.error('Elemento listaPeticiones no encontrado en el DOM');
+        mostrarError('Error: listaPeticiones no encontrado en el DOM');
+        return;
+      }
+      listaPeticiones.innerHTML = '<p>Cargando peticiones...</p>';
+      const res = await fetch(`${apiBase}/peticiones`, { cache: 'no-store' });
+      if (!res.ok) {
+        console.warn('Error al cargar peticiones:', res.status, await res.text().catch(() => ''));
+        mostrarError(`Error al cargar peticiones de ${apiBase}/peticiones: HTTP ${res.status}`);
+        listaPeticiones.innerHTML = '<p>No se pudieron cargar las peticiones.</p>';
+        return;
+      }
+      const peticiones = await res.json();
+      console.log('Peticiones cargadas:', peticiones);
+      listaPeticiones.innerHTML = '';
+      if (peticiones.length === 0) {
+        listaPeticiones.innerHTML = '<p>No hay peticiones registradas.</p>';
+        return;
+      }
+      peticiones.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+      peticiones.forEach(peticion => {
+        const peticionDiv = document.createElement('details');
+        peticionDiv.className = 'peticion-details';
+        peticionDiv.id = `peticion-${peticion.id}`;
+        const isUsed = usedButtons[peticion.id];
+        peticionDiv.dataset.items = JSON.stringify(peticion.items);
+        peticionDiv.dataset.nombre = peticion.nombre;
+        peticionDiv.innerHTML = `
+          <summary>Petición ID: ${peticion.id} - Nombre: ${peticion.nombre} - Fecha: ${new Date(peticion.fecha).toLocaleDateString('es-AR')}</summary>
+          <div class="peticion-item">
+            <div class="peticion-info">
+              <strong>Teléfono:</strong> ${peticion.telefono}
+              <strong>Total:</strong> <span id="total-${peticion.id}">${formatMoney(peticion.total)}</span>
+              <div class="peticion-items" id="items-${peticion.id}">
+                ${peticion.items.map((item, index) => {
+                  let stockWarning = '';
+                  const product = productos.find(p => p.id === item.id);
+                  if (product && item.cantidad > (product.stock || 0)) {
+                    stockWarning = '<span style="color: red;"> Falta stock</span>';
+                  }
+                  return `
+                  <div class="item" data-item-index="${index}">
+                    <span id="item-text-${peticion.id}-${index}">${item.nombre}: <span id="cantidad-${peticion.id}-${index}">${item.cantidad}</span> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}${stockWarning}</span>
+                    <div class="item-controls">
+                      <button class="increase" onclick="modificarCantidad('${peticion.id}', ${index}, 1)">+</button>
+                      <button class="decrease" onclick="modificarCantidad('${peticion.id}', ${index}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
+                      <button class="delete" onclick="eliminarItemPeticion('${peticion.id}', ${index})">Eliminar</button>
+                    </div>
+                  </div>
+                `;
+                }).join('')}
+              </div>
+              ${isUsed ? `<div class="status">Estado: ${isUsed === 'normal' ? 'Confirmado' : 'Confirmado -3%'}</div>` : `
+                <div class="button-group">
+                  <button class="confirmar" onclick="confirmarPeticion(${peticion.id}, false)">Confirmar Pedido</button>
+                  <button class="confirmar-plus" onclick="confirmarPeticion(${peticion.id}, true)">Confirmar Pedido -3%</button>
+                  <button class="preview-pdf" onclick="previewPDF(${peticion.id})">Descargar PDF Preview</button>
+                  <button class="delete-peticion" onclick="eliminarPeticion(${peticion.id})">Eliminar Petición</button>
+                </div>
+              `}
+            </div>
+          </div>
+        `;
+        listaPeticiones.appendChild(peticionDiv);
+      });
+    } catch (err) {
+      console.error('Error en cargarPeticiones:', err);
+      mostrarError(`Error inesperado al cargar peticiones: ${err.message}`);
+      const listaPeticiones = document.getElementById('listaPeticiones');
+      if (listaPeticiones) listaPeticiones.innerHTML = '<p>Error al cargar peticiones.</p>';
+    }
+  }
+  function modificarCantidad(peticionId, itemIndex, change) {
+    console.log(`Modificando cantidad: peticionId=${peticionId}, itemIndex=${itemIndex}, change=${change}`);
+    const peticionDiv = document.getElementById(`peticion-${peticionId}`);
+    if (!peticionDiv) {
+      console.error(`Petición ${peticionId} no encontrada en el DOM`);
+      mostrarError(`Petición ${peticionId} no encontrada`);
+      return;
+    }
+    let items = JSON.parse(peticionDiv.dataset.items || '[]');
+    if (!items[itemIndex]) {
+      console.error(`Item ${itemIndex} no encontrado en petición ${peticionId}`);
+      return;
+    }
+    items[itemIndex].cantidad = Math.max(1, (items[itemIndex].cantidad || 1) + change);
+    items[itemIndex].subtotal = items[itemIndex].cantidad * items[itemIndex].precio_unitario;
+    peticionDiv.dataset.items = JSON.stringify(items);
+    const cantidadSpan = document.getElementById(`cantidad-${peticionId}-${itemIndex}`);
+    const itemText = document.getElementById(`item-text-${peticionId}-${itemIndex}`);
+    let stockWarning = '';
+    const product = productos.find(p => p.id === items[itemIndex].id);
+    if (product && items[itemIndex].cantidad > (product.stock || 0)) {
+      stockWarning = '<span style="color: red;"> Falta stock</span>';
+    }
+    if (cantidadSpan && itemText) {
+      cantidadSpan.textContent = items[itemIndex].cantidad;
+      itemText.innerHTML = `${items[itemIndex].nombre}: <span id="cantidad-${peticionId}-${itemIndex}">${items[itemIndex].cantidad}</span> x ${formatMoney(items[itemIndex].precio_unitario)} = ${formatMoney(items[itemIndex].subtotal)}${stockWarning}`;
+    } else {
+      console.error(`Elementos cantidad-${peticionId}-${itemIndex} o item-text-${peticionId}-${itemIndex} no encontrados`);
+    }
+    const decreaseBtn = document.querySelector(`#items-${peticionId} .item[data-item-index="${itemIndex}"] .decrease`);
+    if (decreaseBtn) {
+      decreaseBtn.disabled = items[itemIndex].cantidad <= 1;
+    }
     const total = items.reduce((sum, it) => sum + it.subtotal, 0);
-    const totalSpan = document.getElementById(`total-${pedidoId}`);
+    const totalSpan = document.getElementById(`total-${peticionId}`);
     if (totalSpan) {
       totalSpan.textContent = formatMoney(total);
-    }
-  } else {
-    console.error(`Items container items-${pedidoId} no encontrado`);
-  }
-}
-
-async function guardarCambiosPedido(pedidoId) {
-  if (!confirm('¿Guardar los cambios en este pedido?')) return;
-  console.log(`Guardando cambios para pedido ${pedidoId}`);
-  try {
-    const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-    if (!pedidoDiv) {
-      throw new Error('Pedido no encontrado en el DOM');
-    }
-    const items = JSON.parse(pedidoDiv.dataset.items || '[]');
-    const originalItems = JSON.parse(pedidoDiv.dataset.originalItems || '[]');
-    if (!items || items.length === 0) {
-      alert('No hay items en el pedido para guardar.');
-      return;
-    }
-    const stockUpdates = [];
-    items.forEach(item => {
-      const originalItem = originalItems.find(oi => oi.id === item.id);
-      const originalCantidad = originalItem ? originalItem.cantidad : 0;
-      const cantidadDiferencia = item.cantidad - originalCantidad;
-      if (cantidadDiferencia > 0) {
-        stockUpdates.push({ id: item.id, cantidad: cantidadDiferencia });
-      }
-    });
-    const payload = {
-      items: items.map(item => ({
-        id: item.id,
-        nombre: item.nombre,
-        cantidad: item.cantidad,
-        precio_unitario: item.precio_unitario,
-        subtotal: item.cantidad * item.precio_unitario
-      })),
-      stockUpdates
-    };
-    console.log('💾 Enviando a actualizar-pedido:', JSON.stringify(payload, null, 2));
-    const res = await fetch(`${apiBase}/actualizar-pedido/${pedidoId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      cache: 'no-store'
-    });
-    if (!res.ok) {
-      const txt = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-      throw new Error(txt.error || `HTTP ${res.status}`);
-    }
-    pedidoDiv.dataset.originalItems = JSON.stringify(items); // Actualizar originalItems
-    alert('Cambios guardados con éxito.');
-    await Promise.all([cargarPedidos(), cargarUsuarios()]);
-  } catch (err) {
-    console.error('Error al guardar cambios del pedido:', err);
-    mostrarError(`No se pudo guardar los cambios del pedido ${pedidoId}: ${err.message}`);
-  }
-}
-
-async function previewPDFPedido(pedidoId) {
-  try {
-    const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-    if (!pedidoDiv) {
-      throw new Error('Pedido no encontrado en el DOM');
-    }
-    console.log('Raw dataset.items (pedido):', pedidoDiv.dataset.items);
-    const items = JSON.parse(pedidoDiv.dataset.items || '[]')
-    if (!items || items.length === 0) {
-      alert('No hay items en el pedido para previsualizar.');
-      return;
-    }
-    const userName = pedidoDiv.closest('.user-details').querySelector('summary').textContent;
-    const payload = {
-      user: userName,
-      items: items.map(item => ({
-        id: item.id,
-        nombre: item.nombre,
-        cantidad: item.cantidad,
-        precio_unitario: item.precio_unitario,
-        subtotal: item.cantidad * item.precio_unitario
-      })),
-      total: items.reduce((sum, item) => sum + item.cantidad * item.precio_unitario, 0),
-      fecha: new Date().toISOString()
-    };
-    console.log('📄 Enviando a generar-pdf-peticion:', JSON.stringify(payload, null, 2));
-    const saveRes = await fetch(`${apiBase}/generar-pdf-peticion`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      cache: 'no-store'
-    });
-    if (!saveRes.ok) {
-      const txt = await saveRes.json().catch(() => ({ error: `HTTP ${saveRes.status}` }));
-      throw new Error(txt.error || `HTTP ${saveRes.status}`);
-    }
-    const data = await saveRes.json();
-    if (data.ok && data.pdf) {
-      window.open(data.pdf, '_blank');
     } else {
-      throw new Error('No se pudo generar el PDF de preview');
+      console.error(`Total span total-${peticionId} no encontrado`);
     }
-  } catch (err) {
-    console.error('Error en previewPDFPedido:', err);
-    mostrarError(`No se pudo generar el PDF de preview para el pedido ${pedidoId}: ${err.message}`);
   }
-}
-    
-    async function guardarPedido(pedidoId) {
-      try {
-        const r = await fetch(`${apiBase}/pedidos/${pedidoId}/pdf`, { cache: 'no-store' });
-        if (!r.ok) {
-          const txt = await r.text().catch(() => '');
-          throw new Error(`Error del servidor: ${r.status} ${txt}`);
-        }
-        const data = await r.json();
-        if (data.ok && data.pdf) {
-          window.open(data.pdf, '_blank');
-        } else {
-          throw new Error('No se pudo generar el PDF');
-        }
-      } catch (err) {
-        console.error('No se pudo generar el PDF:', err);
-        throw err;
-      }
-    }
-    async function eliminarPedido(pedidoId, usuario, index) {
-  if (!confirm('¿Eliminar este pedido?')) return;
-  try {
-    const key = `${usuario}-${index}`;
-    const estado = estadosPedidos[key] || {};
-    const esRecibido = estado.recibido || false;
-    console.log(`Eliminando pedido ${pedidoId}, recibido: ${esRecibido}`); // Log para depuración
-    const res = await fetch(`${apiBase}/eliminar-pedido/${encodeURIComponent(pedidoId)}`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ recibido: esRecibido }),
-      cache: 'no-store'
-    });
-    if (!res.ok) {
-      const txt = await res.text().catch(() => '');
-      console.warn('Error del servidor al eliminar pedido:', res.status, txt);
-      mostrarError(`No se pudo eliminar el pedido en ${apiBase}/eliminar-pedido/${pedidoId}: HTTP ${res.status}`);
+  function eliminarItemPeticion(peticionId, itemIndex) {
+    if (!confirm('¿Eliminar este item de la petición?')) return;
+    console.log(`Eliminando item: peticionId=${peticionId}, itemIndex=${itemIndex}`);
+    const peticionDiv = document.getElementById(`peticion-${peticionId}`);
+    if (!peticionDiv) {
+      console.error(`Petición ${peticionId} no encontrada en el DOM`);
+      mostrarError(`Petición ${peticionId} no encontrada`);
       return;
     }
-    delete estadosPedidos[key];
-    guardarEstados();
-    await cargarPedidos();
-    await cargarUsuarios();
-    alert('Pedido eliminado correctamente.');
-  } catch (err) {
-    console.error('Error al eliminar pedido:', err);
-    mostrarError(`Error de red al eliminar pedido: ${err.message}`);
-  }
-}
-    async function cargarPedidos() {
-      try {
-        const res = await fetch(`${apiBase}/pedidos`, { cache: 'no-store' });
-        if (!res.ok) {
-          console.warn('No se pudieron cargar pedidos:', res.status, await res.text().catch(() => ''));
-          mostrarError(`Error al cargar pedidos de ${apiBase}/pedidos: HTTP ${res.status}`);
-          return;
-        }
-        const data = await res.json();
-        localStorage.setItem('pedidos', JSON.stringify(data));
-        console.log('Pedidos guardados en localStorage:', data);
-      } catch (err) {
-        console.error('Error cargando pedidos:', err);
-        mostrarError(`Error de red al cargar pedidos: ${err.message}`);
-      }
+    let items = JSON.parse(peticionDiv.dataset.items || '[]');
+    if (!items[itemIndex]) {
+      console.error(`Item ${itemIndex} no encontrado en petición ${peticionId}`);
+      return;
     }
-    function formatMoney(n) {
-      try {
-        return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n);
-      } catch (e) {
-        return '$' + Number(n).toFixed(2);
-      }
-    }
-    async function cargarProductos() {
-      try {
-        const res = await fetch(`${apiBase}/productos`, { cache: 'no-store' });
-        if (!res.ok) {
-          throw new Error(`Error al cargar productos: HTTP ${res.status}`);
+    items = items.filter((_, idx) => idx !== itemIndex);
+    peticionDiv.dataset.items = JSON.stringify(items);
+    const itemsContainer = document.getElementById(`items-${peticionId}`);
+    if (itemsContainer) {
+      itemsContainer.innerHTML = items.length > 0 ? items.map((item, index) => {
+        let stockWarning = '';
+        const product = productos.find(p => p.id === item.id);
+        if (product && item.cantidad > (product.stock || 0)) {
+          stockWarning = '<span style="color: red;"> Falta stock</span>';
         }
-        productos = await res.json();
-        console.log('Productos cargados:', productos);
-      } catch (err) {
-        console.error('Error en cargarProductos:', err);
-        mostrarError('Error al cargar productos para verificación de stock.');
-      }
-    }
-    async function cargarPeticiones() {
-      try {
-        const listaPeticiones = document.getElementById('listaPeticiones');
-        if (!listaPeticiones) {
-          console.error('Elemento listaPeticiones no encontrado en el DOM');
-          mostrarError('Error: listaPeticiones no encontrado en el DOM');
-          return;
-        }
-        listaPeticiones.innerHTML = '<p>Cargando peticiones...</p>';
-        const res = await fetch(`${apiBase}/peticiones`, { cache: 'no-store' });
-        if (!res.ok) {
-          console.warn('Error al cargar peticiones:', res.status, await res.text().catch(() => ''));
-          mostrarError(`Error al cargar peticiones de ${apiBase}/peticiones: HTTP ${res.status}`);
-          listaPeticiones.innerHTML = '<p>No se pudieron cargar las peticiones.</p>';
-          return;
-        }
-        const peticiones = await res.json();
-        console.log('Peticiones cargadas:', peticiones);
-        listaPeticiones.innerHTML = '';
-        if (peticiones.length === 0) {
-          listaPeticiones.innerHTML = '<p>No hay peticiones registradas.</p>';
-          return;
-        }
-        peticiones.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-        peticiones.forEach(peticion => {
-          const peticionDiv = document.createElement('details');
-          peticionDiv.className = 'peticion-details';
-          peticionDiv.id = `peticion-${peticion.id}`;
-          const isUsed = usedButtons[peticion.id];
-          peticionDiv.dataset.items = JSON.stringify(peticion.items);
-          peticionDiv.dataset.nombre = peticion.nombre;
-          peticionDiv.innerHTML = `
-            <summary>Petición ID: ${peticion.id} - Nombre: ${peticion.nombre} - Fecha: ${new Date(peticion.fecha).toLocaleDateString('es-AR')}</summary>
-            <div class="peticion-item">
-              <div class="peticion-info">
-                <strong>Teléfono:</strong> ${peticion.telefono}
-                <strong>Total:</strong> <span id="total-${peticion.id}">${formatMoney(peticion.total)}</span>
-                <div class="peticion-items" id="items-${peticion.id}">
-                  ${peticion.items.map((item, index) => {
-                    let stockWarning = '';
-                    const product = productos.find(p => p.id === item.id);
-                    if (product && item.cantidad > (product.stock || 0)) {
-                      stockWarning = '<span style="color: red;"> Falta stock</span>';
-                    }
-                    return `
-                    <div class="item" data-item-index="${index}">
-                      <span id="item-text-${peticion.id}-${index}">${item.nombre}: <span id="cantidad-${peticion.id}-${index}">${item.cantidad}</span> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}${stockWarning}</span>
-                      <div class="item-controls">
-                        <button class="increase" onclick="modificarCantidad('${peticion.id}', ${index}, 1)">+</button>
-                        <button class="decrease" onclick="modificarCantidad('${peticion.id}', ${index}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
-                        <button class="delete" onclick="eliminarItemPeticion('${peticion.id}', ${index})">Eliminar</button>
-                      </div>
-                    </div>
-                  `;
-                  }).join('')}
-                </div>
-                ${isUsed ? `<div class="status">Estado: ${isUsed === 'normal' ? 'Confirmado' : 'Confirmado -3%'}</div>` : `
-                  <div class="button-group">
-                    <button class="confirmar" onclick="confirmarPeticion(${peticion.id}, false)">Confirmar Pedido</button>
-                    <button class="confirmar-plus" onclick="confirmarPeticion(${peticion.id}, true)">Confirmar Pedido -3%</button>
-                    <button class="preview-pdf" onclick="previewPDF(${peticion.id})">Descargar PDF Preview</button>
-                    <button class="delete-peticion" onclick="eliminarPeticion(${peticion.id})">Eliminar Petición</button>
-                  </div>
-                `}
-              </div>
-            </div>
-          `;
-          listaPeticiones.appendChild(peticionDiv);
-        });
-      } catch (err) {
-        console.error('Error en cargarPeticiones:', err);
-        mostrarError(`Error inesperado al cargar peticiones: ${err.message}`);
-        const listaPeticiones = document.getElementById('listaPeticiones');
-        if (listaPeticiones) listaPeticiones.innerHTML = '<p>Error al cargar peticiones.</p>';
-      }
-    }
-    function modificarCantidad(peticionId, itemIndex, change) {
-      console.log(`Modificando cantidad: peticionId=${peticionId}, itemIndex=${itemIndex}, change=${change}`);
-      const peticionDiv = document.getElementById(`peticion-${peticionId}`);
-      if (!peticionDiv) {
-        console.error(`Petición ${peticionId} no encontrada en el DOM`);
-        mostrarError(`Petición ${peticionId} no encontrada`);
-        return;
-      }
-      let items = JSON.parse(peticionDiv.dataset.items || '[]');
-      if (!items[itemIndex]) {
-        console.error(`Item ${itemIndex} no encontrado en petición ${peticionId}`);
-        return;
-      }
-      items[itemIndex].cantidad = Math.max(1, (items[itemIndex].cantidad || 1) + change);
-      items[itemIndex].subtotal = items[itemIndex].cantidad * items[itemIndex].precio_unitario;
-      peticionDiv.dataset.items = JSON.stringify(items);
-      const cantidadSpan = document.getElementById(`cantidad-${peticionId}-${itemIndex}`);
-      const itemText = document.getElementById(`item-text-${peticionId}-${itemIndex}`);
-      let stockWarning = '';
-      const product = productos.find(p => p.id === items[itemIndex].id);
-      if (product && items[itemIndex].cantidad > (product.stock || 0)) {
-        stockWarning = '<span style="color: red;"> Falta stock</span>';
-      }
-      if (cantidadSpan && itemText) {
-        cantidadSpan.textContent = items[itemIndex].cantidad;
-        itemText.innerHTML = `${items[itemIndex].nombre}: <span id="cantidad-${peticionId}-${itemIndex}">${items[itemIndex].cantidad}</span> x ${formatMoney(items[itemIndex].precio_unitario)} = ${formatMoney(items[itemIndex].subtotal)}${stockWarning}`;
-      } else {
-        console.error(`Elementos cantidad-${peticionId}-${itemIndex} o item-text-${peticionId}-${itemIndex} no encontrados`);
-      }
-      const decreaseBtn = document.querySelector(`#items-${peticionId} .item[data-item-index="${itemIndex}"] .decrease`);
-      if (decreaseBtn) {
-        decreaseBtn.disabled = items[itemIndex].cantidad <= 1;
-      }
+        return `
+        <div class="item" data-item-index="${index}">
+          <span id="item-text-${peticionId}-${index}">${item.nombre}: <span id="cantidad-${peticionId}-${index}">${item.cantidad}</span> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}${stockWarning}</span>
+          <div class="item-controls">
+            <button class="increase" onclick="modificarCantidad('${peticionId}', ${index}, 1)">+</button>
+            <button class="decrease" onclick="modificarCantidad('${peticionId}', ${index}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
+            <button class="delete" onclick="eliminarItemPeticion('${peticionId}', ${index})">Eliminar</button>
+          </div>
+        </div>
+      `;
+      }).join('') : '<p>No hay items en esta petición.</p>';
       const total = items.reduce((sum, it) => sum + it.subtotal, 0);
       const totalSpan = document.getElementById(`total-${peticionId}`);
       if (totalSpan) {
         totalSpan.textContent = formatMoney(total);
-      } else {
-        console.error(`Total span total-${peticionId} no encontrado`);
       }
+    } else {
+      console.error(`Items container items-${peticionId} no encontrado`);
     }
-    function eliminarItemPeticion(peticionId, itemIndex) {
-      if (!confirm('¿Eliminar este item de la petición?')) return;
-      console.log(`Eliminando item: peticionId=${peticionId}, itemIndex=${itemIndex}`);
+  }
+  async function eliminarPeticion(peticionId) {
+    if (!confirm('¿Eliminar esta petición?')) return;
+    console.log(`Eliminando petición: ${peticionId}`);
+    try {
+      const deleteRes = await fetch(`${apiBase}/peticiones/${peticionId}`, {
+        method: 'DELETE',
+        cache: 'no-store'
+      });
+      if (!deleteRes.ok) {
+        const txt = await deleteRes.text().catch(() => '');
+        throw new Error(`HTTP ${deleteRes.status}: ${txt}`);
+      }
+      alert('Petición eliminada con éxito.');
+      await cargarPeticiones();
+    } catch (err) {
+      console.error('Error al eliminar petición:', err);
+      mostrarError(`No se pudo eliminar la petición ${peticionId}: ${err.message}`);
+    }
+  }
+  async function confirmarPeticion(peticionId, subtractThreePercent) {
+    try {
+      if (usedButtons[peticionId]) {
+        alert('Este pedido ya ha sido confirmado.');
+        return;
+      }
       const peticionDiv = document.getElementById(`peticion-${peticionId}`);
       if (!peticionDiv) {
-        console.error(`Petición ${peticionId} no encontrada en el DOM`);
-        mostrarError(`Petición ${peticionId} no encontrada`);
+        throw new Error('Petición no encontrada en el DOM');
+      }
+      const items = JSON.parse(peticionDiv.dataset.items || '[]');
+      if (!items || items.length === 0) {
+        alert('No hay items en la petición para confirmar.');
         return;
       }
-      let items = JSON.parse(peticionDiv.dataset.items || '[]');
-      if (!items[itemIndex]) {
-        console.error(`Item ${itemIndex} no encontrado en petición ${peticionId}`);
+      const summary = peticionDiv.querySelector('summary');
+      if (!summary) {
+        throw new Error('Summary no encontrado para la petición');
+      }
+      const nombre = summary.textContent.split(' - ')[1].split(' - ')[0];
+      const pedidoItems = items.map(item => ({
+        id: item.id,
+        cantidad: item.cantidad,
+        precio: subtractThreePercent ? item.precio_unitario * 0.97 : item.precio_unitario
+      }));
+      const payload = {
+        user: nombre,
+        pedido: pedidoItems
+      };
+      console.log('💾 Enviando a guardar-pedidos:', JSON.stringify(payload, null, 2));
+      const saveRes = await fetch(`${apiBase}/guardar-pedidos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        cache: 'no-store'
+      });
+      if (!saveRes.ok) {
+        const txt = await saveRes.json().catch(() => ({ error: `HTTP ${saveRes.status}` }));
+        throw new Error(txt.error || `HTTP ${saveRes.status}`);
+      }
+      console.log(`Eliminando petición ${peticionId}`);
+      const deleteRes = await fetch(`${apiBase}/peticiones/${peticionId}`, {
+        method: 'DELETE',
+        cache: 'no-store'
+      });
+      if (!deleteRes.ok) {
+        const txt = await deleteRes.json().catch(() => ({ error: `HTTP ${deleteRes.status}` }));
+        throw new Error(txt.error || `HTTP ${deleteRes.status}`);
+      }
+      usedButtons[peticionId] = subtractThreePercent ? 'plus7' : 'normal';
+      saveUsedButtons();
+      alert(`Petición ${subtractThreePercent ? 'confirmada con -3%' : 'confirmada'} y eliminada con éxito.`);
+      await Promise.all([cargarPedidos(), cargarPeticiones(), cargarUsuarios()]);
+    } catch (err) {
+      console.error('Error en confirmarPeticion:', err);
+      mostrarError(`No se pudo confirmar la petición ${peticionId}: ${err.message}`);
+    }
+  }
+  async function previewPDF(peticionId) {
+    try {
+      const peticionDiv = document.getElementById(`peticion-${peticionId}`);
+      if (!peticionDiv) {
+        throw new Error('Petición no encontrada en el DOM');
+      }
+      console.log('Raw dataset.items (peticion):', peticionDiv.dataset.items);
+      const items = JSON.parse(peticionDiv.dataset.items || '[]');
+      if (!items || items.length === 0) {
+        alert('No hay items en la petición para previsualizar.');
         return;
       }
-      items = items.filter((_, idx) => idx !== itemIndex);
-      peticionDiv.dataset.items = JSON.stringify(items);
-      const itemsContainer = document.getElementById(`items-${peticionId}`);
-      if (itemsContainer) {
-        itemsContainer.innerHTML = items.length > 0 ? items.map((item, index) => {
-          let stockWarning = '';
-          const product = productos.find(p => p.id === item.id);
-          if (product && item.cantidad > (product.stock || 0)) {
-            stockWarning = '<span style="color: red;"> Falta stock</span>';
-          }
-          return `
-          <div class="item" data-item-index="${index}">
-            <span id="item-text-${peticionId}-${index}">${item.nombre}: <span id="cantidad-${peticionId}-${index}">${item.cantidad}</span> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}${stockWarning}</span>
-            <div class="item-controls">
-              <button class="increase" onclick="modificarCantidad('${peticionId}', ${index}, 1)">+</button>
-              <button class="decrease" onclick="modificarCantidad('${peticionId}', ${index}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
-              <button class="delete" onclick="eliminarItemPeticion('${peticionId}', ${index})">Eliminar</button>
-            </div>
-          </div>
-        `;
-        }).join('') : '<p>No hay items en esta petición.</p>';
-        const total = items.reduce((sum, it) => sum + it.subtotal, 0);
-        const totalSpan = document.getElementById(`total-${peticionId}`);
-        if (totalSpan) {
-          totalSpan.textContent = formatMoney(total);
-        }
-      } else {
-        console.error(`Items container items-${peticionId} no encontrado`);
-      }
-    }
-    async function eliminarPeticion(peticionId) {
-      if (!confirm('¿Eliminar esta petición?')) return;
-      console.log(`Eliminando petición: ${peticionId}`);
-      try {
-        const deleteRes = await fetch(`${apiBase}/peticiones/${peticionId}`, {
-          method: 'DELETE',
-          cache: 'no-store'
-        });
-        if (!deleteRes.ok) {
-          const txt = await deleteRes.text().catch(() => '');
-          throw new Error(`HTTP ${deleteRes.status}: ${txt}`);
-        }
-        alert('Petición eliminada con éxito.');
-        await cargarPeticiones();
-      } catch (err) {
-        console.error('Error al eliminar petición:', err);
-        mostrarError(`No se pudo eliminar la petición ${peticionId}: ${err.message}`);
-      }
-    }
-    async function confirmarPeticion(peticionId, subtractThreePercent) {
-      try {
-        if (usedButtons[peticionId]) {
-          alert('Este pedido ya ha sido confirmado.');
-          return;
-        }
-        const peticionDiv = document.getElementById(`peticion-${peticionId}`);
-        if (!peticionDiv) {
-          throw new Error('Petición no encontrada en el DOM');
-        }
-        const items = JSON.parse(peticionDiv.dataset.items || '[]');
-        if (!items || items.length === 0) {
-          alert('No hay items en la petición para confirmar.');
-          return;
-        }
-        const summary = peticionDiv.querySelector('summary');
-        if (!summary) {
-          throw new Error('Summary no encontrado para la petición');
-        }
-        const nombre = summary.textContent.split(' - ')[1].split(' - ')[0];
-        const pedidoItems = items.map(item => ({
+      const nombre = peticionDiv.dataset.nombre;
+      const payload = {
+        user: nombre,
+        items: items.map(item => ({
           id: item.id,
+          nombre: item.nombre,
           cantidad: item.cantidad,
-          precio: subtractThreePercent ? item.precio_unitario * 0.97 : item.precio_unitario
-        }));
-        const payload = {
-          user: nombre,
-          pedido: pedidoItems
-        };
-        console.log('💾 Enviando a guardar-pedidos:', JSON.stringify(payload, null, 2));
-        const saveRes = await fetch(`${apiBase}/guardar-pedidos`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-          cache: 'no-store'
-        });
-        if (!saveRes.ok) {
-          const txt = await saveRes.json().catch(() => ({ error: `HTTP ${saveRes.status}` }));
-          throw new Error(txt.error || `HTTP ${saveRes.status}`);
-        }
-        console.log(`Eliminando petición ${peticionId}`);
-        const deleteRes = await fetch(`${apiBase}/peticiones/${peticionId}`, {
-          method: 'DELETE',
-          cache: 'no-store'
-        });
-        if (!deleteRes.ok) {
-          const txt = await deleteRes.json().catch(() => ({ error: `HTTP ${deleteRes.status}` }));
-          throw new Error(txt.error || `HTTP ${deleteRes.status}`);
-        }
-        usedButtons[peticionId] = subtractThreePercent ? 'plus7' : 'normal';
-        saveUsedButtons();
-        alert(`Petición ${subtractThreePercent ? 'confirmada con -3%' : 'confirmada'} y eliminada con éxito.`);
-        await Promise.all([cargarPedidos(), cargarPeticiones(), cargarUsuarios()]);
-      } catch (err) {
-        console.error('Error en confirmarPeticion:', err);
-        mostrarError(`No se pudo confirmar la petición ${peticionId}: ${err.message}`);
+          precio_unitario: item.precio_unitario * 0.97 * 1.10,
+          subtotal: item.cantidad * (item.precio_unitario * 0.97 * 1.10)
+        })),
+        total: items.reduce((sum, item) => sum + item.cantidad * (item.precio_unitario * 0.97 * 1.10), 0),
+        fecha: new Date().toISOString()
+      };
+      console.log('📄 Enviando a generar-pdf-peticion:', JSON.stringify(payload, null, 2));
+      const saveRes = await fetch(`${apiBase}/generar-pdf-peticion`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        cache: 'no-store'
+      });
+      if (!saveRes.ok) {
+        const txt = await saveRes.json().catch(() => ({ error: `HTTP ${saveRes.status}` }));
+        throw new Error(txt.error || `HTTP ${saveRes.status}`);
       }
-    }
-    async function previewPDFPedido(pedidoId) {
-  try {
-    const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-    if (!pedidoDiv) {
-      throw new Error('Pedido no encontrado en el DOM');
-    }
-    console.log('Raw dataset.items:', pedidoDiv.dataset.items); // Debug log
-    const items = JSON.parse(pedidoDiv.dataset.items || '[]');
-    if (!items || items.length === 0) {
-      alert('No hay items en el pedido para previsualizar.');
-      return;
-    }
-        const nombre = peticionDiv.dataset.nombre;
-        const payload = {
-          user: nombre,
-          items: items.map(item => ({
-            id: item.id,
-            nombre: item.nombre,
-            cantidad: item.cantidad,
-            precio_unitario: item.precio_unitario * 0.97 * 1.10,
-            subtotal: item.cantidad * (item.precio_unitario * 0.97 * 1.10)
-          })),
-          total: items.reduce((sum, item) => sum + item.cantidad * (item.precio_unitario * 0.97 * 1.10), 0),
-          fecha: new Date().toISOString()
-        };
-        console.log('📄 Enviando a generar-pdf-peticion:', JSON.stringify(payload, null, 2));
-        const saveRes = await fetch(`${apiBase}/generar-pdf-peticion`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-          cache: 'no-store'
-        });
-        if (!saveRes.ok) {
-          const txt = await saveRes.json().catch(() => ({ error: `HTTP ${saveRes.status}` }));
-          throw new Error(txt.error || `HTTP ${saveRes.status}`);
-        }
-        const data = await saveRes.json();
-        if (data.ok && data.pdf) {
-          window.open(data.pdf, '_blank');
-        } else {
-          throw new Error('No se pudo generar el PDF de preview');
-        }
-      } catch (err) {
-        console.error('Error en previewPDF:', err);
-        mostrarError(`No se pudo generar el PDF de preview para la petición ${peticionId}: ${err.message}`);
+      const data = await saveRes.json();
+      if (data.ok && data.pdf) {
+        window.open(data.pdf, '_blank');
+      } else {
+        throw new Error('No se pudo generar el PDF de preview');
       }
-
-      
+    } catch (err) {
+      console.error('Error en previewPDF:', err);
+      mostrarError(`No se pudo generar el PDF de preview para la petición ${peticionId}: ${err.message}`);
     }
-    async function init() {
-      try {
-        console.log('Iniciando carga de datos...');
-        await cargarProductos();
-        await cargarPedidos();
-        await cargarUsuarios();
-        await cargarPeticiones();
-        console.log('Inicialización completada');
-      } catch (err) {
-        console.error('Error en init:', err);
-        mostrarError('Error al inicializar la página. Revisa la consola para más detalles.');
-      }
+  }
+  async function init() {
+    try {
+      console.log('Iniciando carga de datos...');
+      await cargarProductos();
+      await cargarPedidos();
+      await cargarUsuarios();
+      await cargarPeticiones();
+      console.log('Inicialización completada');
+    } catch (err) {
+      console.error('Error en init:', err);
+      mostrarError('Error al inicializar la página. Revisa la consola para más detalles.');
     }
-    window.onload = init;
-  </script>
+  }
+  window.onload = init;
+</script>
 </body>
 </html>
+
 
 
 
