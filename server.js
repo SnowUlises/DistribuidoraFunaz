@@ -14,6 +14,46 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY
 const PDF_PATH = path.join(process.cwd(), 'public', 'pedidos-pdf');
 if (!fs.existsSync(PDF_PATH)) fs.mkdirSync(PDF_PATH, { recursive: true });
 
+app.put('/api/actualizar-pedido/:id', async (req, res) => {
+  try {
+    const pedidoId = req.params.id;
+    const { items, stockUpdates } = req.body;
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'Items inválidos' });
+    }
+    // Actualizar stock solo para ítems con cantidad aumentada
+    for (const update of stockUpdates) {
+      const { data: prod } = await supabase
+        .from('productos')
+        .select('*')
+        .eq('id', update.id)
+        .single();
+      if (prod) {
+        const newStock = Math.max(0, (Number(prod.stock) || 0) - update.cantidad);
+        const { error: updErr } = await supabase
+          .from('productos')
+          .update({ stock: newStock })
+          .eq('id', update.id);
+        if (updErr) console.error('❌ Error actualizando stock:', updErr);
+      }
+    }
+    // Actualizar el pedido en la base de datos
+    const total = items.reduce((sum, item) => sum + (item.cantidad * item.precio_unitario), 0);
+    const { error } = await supabase
+      .from('pedidos')
+      .update({ items, total })
+      .eq('id', pedidoId);
+    if (error) {
+      console.error('❌ Error actualizando pedido:', error);
+      return res.status(500).json({ error: `Error al actualizar el pedido: ${error.message}` });
+    }
+    res.json({ ok: true, mensaje: 'Pedido actualizado' });
+  } catch (err) {
+    console.error('❌ Exception en actualizar-pedido:', err);
+    res.status(500).json({ error: err.message || 'Error interno del servidor' });
+  }
+});
+
 app.post('/api/generar-pdf-peticion', async (req, res) => {
   try {
     const { user, items, total, fecha } = req.body;
@@ -422,5 +462,6 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
