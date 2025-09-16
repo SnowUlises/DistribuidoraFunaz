@@ -190,6 +190,19 @@
     button.confirmar-plus:hover {
       background: #138496;
     }
+    button.preview-pdf {
+      background: #6c757d;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button.preview-pdf:hover {
+      background: #5a6268;
+    }
     button.delete-peticion {
       background: #dc3545;
       border: none;
@@ -254,6 +267,7 @@
     // States
     let estadosPedidos = JSON.parse(localStorage.getItem('estadosPedidos') || '{}');
     const usedButtons = JSON.parse(localStorage.getItem('usedButtons') || '{}');
+    let productos = [];
     function guardarEstados() {
       localStorage.setItem('estadosPedidos', JSON.stringify(estadosPedidos));
     }
@@ -458,6 +472,19 @@
         return '$' + Number(n).toFixed(2);
       }
     }
+    async function cargarProductos() {
+      try {
+        const res = await fetch(`${apiBase}/productos`, { cache: 'no-store' });
+        if (!res.ok) {
+          throw new Error(`Error al cargar productos: HTTP ${res.status}`);
+        }
+        productos = await res.json();
+        console.log('Productos cargados:', productos);
+      } catch (err) {
+        console.error('Error en cargarProductos:', err);
+        mostrarError('Error al cargar productos para verificación de stock.');
+      }
+    }
     async function cargarPeticiones() {
       try {
         const listaPeticiones = document.getElementById('listaPeticiones');
@@ -488,6 +515,7 @@
           peticionDiv.id = `peticion-${peticion.id}`;
           const isUsed = usedButtons[peticion.id];
           peticionDiv.dataset.items = JSON.stringify(peticion.items);
+          peticionDiv.dataset.nombre = peticion.nombre;
           peticionDiv.innerHTML = `
             <summary>Petición ID: ${peticion.id} - Nombre: ${peticion.nombre} - Fecha: ${new Date(peticion.fecha).toLocaleDateString('es-AR')}</summary>
             <div class="peticion-item">
@@ -495,21 +523,29 @@
                 <strong>Teléfono:</strong> ${peticion.telefono}
                 <strong>Total:</strong> <span id="total-${peticion.id}">${formatMoney(peticion.total)}</span>
                 <div class="peticion-items" id="items-${peticion.id}">
-                  ${peticion.items.map((item, index) => `
+                  ${peticion.items.map((item, index) => {
+                    let stockWarning = '';
+                    const product = productos.find(p => p.id === item.id);
+                    if (product && item.cantidad > (product.stock || 0)) {
+                      stockWarning = '<span style="color: red;"> Falta stock</span>';
+                    }
+                    return `
                     <div class="item" data-item-index="${index}">
-                      <span id="item-text-${peticion.id}-${index}">${item.nombre}: <span id="cantidad-${peticion.id}-${index}">${item.cantidad}</span> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}</span>
+                      <span id="item-text-${peticion.id}-${index}">${item.nombre}: <span id="cantidad-${peticion.id}-${index}">${item.cantidad}</span> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}${stockWarning}</span>
                       <div class="item-controls">
                         <button class="increase" onclick="modificarCantidad('${peticion.id}', ${index}, 1)">+</button>
                         <button class="decrease" onclick="modificarCantidad('${peticion.id}', ${index}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
                         <button class="delete" onclick="eliminarItemPeticion('${peticion.id}', ${index})">Eliminar</button>
                       </div>
                     </div>
-                  `).join('')}
+                  `;
+                  }).join('')}
                 </div>
                 ${isUsed ? `<div class="status">Estado: ${isUsed === 'normal' ? 'Confirmado' : 'Confirmado -3%'}</div>` : `
                   <div class="button-group">
                     <button class="confirmar" onclick="confirmarPeticion(${peticion.id}, false)">Confirmar Pedido</button>
                     <button class="confirmar-plus" onclick="confirmarPeticion(${peticion.id}, true)">Confirmar Pedido -3%</button>
+                    <button class="preview-pdf" onclick="previewPDF(${peticion.id})">Descargar PDF Preview</button>
                     <button class="delete-peticion" onclick="eliminarPeticion(${peticion.id})">Eliminar Petición</button>
                   </div>
                 `}
@@ -543,9 +579,14 @@
       peticionDiv.dataset.items = JSON.stringify(items);
       const cantidadSpan = document.getElementById(`cantidad-${peticionId}-${itemIndex}`);
       const itemText = document.getElementById(`item-text-${peticionId}-${itemIndex}`);
+      let stockWarning = '';
+      const product = productos.find(p => p.id === items[itemIndex].id);
+      if (product && items[itemIndex].cantidad > (product.stock || 0)) {
+        stockWarning = '<span style="color: red;"> Falta stock</span>';
+      }
       if (cantidadSpan && itemText) {
         cantidadSpan.textContent = items[itemIndex].cantidad;
-        itemText.innerHTML = `${items[itemIndex].nombre}: <span id="cantidad-${peticionId}-${itemIndex}">${items[itemIndex].cantidad}</span> x ${formatMoney(items[itemIndex].precio_unitario)} = ${formatMoney(items[itemIndex].subtotal)}`;
+        itemText.innerHTML = `${items[itemIndex].nombre}: <span id="cantidad-${peticionId}-${itemIndex}">${items[itemIndex].cantidad}</span> x ${formatMoney(items[itemIndex].precio_unitario)} = ${formatMoney(items[itemIndex].subtotal)}${stockWarning}`;
       } else {
         console.error(`Elementos cantidad-${peticionId}-${itemIndex} o item-text-${peticionId}-${itemIndex} no encontrados`);
       }
@@ -579,16 +620,23 @@
       peticionDiv.dataset.items = JSON.stringify(items);
       const itemsContainer = document.getElementById(`items-${peticionId}`);
       if (itemsContainer) {
-        itemsContainer.innerHTML = items.length > 0 ? items.map((item, index) => `
+        itemsContainer.innerHTML = items.length > 0 ? items.map((item, index) => {
+          let stockWarning = '';
+          const product = productos.find(p => p.id === item.id);
+          if (product && item.cantidad > (product.stock || 0)) {
+            stockWarning = '<span style="color: red;"> Falta stock</span>';
+          }
+          return `
           <div class="item" data-item-index="${index}">
-            <span id="item-text-${peticionId}-${index}">${item.nombre}: <span id="cantidad-${peticionId}-${index}">${item.cantidad}</span> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}</span>
+            <span id="item-text-${peticionId}-${index}">${item.nombre}: <span id="cantidad-${peticionId}-${index}">${item.cantidad}</span> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}${stockWarning}</span>
             <div class="item-controls">
               <button class="increase" onclick="modificarCantidad('${peticionId}', ${index}, 1)">+</button>
               <button class="decrease" onclick="modificarCantidad('${peticionId}', ${index}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
               <button class="delete" onclick="eliminarItemPeticion('${peticionId}', ${index})">Eliminar</button>
             </div>
           </div>
-        `).join('') : '<p>No hay items en esta petición.</p>';
+        `;
+        }).join('') : '<p>No hay items en esta petición.</p>';
         const total = items.reduce((sum, it) => sum + it.subtotal, 0);
         const totalSpan = document.getElementById(`total-${peticionId}`);
         if (totalSpan) {
@@ -617,7 +665,7 @@
         mostrarError(`No se pudo eliminar la petición ${peticionId}: ${err.message}`);
       }
     }
-    async function confirmarPeticion(peticionId, addSevenPercent) {
+    async function confirmarPeticion(peticionId, subtractThreePercent) {
       try {
         if (usedButtons[peticionId]) {
           alert('Este pedido ya ha sido confirmado.');
@@ -640,13 +688,13 @@
         const pedidoItems = items.map(item => ({
           id: item.id,
           cantidad: item.cantidad,
-          precio: addSevenPercent ? item.precio_unitario * 0.97 : item.precio_unitario
+          precio: subtractThreePercent ? item.precio_unitario * 0.97 : item.precio_unitario
         }));
         const payload = {
           user: nombre,
           pedido: pedidoItems
         };
-        console.log('Enviando a guardar-pedidos:', JSON.stringify(payload, null, 2));
+        console.log('💾 Enviando a guardar-pedidos:', JSON.stringify(payload, null, 2));
         const saveRes = await fetch(`${apiBase}/guardar-pedidos`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -666,18 +714,63 @@
           const txt = await deleteRes.json().catch(() => ({ error: `HTTP ${deleteRes.status}` }));
           throw new Error(txt.error || `HTTP ${deleteRes.status}`);
         }
-        usedButtons[peticionId] = addSevenPercent ? 'plus7' : 'normal';
+        usedButtons[peticionId] = subtractThreePercent ? 'plus7' : 'normal';
         saveUsedButtons();
-        alert(`Petición ${addSevenPercent ? 'confirmada con -3%' : 'confirmada'} y eliminada con éxito.`);
+        alert(`Petición ${subtractThreePercent ? 'confirmada con -3%' : 'confirmada'} y eliminada con éxito.`);
         await Promise.all([cargarPedidos(), cargarPeticiones(), cargarUsuarios()]);
       } catch (err) {
         console.error('Error en confirmarPeticion:', err);
         mostrarError(`No se pudo confirmar la petición ${peticionId}: ${err.message}`);
       }
     }
+    async function previewPDF(peticionId) {
+      try {
+        const peticionDiv = document.getElementById(`peticion-${peticionId}`);
+        if (!peticionDiv) {
+          throw new Error('Petición no encontrada en el DOM');
+        }
+        const items = JSON.parse(peticionDiv.dataset.items || '[]');
+        if (!items || items.length === 0) {
+          alert('No hay items en la petición para previsualizar.');
+          return;
+        }
+        const nombre = peticionDiv.dataset.nombre;
+        const pedidoItems = items.map(item => ({
+          id: item.id,
+          cantidad: item.cantidad,
+          precio: item.precio_unitario * 0.97 * 1.10
+        }));
+        const payload = {
+          user: nombre,
+          pedido: pedidoItems,
+          preview: true
+        };
+        console.log('💾 Enviando preview a guardar-pedidos:', JSON.stringify(payload, null, 2));
+        const saveRes = await fetch(`${apiBase}/guardar-pedidos`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          cache: 'no-store'
+        });
+        if (!saveRes.ok) {
+          const txt = await saveRes.json().catch(() => ({ error: `HTTP ${saveRes.status}` }));
+          throw new Error(txt.error || `HTTP ${saveRes.status}`);
+        }
+        const data = await saveRes.json();
+        if (data.ok && data.pdf) {
+          window.open(data.pdf, '_blank');
+        } else {
+          throw new Error('No se pudo generar el PDF de preview');
+        }
+      } catch (err) {
+        console.error('Error en previewPDF:', err);
+        mostrarError(`No se pudo generar el PDF de preview para la petición ${peticionId}: ${err.message}`);
+      }
+    }
     async function init() {
       try {
         console.log('Iniciando carga de datos...');
+        await cargarProductos();
         await cargarPedidos();
         await cargarUsuarios();
         await cargarPeticiones();
@@ -691,4 +784,3 @@
   </script>
 </body>
 </html>
-
