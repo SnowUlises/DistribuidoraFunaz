@@ -567,7 +567,8 @@ async function previewPDFPedido(pedidoId) {
     if (!pedidoDiv) {
       throw new Error('Pedido no encontrado en el DOM');
     }
-    const items = JSON.parse(pedidoDiv.dataset.items || '[]');
+    console.log('Raw dataset.items (pedido):', pedidoDiv.dataset.items);
+    const items = JSON.parse(pedidoDiv.dataset.items || '[]')
     if (!items || items.length === 0) {
       alert('No hay items en el pedido para previsualizar.');
       return;
@@ -929,17 +930,18 @@ async function previewPDFPedido(pedidoId) {
         mostrarError(`No se pudo confirmar la petición ${peticionId}: ${err.message}`);
       }
     }
-    async function previewPDF(peticionId) {
-      try {
-        const peticionDiv = document.getElementById(`peticion-${peticionId}`);
-        if (!peticionDiv) {
-          throw new Error('Petición no encontrada en el DOM');
-        }
-        const items = JSON.parse(peticionDiv.dataset.items || '[]');
-        if (!items || items.length === 0) {
-          alert('No hay items en la petición para previsualizar.');
-          return;
-        }
+    async function previewPDFPedido(pedidoId) {
+  try {
+    const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
+    if (!pedidoDiv) {
+      throw new Error('Pedido no encontrado en el DOM');
+    }
+    console.log('Raw dataset.items:', pedidoDiv.dataset.items); // Debug log
+    const items = JSON.parse(pedidoDiv.dataset.items || '[]');
+    if (!items || items.length === 0) {
+      alert('No hay items en el pedido para previsualizar.');
+      return;
+    }
         const nombre = peticionDiv.dataset.nombre;
         const payload = {
           user: nombre,
@@ -974,6 +976,8 @@ async function previewPDFPedido(pedidoId) {
         console.error('Error en previewPDF:', err);
         mostrarError(`No se pudo generar el PDF de preview para la petición ${peticionId}: ${err.message}`);
       }
+
+      
     }
     async function init() {
       try {
@@ -992,5 +996,6 @@ async function previewPDFPedido(pedidoId) {
   </script>
 </body>
 </html>
+
 
 
