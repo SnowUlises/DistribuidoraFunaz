@@ -258,27 +258,29 @@ app.post('/api/Enviar-Peticion', async (req, res) => {
 async function generarPDF(pedido) {
   return new Promise((resolve, reject) => {
     const items = Array.isArray(pedido.items) ? pedido.items : [];
-    // 🔹 Calculamos altura dinámica basada en ítems
+    // Calculamos altura dinámica basada en ítems
     const alturaCalculada = 300 + (items.length * 60); // 60px aprox. por ítem
-    const altura = 862; // Mínimo 400px
+    const altura = Math.max(862, alturaCalculada); // Mínimo 862px
     const doc = new PDFDocument({
-      size: [267, altura], // 🔥 Tamaño personalizado, ancho fijo, alto dinámico
+      size: [267, altura], // Tamaño personalizado, ancho fijo, alto dinámico
       margins: { top: 20, bottom: 20, left: 20, right: 20 },
     });
     const chunks = [];
     doc.on('data', c => chunks.push(c));
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
-    // Logo
+    // Logo (centrado y más grande)
     const logoPath = path.join(process.cwd(), 'public', 'logo.png');
     if (fs.existsSync(logoPath)) {
-      doc.image(logoPath, 100, 20, { width: 100 });
-      doc.moveDown(8);
+      const logoWidth = 150; // Aumentado de 100 a 150 para hacerlo más grande
+      const xPosition = (267 - logoWidth) / 2; // Cálculo para centrar (ancho página - ancho logo) / 2
+      doc.image(logoPath, xPosition, 20, { width: logoWidth });
+      doc.moveDown(10); // Ajustado para dar más espacio tras el logo más grande
     } else {
       doc.moveDown(3);
     }
     // Encabezado
-    doc.font('Helvetica-Bold').fontSize(16).text(`Distribuidora Funaz`, { align: 'center' });
+    doc.font('Helvetica-Bold').fontSize(16).text(`Cliente: ${pedido.user || 'Invitado'}`, { align: 'center' }); // Reemplazo de "Distribuidora Funaz"
     doc.moveDown(1);
     doc.font('Helvetica').fontSize(14);
     doc.text(`Dirección: Calle Colon 1740 Norte`);
@@ -289,7 +291,7 @@ async function generarPDF(pedido) {
     const fecha = new Date(pedido.fecha || Date.now());
     doc.fontSize(14).text(`Fecha: ${fecha.toLocaleDateString()} ${fecha.toLocaleTimeString()}`, { align: 'center' });
     doc.moveDown(1.5);
-    doc.moveTo(20, doc.y).lineTo(280, doc.y).stroke();
+    doc.moveTo(20, doc.y).lineTo(247, doc.y).stroke(); // Ajustado a 247 para respetar márgenes
     doc.moveDown(1.5);
     // Título
     doc.fontSize(18).font('Helvetica-Bold').text('PEDIDO', { underline: true, align: 'center' });
@@ -309,7 +311,7 @@ async function generarPDF(pedido) {
     });
     // Total
     doc.moveDown(2);
-    doc.moveTo(20, doc.y).lineTo(280, doc.y).stroke();
+    doc.moveTo(20, doc.y).lineTo(247, doc.y).stroke();
     doc.moveDown(1.5);
     doc.fontSize(20).font('Helvetica-Bold').text(`TOTAL: $${total.toFixed(2)}`, { align: 'center' });
     doc.moveDown(3);
@@ -371,3 +373,4 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
