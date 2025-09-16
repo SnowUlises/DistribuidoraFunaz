@@ -13,6 +13,58 @@ app.use(express.static('public'));
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 const PDF_PATH = path.join(process.cwd(), 'public', 'pedidos-pdf');
 if (!fs.existsSync(PDF_PATH)) fs.mkdirSync(PDF_PATH, { recursive: true });
+
+app.post('/api/generar-pdf-peticion', async (req, res) => {
+  try {
+    const { user, items, total, fecha } = req.body;
+    if (!user || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'Datos inválidos: user o items faltantes' });
+    }
+    // Validar y preparar datos para el PDF
+    const pedido = {
+      id: `preview_${Date.now()}`, // ID único temporal para el PDF
+      user: user || 'Invitado',
+      items: items.map(item => ({
+        id: item.id,
+        nombre: item.nombre,
+        cantidad: Number(item.cantidad) || 0,
+        precio_unitario: Number(item.precio_unitario) || 0,
+        subtotal: Number(item.subtotal) || 0
+      })),
+      total: Number(total) || 0,
+      fecha: fecha || new Date().toISOString()
+    };
+    // Generar PDF
+    const pdfBuffer = await generarPDF(pedido);
+    // Subir a Storage con nombre único
+    const pdfFileName = `preview_${pedido.id}.pdf`;
+    const { error: uploadErr } = await supabase.storage
+      .from('pedidos-pdf')
+      .upload(pdfFileName, pdfBuffer, {
+        contentType: 'application/pdf',
+        upsert: true,
+      });
+    if (uploadErr) {
+      console.error('❌ Error subiendo PDF:', uploadErr);
+      return res.status(500).json({ error: 'No se pudo subir el PDF' });
+    }
+    // Generar URL firmada
+    const { data: signed, error: signedErr } = await supabase
+      .storage
+      .from('pedidos-pdf')
+      .createSignedUrl(pdfFileName, 60 * 60 * 24 * 7); // 7 días de expiración
+    if (signedErr) {
+      console.error('❌ Error generando URL firmada:', signedErr);
+      return res.status(500).json({ error: 'No se pudo obtener URL del PDF' });
+    }
+    const url = signed.signedUrl;
+    res.json({ ok: true, pdf: url });
+  } catch (err) {
+    console.error('❌ Error en generar-pdf-peticion:', err);
+    res.status(500).json({ error: err.message || 'Error generando PDF de petición' });
+  }
+});
+
 app.delete('/api/peticiones/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -370,3 +422,4 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
