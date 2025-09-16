@@ -258,11 +258,8 @@ app.post('/api/Enviar-Peticion', async (req, res) => {
 async function generarPDF(pedido) {
   return new Promise((resolve, reject) => {
     const items = Array.isArray(pedido.items) ? pedido.items : [];
-    // Calculamos altura dinámica basada en ítems
-    const alturaCalculada = 300 + (items.length * 60); // 60px aprox. por ítem
-    const altura = Math.max(862, alturaCalculada); // Mínimo 862px
     const doc = new PDFDocument({
-      size: [267, altura], // Tamaño personalizado, ancho fijo, alto dinámico
+      size: [267, 862], // Tamaño fijo para impresora térmica
       margins: { top: 20, bottom: 20, left: 20, right: 20 },
     });
     const chunks = [];
@@ -373,5 +370,3 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
-
-
