@@ -280,7 +280,7 @@ async function generarPDF(pedido) {
       doc.moveDown(3);
     }
     // Encabezado
-    doc.font('Helvetica-Bold').fontSize(16).text(`Cliente: ${pedido.user || 'Invitado'}`, { align: 'center' }); // Reemplazo de "Distribuidora Funaz"
+    doc.font('Helvetica-Bold').fontSize(16).text(`${pedido.user || 'Invitado'}`, { align: 'center' }); // Reemplazo de "Distribuidora Funaz"
     doc.moveDown(1);
     doc.font('Helvetica').fontSize(14);
     doc.text(`Dirección: Calle Colon 1740 Norte`);
@@ -373,4 +373,5 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
