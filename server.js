@@ -28,7 +28,7 @@ app.post('/api/generar-pdf-peticion', async (req, res) => {
         id: item.id,
         nombre: item.nombre,
         cantidad: Number(item.cantidad) || 0,
-        precio_unitario: Number(item.precio_unitario) || 0,
+        precio_unitario: Number(item.precio_unitario * 1.1) || 0,
         subtotal: Number(item.subtotal) || 0
       })),
       total: Number(total) || 0,
@@ -422,4 +422,5 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
