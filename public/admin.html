@@ -409,7 +409,7 @@
           const txt = await r.text().catch(() => '');
           throw new Error(`Error del servidor: ${r.status} ${txt}`);
         }
-        const data = await r.json();
+        const data = await res.json();
         if (data.ok && data.pdf) {
           window.open(data.pdf, '_blank');
         } else {
@@ -735,18 +735,20 @@
           return;
         }
         const nombre = peticionDiv.dataset.nombre;
-        const pedidoItems = items.map(item => ({
-          id: item.id,
-          cantidad: item.cantidad,
-          precio: item.precio_unitario * 0.97 * 1.10
-        }));
         const payload = {
           user: nombre,
-          pedido: pedidoItems,
-          preview: true
+          items: items.map(item => ({
+            id: item.id,
+            nombre: item.nombre,
+            cantidad: item.cantidad,
+            precio_unitario: item.precio_unitario * 0.97 * 1.10,
+            subtotal: item.cantidad * (item.precio_unitario * 0.97 * 1.10)
+          })),
+          total: items.reduce((sum, item) => sum + item.cantidad * (item.precio_unitario * 0.97 * 1.10), 0),
+          fecha: new Date().toISOString()
         };
-        console.log('💾 Enviando preview a guardar-pedidos:', JSON.stringify(payload, null, 2));
-        const saveRes = await fetch(`${apiBase}/guardar-pedidos`, {
+        console.log('📄 Enviando a generar-pdf-peticion:', JSON.stringify(payload, null, 2));
+        const saveRes = await fetch(`${apiBase}/generar-pdf-peticion`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
