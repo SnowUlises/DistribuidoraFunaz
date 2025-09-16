@@ -409,7 +409,7 @@
           const txt = await r.text().catch(() => '');
           throw new Error(`Error del servidor: ${r.status} ${txt}`);
         }
-        const data = await res.json();
+        const data = await r.json();
         if (data.ok && data.pdf) {
           window.open(data.pdf, '_blank');
         } else {
@@ -786,3 +786,4 @@
   </script>
 </body>
 </html>
+
