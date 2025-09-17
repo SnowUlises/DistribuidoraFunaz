@@ -299,6 +299,14 @@
     estadosPedidos[key] = { ...estadosPedidos[key], recibido: nuevo };
     guardarEstados();
   }
+  function formatDateTime(fecha) {
+    const date = new Date(fecha);
+    const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const formattedDate = `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
+    const formattedTime = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+    return { formattedDate, formattedTime };
+  }
   async function cargarUsuarios() {
     try {
       const listaPedidos = document.getElementById('listaUsuarios');
@@ -349,11 +357,12 @@
           const key = `${userName}-${index}`;
           const estado = estadosPedidos[key] || {};
           const total = items.reduce((sum, p) => sum + p.subtotal, 0);
+          const { formattedDate, formattedTime } = formatDateTime(pedido.fecha);
           pedidosHTML += `
             <li>
               <div class="pedido-item" id="pedido-${pedidoId}">
                 <div class="pedido-line">
-                  <strong>Pedido #${index + 1}</strong> (ID: ${pedidoId}) - <b>Total: <span id="total-${pedidoId}">${formatMoney(total)}</span></b>
+                  <strong>Pedido #${index + 1}</strong> del ${formattedDate} ${formattedTime} (ID: ${pedidoId}) - <b>Total: <span id="total-${pedidoId}">${formatMoney(total)}</span></b>
                 </div>
                 <div class="peticion-items" id="items-${pedidoId}">
                   ${items.map((item, itemIndex) => `
@@ -719,8 +728,9 @@
         const isUsed = usedButtons[peticion.id];
         peticionDiv.dataset.items = JSON.stringify(peticion.items);
         peticionDiv.dataset.nombre = peticion.nombre;
+        const { formattedDate, formattedTime } = formatDateTime(peticion.fecha);
         peticionDiv.innerHTML = `
-          <summary>Petición ID: ${peticion.id} - Nombre: ${peticion.nombre} - Fecha: ${new Date(peticion.fecha).toLocaleDateString('es-AR')}</summary>
+          <summary>Petición ID: ${peticion.id} - Nombre: ${peticion.nombre} - Fecha: ${formattedDate} ${formattedTime}</summary>
           <div class="peticion-item">
             <div class="peticion-info">
               <strong>Teléfono:</strong> ${peticion.telefono}
@@ -990,7 +1000,3 @@
 </script>
 </body>
 </html>
-
-
-
-
