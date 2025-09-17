@@ -730,7 +730,7 @@
         peticionDiv.dataset.nombre = peticion.nombre;
         const { formattedDate, formattedTime } = formatDateTime(peticion.fecha);
         peticionDiv.innerHTML = `
-          <summary>Petición ID: ${peticion.id} - Nombre: ${peticion.nombre} - Fecha: ${formattedDate} ${formattedTime}</summary>
+          <summary>Petición ID: ${peticion.id} - ${peticion.nombre} - Fecha: ${formattedDate} ${formattedTime}</summary>
           <div class="peticion-item">
             <div class="peticion-info">
               <strong>Teléfono:</strong> ${peticion.telefono}
@@ -1000,3 +1000,4 @@
 </script>
 </body>
 </html>
+
