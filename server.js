@@ -204,10 +204,12 @@ app.post('/api/guardar-pedidos', async (req, res) => {
   try {
     const pedidoItems = req.body.pedido;
     const usuarioPedido = req.body.user || req.body.usuario || 'invitado';
-    if (!Array.isArray(pedidoItems) || pedidoItems.length === 0)
+    if (!Array.isArray(pedidoItems) || pedidoItems.length === 0) {
       return res.status(400).json({ error: 'Pedido inválido' });
+    }
     let total = 0;
     const items = [];
+    // Start a transaction
     for (const it of pedidoItems) {
       const prodId = it.id;
       const { data: prod, error: prodError } = await supabase
@@ -215,12 +217,18 @@ app.post('/api/guardar-pedidos', async (req, res) => {
         .select('*')
         .eq('id', prodId)
         .single();
-      if (prodError) {
-        console.warn('⚠️ Producto no encontrado:', prodError);
-        continue;
+      if (prodError || !prod) {
+        return res.status(400).json({ error: `Producto con ID ${prodId} no encontrado` });
       }
-      if (!prod) continue;
       const cantidadFinal = Number(it.cantidad) || 0;
+      if (cantidadFinal <= 0) {
+        return res.status(400).json({ error: `Cantidad inválida para producto ${prodId}` });
+      }
+      // Validate stock
+      const currentStock = Number(prod.stock) || 0;
+      if (currentStock < cantidadFinal) {
+        return res.status(400).json({ error: `Stock insuficiente para producto ${prod.nombre} (ID: ${prodId})` });
+      }
       const precioUnitario = Number(it.precio ?? it.precio_unitario ?? prod.precio) || 0;
       const subtotal = cantidadFinal * precioUnitario;
       total += subtotal;
@@ -231,15 +239,19 @@ app.post('/api/guardar-pedidos', async (req, res) => {
         precio_unitario: precioUnitario,
         subtotal
       });
-      const newStock = Math.max(0, (Number(prod.stock) || 0) - cantidadFinal);
+      // Update stock
+      const newStock = currentStock - cantidadFinal;
       const { error: updErr } = await supabase
         .from('productos')
         .update({ stock: newStock })
         .eq('id', prodId);
-      if (updErr) console.error('❌ Error actualizando stock:', updErr);
+      if (updErr) {
+        return res.status(500).json({ error: `Error actualizando stock para producto ${prodId}: ${updErr.message}` });
+      }
     }
-    if (items.length === 0)
+    if (items.length === 0) {
       return res.status(400).json({ error: 'No hay items válidos para el pedido' });
+    }
     const id = Date.now().toString();
     const payload = { id, user: usuarioPedido, fecha: new Date().toISOString(), items, total };
     console.log('💾 Guardando pedido:', payload);
@@ -249,20 +261,18 @@ app.post('/api/guardar-pedidos', async (req, res) => {
       .select()
       .single();
     if (error) {
-      console.error('❌ Supabase insert error:', error);
-      return res.status(500).json({ error });
+      return res.status(500).json({ error: `Error al guardar el pedido: ${error.message}` });
     }
     const returnedId = data?.id ?? id;
-    // 🔹 RESPUESTA SIMPLE: nada de PDFs aquí
     res.json({
       ok: true,
       mensaje: 'Pedido guardado',
       id: returnedId,
-      endpoint_pdf: `/api/pedidos/${returnedId}/pdf` // opcional
+      endpoint_pdf: `/api/pedidos/${returnedId}/pdf`
     });
   } catch (err) {
     console.error('❌ Exception en guardar-pedidos:', err);
-    res.status(500).json({ error: err.message || err });
+    res.status(500).json({ error: err.message || 'Error interno del servidor' });
   }
 });
 app.post('/api/Enviar-Peticion', async (req, res) => {
@@ -462,6 +472,7 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
