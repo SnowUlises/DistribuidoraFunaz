@@ -879,6 +879,7 @@
     }
   }
   async function confirmarPeticion(peticionId, subtractThreePercent) {
+    if (!confirm(`¿Estás seguro de confirmar esta petición${subtractThreePercent ? ' con -3%' : ''}?`)) return;
     try {
       if (usedButtons[peticionId]) {
         alert('Este pedido ya ha sido confirmado.');
@@ -1000,4 +1001,5 @@
 </script>
 </body>
 </html>
+
 
