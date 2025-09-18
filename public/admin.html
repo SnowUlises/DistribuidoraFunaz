@@ -203,6 +203,19 @@
     button.preview-pdf:hover {
       background: #5a6268;
     }
+    button.copy-faltantes {
+      background: #fd7e14;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button.copy-faltantes:hover {
+      background: #dd6b10;
+    }
     button.delete-peticion {
       background: #dc3545;
       border: none;
@@ -759,6 +772,7 @@
                   <button class="confirmar" onclick="confirmarPeticion(${peticion.id}, false)">Confirmar Pedido</button>
                   <button class="confirmar-plus" onclick="confirmarPeticion(${peticion.id}, true)">Confirmar Pedido -3%</button>
                   <button class="preview-pdf" onclick="previewPDF(${peticion.id})">Descargar PDF Preview</button>
+                  <button class="copy-faltantes" onclick="copiarFaltantes(${peticion.id})">Copiar faltantes</button>
                   <button class="delete-peticion" onclick="eliminarPeticion(${peticion.id})">Eliminar Petición</button>
                 </div>
               `}
@@ -984,6 +998,32 @@
       mostrarError(`No se pudo generar el PDF de preview para la petición ${peticionId}: ${err.message}`);
     }
   }
+  function copiarFaltantes(peticionId) {
+    const peticionDiv = document.getElementById(`peticion-${peticionId}`);
+    if (!peticionDiv) {
+      alert('Petición no encontrada');
+      return;
+    }
+    const items = JSON.parse(peticionDiv.dataset.items);
+    let faltantes = [];
+    for (const item of items) {
+      const product = productos.find(p => p.id === item.id);
+      const stock = product ? (product.stock || 0) : 0;
+      const missing = Math.max(0, item.cantidad - stock);
+      if (missing > 0) {
+        faltantes.push(`${missing} ${item.nombre}`);
+      }
+    }
+    const textToCopy = faltantes.join('\n');
+    navigator.clipboard.writeText(textToCopy)
+      .then(() => {
+        alert('Faltantes copiados al portapapeles:\n' + textToCopy);
+      })
+      .catch(err => {
+        console.error('Error al copiar al portapapeles:', err);
+        alert('Error al copiar. Por favor, copia manualmente:\n' + textToCopy);
+      });
+  }
   async function init() {
     try {
       console.log('Iniciando carga de datos...');
@@ -1001,5 +1041,3 @@
 </script>
 </body>
 </html>
-
-
