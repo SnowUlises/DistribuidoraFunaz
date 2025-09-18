@@ -226,9 +226,6 @@ app.post('/api/guardar-pedidos', async (req, res) => {
       }
       // Validate stock
       const currentStock = Number(prod.stock) || 0;
-      if (currentStock < cantidadFinal) {
-        return res.status(400).json({ error: `Stock insuficiente para producto ${prod.nombre} (ID: ${prodId})` });
-      }
       const precioUnitario = Number(it.precio ?? it.precio_unitario ?? prod.precio) || 0;
       const subtotal = cantidadFinal * precioUnitario;
       total += subtotal;
@@ -472,6 +469,7 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
