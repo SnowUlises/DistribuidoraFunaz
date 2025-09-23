@@ -72,7 +72,8 @@ app.post('/api/generar-pdf-peticion', async (req, res) => {
         subtotal: Number(item.subtotal) || 0
       })),
       total: Number(total) || 0,
-      fecha: fecha || new Date().toISOString()
+      const fechaLocal = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
+      fecha: fechaLocal || new Date().toISOString()
     };
     // Generar PDF
     const pdfBuffer = await generarPDF(pedido);
@@ -250,7 +251,8 @@ app.post('/api/guardar-pedidos', async (req, res) => {
       return res.status(400).json({ error: 'No hay items válidos para el pedido' });
     }
     const id = Date.now().toString();
-    const payload = { id, user: usuarioPedido, fecha: new Date().toISOString(), items, total };
+    const fechaLocal = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
+    const payload = { id, user: usuarioPedido, fecha: fechaLocal, items, total };
     console.log('💾 Guardando pedido:', payload);
     const { data, error } = await supabase
       .from('pedidos')
@@ -287,6 +289,7 @@ app.post('/api/Enviar-Peticion', async (req, res) => {
         }
         let total = 0;
         const processedItems = [];
+        const fechaLocal = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
         // Process each item
         for (const it of pedidoItems) {
             const prodId = it.id;
@@ -331,7 +334,7 @@ app.post('/api/Enviar-Peticion', async (req, res) => {
             telefono: telefonoNum,
             items: processedItems,
             total: totalInt,
-            fecha: new Date().toISOString()
+            fecha: fechaLocal
         };
         console.log('💾 Guardando petición:', payload);
         const { data, error } = await supabase
@@ -469,6 +472,7 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
