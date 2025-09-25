@@ -61,6 +61,7 @@ app.post('/api/generar-pdf-peticion', async (req, res) => {
       return res.status(400).json({ error: 'Datos inválidos: user o items faltantes' });
     }
     // Validar y preparar datos para el PDF
+    const fechaLocal = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
     const pedido = {
       id: `preview_${Date.now()}`, // ID único temporal para el PDF
       user: user || 'Invitado',
@@ -72,7 +73,7 @@ app.post('/api/generar-pdf-peticion', async (req, res) => {
         subtotal: Number(item.subtotal) || 0
       })),
       total: Number(total) || 0,
-      const fechaLocal = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
+      
       fecha: fechaLocal || new Date().toISOString()
     };
     // Generar PDF
@@ -472,6 +473,7 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
