@@ -212,7 +212,7 @@ btnConfirmar.addEventListener('click', async () => {
 
  if (typeof producto.stock === 'number') {
   // restamos la cantidad aunque quede negativa
-  producto.stock = Math.max(0, producto.stock - item.cantidad);
+  producto.stock = producto.stock - item.cantidad;
 
 }
 
@@ -288,6 +288,7 @@ function formatMoney(n) {
 
 </body>
 </html>
+
 
 
 
