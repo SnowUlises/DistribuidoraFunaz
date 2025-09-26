@@ -729,6 +729,7 @@ async function handleNotifClick() {
 }
 document.getElementById('btnNotif').addEventListener('click', handleNotifClick);
 checkNotificaciones();
+setInterval(checkNotificaciones, 10000); // Verificar cada 10 segundos
 </script>
 </body>
 </html>
