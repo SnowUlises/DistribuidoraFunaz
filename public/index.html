@@ -292,10 +292,10 @@
   <div id="usuarioMenu"></div>
   <button id="btnPedido">Pedido</button>
   <button id="btnAdmin">Admin</button>
+  <button id="btnNotif" style="position:relative;">🔔<span id="notifBadge" style="position:absolute; top:-10px; right:-10px; background:red; color:white; border-radius:50%; padding:2px 6px; font-size:0.8em; display:none;"></span></button>
   <button id="btnCarrito">Carrito (0)</button>
 </div>
   </header>
- 
   <div id="carritoContainer" style="display:none;">
     <h3>Carrito de compras</h3>
     <div id="itemsCarrito"></div>
@@ -479,7 +479,7 @@ function renderProductos() {
     div.onclick = () => {
   window.location.href = `producto.html?id=${p.id}`;
 };
-   
+  
 div.querySelector('button.btn-carrito').onclick = (event) => {
   event.stopPropagation();
   agregarAlCarrito(p.id);
@@ -560,7 +560,6 @@ function vaciarCarrito() {
     renderCarrito();
   }
 }
- 
 const btnAdmin = document.getElementById('btnAdmin');
 if (btnAdmin) {
   btnAdmin.addEventListener('click', () => {
@@ -568,7 +567,6 @@ if (btnAdmin) {
     location.href = 'admin.html';
   });
 }
- 
 let mensajeTimeout = null;
 function mostrarMensaje(texto) {
   const m = document.getElementById('mensajeCarrito');
@@ -698,9 +696,39 @@ function confirmarAgregar() {
   mostrarMensaje(`Agregados ${totalAdded} items al carrito.`);
   renderCarrito();
 }
+async function checkNotificaciones() {
+  try {
+    const res = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/peticiones');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const peticiones = await res.json();
+    const currentCount = peticiones.length;
+    const seenCount = parseInt(localStorage.getItem('seenPetitionsCount') || '0');
+    const newCount = currentCount - seenCount;
+    const badge = document.getElementById('notifBadge');
+    if (newCount > 0) {
+      badge.textContent = newCount;
+      badge.style.display = 'inline';
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch (err) {
+    console.error('Error fetching peticiones:', err);
+  }
+}
+async function handleNotifClick() {
+  try {
+    const res = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/peticiones');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const peticiones = await res.json();
+    const currentCount = peticiones.length;
+    localStorage.setItem('seenPetitionsCount', currentCount);
+    document.getElementById('notifBadge').style.display = 'none';
+  } catch (err) {
+    console.error('Error fetching peticiones:', err);
+  }
+}
+document.getElementById('btnNotif').addEventListener('click', handleNotifClick);
+checkNotificaciones();
 </script>
 </body>
 </html>
-
-
-
