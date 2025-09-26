@@ -29,7 +29,7 @@ app.put('/api/actualizar-pedido/:id', async (req, res) => {
         .eq('id', update.id)
         .single();
       if (prod) {
-        const newStock = (Number(prod.stock) || 0) - update.cantidad);
+        const newStock = Number(prod.stock ?? 0) - Number(update.cantidad ?? 0);
         const { error: updErr } = await supabase
           .from('productos')
           .update({ stock: newStock })
@@ -473,6 +473,7 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
