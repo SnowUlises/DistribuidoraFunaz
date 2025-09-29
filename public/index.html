@@ -702,8 +702,14 @@ async function checkNotificaciones() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const peticiones = await res.json();
     const currentCount = peticiones.length;
-    const seenCount = parseInt(localStorage.getItem('seenPetitionsCount') || '0');
-    const newCount = currentCount - seenCount;
+    let seenCount = parseInt(localStorage.getItem('seenPetitionsCount') || '0');
+    let newCount;
+    if (currentCount < seenCount) {
+      localStorage.setItem('seenPetitionsCount', currentCount);
+      newCount = 0;
+    } else {
+      newCount = currentCount - seenCount;
+    }
     const badge = document.getElementById('notifBadge');
     if (newCount > 0) {
       badge.textContent = newCount;
