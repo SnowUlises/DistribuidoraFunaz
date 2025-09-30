@@ -1008,7 +1008,7 @@
     let faltantes = [];
     for (const item of items) {
       const product = productos.find(p => p.id === item.id);
-      const stock = product ? (product.stock || 0) : 0;
+      const stock = product ? Math.max(product.stock || 0, 0) : 0;
       const missing = Math.max(0, item.cantidad - stock);
       if (missing > 0) {
         faltantes.push(`${missing} ${item.nombre}`);
@@ -1041,3 +1041,4 @@
 </script>
 </body>
 </html>
+
