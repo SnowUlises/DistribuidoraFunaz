@@ -652,8 +652,10 @@
       pedidoDiv.dataset.originalItems = JSON.stringify(items);
       alert('Cambios guardados con éxito.');
       const openStates = getOpenStates();
+      const savedScroll = window.scrollY;
       await Promise.all([cargarPedidos(), cargarUsuarios()]);
       restoreOpenStates(openStates);
+      window.scrollTo(0, savedScroll);
     } catch (err) {
       console.error('Error al guardar cambios del pedido:', err);
       mostrarError(`No se pudo guardar los cambios del pedido ${pedidoId}: ${err.message}`);
@@ -1214,3 +1216,4 @@
 </script>
 </body>
 </html>
+
