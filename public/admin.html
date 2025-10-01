@@ -251,6 +251,56 @@
       color: #777;
       margin-top: 2em;
     }
+    button.add-product {
+      background: #007bff;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button.add-product:hover {
+      background: #0069d9;
+    }
+    dialog {
+      padding: 1.5em;
+      border-radius: 8px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      max-width: 400px;
+      width: 90%;
+    }
+    dialog form {
+      display: flex;
+      flex-direction: column;
+      gap: 1em;
+    }
+    dialog label {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+    }
+    dialog input[type="text"] {
+      flex: 1;
+      padding: 0.5em;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    dialog button {
+      padding: 0.5em 1em;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    dialog button[type="button"]:first-of-type {
+      background: #28a745;
+      color: white;
+    }
+    dialog button[type="button"]:last-of-type {
+      background: #dc3545;
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -270,6 +320,17 @@
   <footer>
     Distribuidora Funaz
   </footer>
+  <dialog id="addProductModal">
+    <form>
+      <label for="productsInput">Productos (IDxCantidad, separados por coma):</label>
+      <input type="text" id="productsInput" placeholder="353x5,24x2">
+      <label>
+        <input type="checkbox" id="apply3percent"> Aplicar -3%
+      </label>
+      <button type="button" onclick="addProductsToPedido()">Añadir</button>
+      <button type="button" onclick="closeAddModal()">Cancelar</button>
+    </form>
+  </dialog>
   <script>
   const apiBase = 'https://distribuidorafunaz-a2o6.onrender.com/api';
   // Security check
@@ -281,6 +342,7 @@
   let estadosPedidos = JSON.parse(localStorage.getItem('estadosPedidos') || '{}');
   const usedButtons = JSON.parse(localStorage.getItem('usedButtons') || '{}');
   let productos = [];
+  let currentPedidoId = null;
   function guardarEstados() {
     localStorage.setItem('estadosPedidos', JSON.stringify(estadosPedidos));
   }
@@ -319,6 +381,26 @@
     const formattedDate = `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
     const formattedTime = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
     return { formattedDate, formattedTime };
+  }
+  function getOpenStates() {
+    const mainUsersDetails = document.querySelector('details > summary:first-child').parentElement;
+    const mainPeticionesDetails = document.querySelectorAll('details')[1];
+    const openUserNames = Array.from(document.querySelectorAll('.user-details[open]')).map(d => d.querySelector('summary').textContent.trim());
+    return {
+      usersOpen: mainUsersDetails?.open || false,
+      peticionesOpen: mainPeticionesDetails?.open || false,
+      openUserNames
+    };
+  }
+  function restoreOpenStates(states) {
+    const mainUsersDetails = document.querySelector('details > summary:first-child').parentElement;
+    if (mainUsersDetails && states.usersOpen) mainUsersDetails.open = true;
+    const mainPeticionesDetails = document.querySelectorAll('details')[1];
+    if (mainPeticionesDetails && states.peticionesOpen) mainPeticionesDetails.open = true;
+    states.openUserNames.forEach(name => {
+      const userDetail = Array.from(document.querySelectorAll('.user-details')).find(d => d.querySelector('summary').textContent.trim() === name);
+      if (userDetail) userDetail.open = true;
+    });
   }
   async function cargarUsuarios() {
     try {
@@ -395,6 +477,7 @@
                     Guardar pedido
                   </button>
                   <button class="preview-pdf" onclick="previewPDFPedido('${pedidoId}')">Descargar PDF Preview</button>
+                  <button class="add-product" onclick="openAddModal('${pedidoId}')">Añadir producto</button>
                   <button class="confirmar" onclick="guardarCambiosPedido('${pedidoId}')">Guardar Cambios</button>
                   <span class="guardar-status" id="guardar-status-${pedidoId}" aria-hidden="true">
                     ${estado.guardado ? '✅ Guardado' : ''}
@@ -568,7 +651,9 @@
       }
       pedidoDiv.dataset.originalItems = JSON.stringify(items);
       alert('Cambios guardados con éxito.');
+      const openStates = getOpenStates();
       await Promise.all([cargarPedidos(), cargarUsuarios()]);
+      restoreOpenStates(openStates);
     } catch (err) {
       console.error('Error al guardar cambios del pedido:', err);
       mostrarError(`No se pudo guardar los cambios del pedido ${pedidoId}: ${err.message}`);
@@ -666,8 +751,10 @@
       }
       delete estadosPedidos[key];
       guardarEstados();
+      const openStates = getOpenStates();
       await cargarPedidos();
       await cargarUsuarios();
+      restoreOpenStates(openStates);
       alert('Pedido eliminado correctamente.');
     } catch (err) {
       console.error('Error al eliminar pedido:', err);
@@ -886,7 +973,9 @@
         throw new Error(`HTTP ${deleteRes.status}: ${txt}`);
       }
       alert('Petición eliminada con éxito.');
+      const openStates = getOpenStates();
       await cargarPeticiones();
+      restoreOpenStates(openStates);
     } catch (err) {
       console.error('Error al eliminar petición:', err);
       mostrarError(`No se pudo eliminar la petición ${peticionId}: ${err.message}`);
@@ -945,7 +1034,9 @@
       usedButtons[peticionId] = subtractThreePercent ? 'plus7' : 'normal';
       saveUsedButtons();
       alert(`Petición ${subtractThreePercent ? 'confirmada con -3%' : 'confirmada'} y eliminada con éxito.`);
+      const openStates = getOpenStates();
       await Promise.all([cargarPedidos(), cargarPeticiones(), cargarUsuarios()]);
+      restoreOpenStates(openStates);
     } catch (err) {
       console.error('Error en confirmarPeticion:', err);
       mostrarError(`No se pudo confirmar la petición ${peticionId}: ${err.message}`);
@@ -1024,6 +1115,88 @@
         alert('Error al copiar. Por favor, copia manualmente:\n' + textToCopy);
       });
   }
+  function openAddModal(pedidoId) {
+    currentPedidoId = pedidoId;
+    document.getElementById('productsInput').value = '';
+    document.getElementById('apply3percent').checked = false;
+    document.getElementById('addProductModal').showModal();
+  }
+  function closeAddModal() {
+    document.getElementById('addProductModal').close();
+  }
+  function addProductsToPedido() {
+    const input = document.getElementById('productsInput').value.trim();
+    const apply3 = document.getElementById('apply3percent').checked;
+    if (!input) {
+      alert('Ingrese productos en el formato especificado.');
+      return;
+    }
+    const entries = input.split(',').map(s => s.trim()).filter(s => s);
+    const newItems = [];
+    for (const ent of entries) {
+      const [idStr, qtyStr] = ent.split('x').map(s => s.trim());
+      const id = parseInt(idStr);
+      const qty = parseInt(qtyStr) || 1;
+      if (isNaN(id) || qty <= 0) {
+        console.warn(`Entrada inválida: ${ent}`);
+        continue;
+      }
+      const product = productos.find(p => p.id === id);
+      if (!product) {
+        console.warn(`Producto no encontrado: ID ${id}`);
+        continue;
+      }
+      let precio = product.precio * 1.10;
+      if (apply3) precio *= 0.97;
+      const subtotal = qty * precio;
+      newItems.push({
+        id: product.id,
+        nombre: product.nombre,
+        cantidad: qty,
+        precio_unitario: precio,
+        subtotal
+      });
+    }
+    if (newItems.length === 0) {
+      alert('No se encontraron productos válidos para añadir.');
+      closeAddModal();
+      return;
+    }
+    const pedidoDiv = document.getElementById(`pedido-${currentPedidoId}`);
+    if (!pedidoDiv) {
+      alert('Pedido no encontrado.');
+      closeAddModal();
+      return;
+    }
+    let items = JSON.parse(pedidoDiv.dataset.items || '[]');
+    newItems.forEach(newItem => {
+      const existingIndex = items.findIndex(i => i.id === newItem.id);
+      if (existingIndex >= 0) {
+        items[existingIndex].cantidad += newItem.cantidad;
+        items[existingIndex].subtotal = items[existingIndex].cantidad * items[existingIndex].precio_unitario;
+      } else {
+        items.push(newItem);
+      }
+    });
+    pedidoDiv.dataset.items = JSON.stringify(items);
+    const itemsContainer = document.getElementById(`items-${currentPedidoId}`);
+    if (itemsContainer) {
+      itemsContainer.innerHTML = items.map((item, index) => `
+        <div class="item" data-item-index="${index}">
+          <span id="item-text-${currentPedidoId}-${index}">${item.nombre}: <span id="cantidad-${currentPedidoId}-${index}">${item.cantidad}</span> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}</span>
+          <div class="item-controls">
+            <button class="increase" onclick="modificarCantidadPedido('${currentPedidoId}', ${index}, 1)">+</button>
+            <button class="decrease" onclick="modificarCantidadPedido('${currentPedidoId}', ${index}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
+            <button class="delete" onclick="eliminarItemPedido('${currentPedidoId}', ${index})">Eliminar</button>
+          </div>
+        </div>
+      `).join('');
+    }
+    const total = items.reduce((sum, it) => sum + it.subtotal, 0);
+    const totalSpan = document.getElementById(`total-${currentPedidoId}`);
+    if (totalSpan) totalSpan.textContent = formatMoney(total);
+    closeAddModal();
+  }
   async function init() {
     try {
       console.log('Iniciando carga de datos...');
@@ -1041,4 +1214,3 @@
 </script>
 </body>
 </html>
-
