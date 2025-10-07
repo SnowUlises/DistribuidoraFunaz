@@ -125,7 +125,7 @@
         console.log('Producto cargado:', producto);
 
         const check = producto.stock > 0 ? '<span class="checkmark checked"></span>' : '<span class="checkmark"></span>';
-        const existingItem = carrito.find(p => String(p.id) == String(id);
+        const existingItem = carrito.find(p => String(p.id) == String(id));
         const initialCantidad = existingItem ? existingItem.cantidad : 1;
 
         document.getElementById('detalle').innerHTML = `
@@ -270,7 +270,7 @@
       }
 
       carrito.forEach(item => {
-        const prod = productos.find(p => String(p.id) === String(item.id) || item;
+        const prod = productos.find(p => String(p.id) === String(item.id)) || item;
         const div = document.createElement('div');
         div.className = 'item-carrito';
         div.innerHTML = `
@@ -364,5 +364,6 @@
   </script>
 </body>
 </html>
+
 
 
