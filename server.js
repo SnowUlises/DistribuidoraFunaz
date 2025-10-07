@@ -129,7 +129,10 @@ app.delete('/api/peticiones/:id', async (req, res) => {
 ----------------------------- */
 app.get('/api/productos', async (req, res) => {
   try {
-    const { data, error } = await supabase.from('productos').select('*');
+    const { data, error } = await supabase
+  .from('productos')
+  .select('*')
+  .range(0, 4999)
     if (error) throw error;
     res.json(data);
   } catch (err) {
@@ -473,6 +476,7 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
