@@ -113,13 +113,19 @@
         const res = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/productos', { cache: 'no-store' });
         if (!res.ok) throw new Error(`HTTP ${res.status}: No se pudo cargar productos`);
         productos = await res.json();
-        producto = productos.find(p => p.id == id);
-        if (!producto) throw new Error('Producto no encontrado');
+        producto = productos.find(p => String(p.id) === String(id));
+        if (!producto) {
+  console.error("Producto no encontrado");
+  console.log("ID buscado:", id);
+  console.log("IDs disponibles:", productos.map(p => p.id));
+  console.log("Primeros productos:", productos.slice(0, 5));
+  throw new Error("Producto no encontrado");
+}
 
         console.log('Producto cargado:', producto);
 
         const check = producto.stock > 0 ? '<span class="checkmark checked"></span>' : '<span class="checkmark"></span>';
-        const existingItem = carrito.find(p => p.id == id);
+        const existingItem = carrito.find(p => String(p.id) == String(id);
         const initialCantidad = existingItem ? existingItem.cantidad : 1;
 
         document.getElementById('detalle').innerHTML = `
@@ -188,7 +194,7 @@
         return;
       }
 
-      const existente = carrito.find(p => p.id === producto.id);
+      const existente = carrito.find(p => String(p.id) === String(producto.id));
       const cantidadAnterior = existente ? existente.cantidad : 0;
       const diferencia = cantidad - cantidadAnterior;
 
@@ -264,7 +270,7 @@
       }
 
       carrito.forEach(item => {
-        const prod = productos.find(p => p.id === item.id) || item;
+        const prod = productos.find(p => String(p.id) === String(item.id) || item;
         const div = document.createElement('div');
         div.className = 'item-carrito';
         div.innerHTML = `
@@ -336,7 +342,7 @@
           actualizarContadorCarrito();
           // Update input field if product is loaded
           if (producto && cantidadInput) {
-            const existingItem = carrito.find(p => p.id === producto.id);
+            const existingItem = carrito.find(p => String(p.id) === String(producto.id));
             cantidadInput.value = existingItem ? existingItem.cantidad : 1;
           }
         } catch (err) {
@@ -358,4 +364,5 @@
   </script>
 </body>
 </html>
+
 
