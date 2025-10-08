@@ -508,7 +508,7 @@ function agregarAlCarrito(id, cantidad = 1, silent = false) {
     abrirModalCuenta();
     return;
   }
-  const producto = productos.find(p => String(p.id) === String(id));
+  const producto = productos.find(p => p.id === (id);
   if (!producto) return;
   const item = carrito.find(i => i.id === id);
   if (item) item.cantidad += cantidad;
@@ -535,7 +535,7 @@ function renderCarrito() {
     return;
   }
   carrito.forEach(item => {
-    const prod = productos.find(p => String(p.id) === String(id));;
+    const prod = productos.find(p => p.id === (id);
     if (!prod) return;
     const div = document.createElement('div');
     div.className = 'item-carrito';
@@ -650,7 +650,7 @@ function procesarPedido() {
     const id = parseInt(idStr.trim());
     const cantidad = parseInt(cantStr.trim()) || 1;
     if (isNaN(id) || isNaN(cantidad) || cantidad < 1) continue;
-    const prod = productos.find(p => String(p.id) === String(id));
+    const prod = productos.find(p => p.id === id);
     if (!prod) continue;
     tempPedido.push({id, cantidad, nombre: prod.nombre});
   }
@@ -739,4 +739,5 @@ setInterval(checkNotificaciones, 10000); // Verificar cada 10 segundos
 </script>
 </body>
 </html>
+
 
