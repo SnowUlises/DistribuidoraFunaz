@@ -129,12 +129,26 @@ app.delete('/api/peticiones/:id', async (req, res) => {
 ----------------------------- */
 app.get('/api/productos', async (req, res) => {
   try {
-    const { data, error } = await supabase
-  .from('productos')
-  .select('*')
-  .range(0, 4999)
-    if (error) throw error;
-    res.json(data);
+    const step = 1000;
+    let from = 0;
+    let all = [];
+    let done = false;
+
+    while (!done) {
+      const { data, error } = await supabase
+        .from('productos')
+        .select('*', { head: false })
+        .range(from, from + step - 1);
+
+      if (error) throw error;
+      if (!data.length) done = true;
+      else {
+        all = all.concat(data);
+        from += step;
+      }
+    }
+
+    res.json(all);
   } catch (err) {
     console.error('❌ Error cargando productos:', err);
     res.status(500).json({ error: 'No se pudieron cargar productos' });
@@ -476,6 +490,7 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
