@@ -299,6 +299,7 @@
   <div id="carritoContainer" style="display:none;">
     <h3>Carrito de compras</h3>
     <div id="itemsCarrito"></div>
+    <div id="totalCarrito" style="text-align:right; font-weight:bold; margin:10px 0; padding-right:10px;"></div>
     <div style="margin-top:10px; text-align:center;">
       <button onclick="vaciarCarrito()" style="background:#d9534f; padding:6px 12px; border:none; color:#fff; border-radius:6px; cursor:pointer;">Vaciar carrito</button>
     </div>
@@ -530,21 +531,24 @@ function actualizarContadorCarrito() {
 function renderCarrito() {
   const cont = document.getElementById('itemsCarrito');
   cont.innerHTML = '';
+  let total = 0;
   if(carrito.length === 0){
     cont.innerHTML = '<p>El carrito está vacío.</p>';
-    return;
+  } else {
+    carrito.forEach(item => {
+      const prod = productos.find(p => p.id === item.id);
+      if (!prod) return;
+      total += (prod.precio * 1.10) * item.cantidad;
+      const div = document.createElement('div');
+      div.className = 'item-carrito';
+      div.innerHTML = `
+        <span>${prod.nombre} x${item.cantidad}</span>
+        <button onclick="eliminarDelCarrito(${item.id})">X</button>
+      `;
+      cont.appendChild(div);
+    });
   }
-  carrito.forEach(item => {
-    const prod = productos.find(p => p.id === item.id);
-    if (!prod) return;
-    const div = document.createElement('div');
-    div.className = 'item-carrito';
-    div.innerHTML = `
-      <span>${prod.nombre} x${item.cantidad}</span>
-      <button onclick="eliminarDelCarrito(${item.id})">X</button>
-    `;
-    cont.appendChild(div);
-  });
+  document.getElementById('totalCarrito').textContent = `Total: $${total.toFixed(2)}`;
 }
 function eliminarDelCarrito(id) {
   carrito = carrito.filter(i => i.id !== id);
@@ -739,6 +743,3 @@ setInterval(checkNotificaciones, 10000); // Verificar cada 10 segundos
 </script>
 </body>
 </html>
-
-
-
