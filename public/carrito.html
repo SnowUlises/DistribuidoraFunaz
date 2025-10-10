@@ -42,7 +42,10 @@
 <div style="margin: 10px 0; text-align:center;">
   <input type="text" id="nombreCliente" placeholder="Nombre del cliente" style="padding:6px; width:80%; max-width:300px;">
 </div>
-    <button id="btnMostrarFormulario" class="enviar">Enviar pedido</button>
+    <div style="display:flex; justify-content:center; gap:1em;">
+      <button id="btnMostrarFormulario" class="enviar">Enviar pedido</button>
+      <button id="btnGenerarTicket" class="enviar">Generar Ticket</button>
+    </div>
 
     <div id="formOverlay">
       <div id="formDatos">
@@ -75,6 +78,7 @@ const totalPedido = document.getElementById('totalPedido');
 const btnConfirmar = document.getElementById('confirmarEnvio');
 const postActions = document.getElementById('postActions');
 const sinStockAviso = document.getElementById('sinStockAviso');
+const btnGenerarTicket = document.getElementById('btnGenerarTicket');
 
 const apiBase = 'https://distribuidorafunaz-a2o6.onrender.com/api';
 
@@ -102,10 +106,12 @@ function renderizarCarrito() {
   if (carrito.length === 0) {
     lista.innerHTML = '<p>El carrito está vacío.</p>';
     btnMostrarFormulario.style.display = 'none';
+    btnGenerarTicket.style.display = 'none';
     ocultarFormulario();
     return;
   }
   btnMostrarFormulario.style.display = 'block';
+  btnGenerarTicket.style.display = 'block';
 
   carrito.forEach((item, i) => {
     // comparación tolerante a tipo (string/number)
@@ -264,6 +270,69 @@ const nombreCliente = nombreInput.value.trim() || 'cliente';
   }
 });
 
+async function generarTicket() {
+  const esRegular = document.getElementById('clienteRegular').checked;
+  const nombreCliente = document.getElementById('nombreCliente').value.trim() || 'Cliente';
+  const items = [];
+  let total = 0;
+
+  for (const item of carrito) {
+    const p = productos.find(prod => prod.id == item.id);
+    if (!p) continue;
+
+    const factorDescuento = esRegular ? 0.97 : 1;
+    const precioUnitarioEnviado = Number(p.precio) * factorDescuento;
+    const precioFinal = precioUnitarioEnviado * 1.1; // El endpoint aplicará *1.1, pero calculamos para subtotal y total
+    const subtotal = item.cantidad * precioFinal;
+    total += subtotal;
+
+    items.push({
+      id: item.id,
+      nombre: p.nombre,
+      cantidad: item.cantidad,
+      precio_unitario: precioUnitarioEnviado,
+      subtotal: item.cantidad * precioUnitarioEnviado // Enviado no final, pero PDF recalculará con *1.1
+    });
+  }
+
+  if (items.length === 0) {
+    alert('Carrito vacío');
+    return;
+  }
+
+  const payload = {
+    user: nombreCliente,
+    items,
+    total, // Total final
+    fecha: new Date().toISOString()
+  };
+
+  try {
+    const res = await fetch(`${apiBase}/generar-pdf-peticion`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      throw new Error(txt || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    if (data.ok && data.pdf) {
+      window.open(data.pdf, '_blank');
+    } else {
+      alert('Error generando el ticket');
+    }
+  } catch (err) {
+    console.error('Error generando ticket:', err);
+    alert('No se pudo generar el ticket: ' + err.message);
+  }
+}
+
+btnGenerarTicket.addEventListener('click', generarTicket);
+
 // helper
 function formatMoney(n) {
   try { return new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS'}).format(n); }
@@ -284,28 +353,3 @@ function formatMoney(n) {
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
