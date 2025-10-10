@@ -43,8 +43,8 @@
   <input type="text" id="nombreCliente" placeholder="Nombre del cliente" style="padding:6px; width:80%; max-width:300px;">
 </div>
     <div style="display:flex; justify-content:center; gap:1em;">
-      <button id="btnMostrarFormulario" class="enviar">Enviar pedido</button>
       <button id="btnGenerarTicket" class="enviar">Generar Ticket</button>
+      <button id="btnMostrarFormulario" class="enviar">Enviar pedido</button>
     </div>
 
     <div id="formOverlay">
@@ -209,8 +209,8 @@ btnConfirmar.addEventListener('click', async () => {
   const productosClon = productos.map(p => ({...p}));
 
   for (const item of carrito) {
-  const producto = productosClon.find(p => p.id == item.id);
-  if (!producto) continue;
+    const producto = productosClon.find(p => p.id == item.id);
+    if (!producto) continue;
 
  if (typeof producto.stock === 'number') {
   // restamos la cantidad aunque quede negativa
