@@ -286,7 +286,7 @@
 </head>
 <body>
   <header>
-    <img src="imagenes/logo.png" alt="Logo" />
+    <img id="logoImg" src="" alt="Logo" />
     <h1>Distribuidora Funaz</h1>
     <div style="margin-left:auto; display:flex; gap:0.5em; align-items:center;">
   <div id="usuarioMenu"></div>
@@ -437,6 +437,11 @@ function cambiarCantidadPagina() {
   document.querySelector('.productos').style.setProperty('--cols', cols);
   renderProductos();
 }
+function getImageUrl(fileName) {
+  if (!fileName) return '';
+  const cleanFileName = fileName.trim().replace(/^imagenes\//, '');
+  return `https://slroycxifwezthdomkny.supabase.co/storage/v1/object/public/imagenes/${cleanFileName}`;
+}
 function renderProductos() {
   const cont = document.querySelector('.productos');
   cont.innerHTML = '';
@@ -467,8 +472,19 @@ function renderProductos() {
   productosPagina.forEach(p => {
     const div = document.createElement('div');
     div.className = 'producto';
+    const img = document.createElement('img');
+    img.alt = p.nombre;
+    img.src = getImageUrl('placeholder.png');
+    if (p.imagen) {
+      const publicUrl = getImageUrl(p.imagen);
+      if (publicUrl) {
+        const realImg = new Image();
+        realImg.src = publicUrl;
+        realImg.onload = () => { img.src = publicUrl; };
+        realImg.onerror = () => { img.src = getImageUrl('placeholder.png'); };
+      }
+    }
     div.innerHTML = `
-      <img src="imagenes/${p.id}.png" alt="${p.nombre}" onerror="this.onerror=null; this.src='imagenes/placeholder.png'" />
       <h3>${p.nombre}</h3>
       <div>$${(p.precio * 1.10).toFixed(2)}</div>
       <div class="stock ${p.stock > 0 ? 'con-stock' : 'sin-stock'}">
@@ -476,6 +492,7 @@ function renderProductos() {
 </div>
       <button class="btn-carrito" onclick="agregarAlCarrito(${p.id})">Agregar al carrito</button>
     `;
+    div.insertBefore(img, div.firstChild);
     div.style.cursor = 'pointer'; // opcional para indicar que es clickeable
     div.onclick = () => {
   window.location.href = `producto.html?id=${p.id}`;
@@ -740,6 +757,8 @@ async function handleNotifClick() {
 document.getElementById('btnNotif').addEventListener('click', handleNotifClick);
 checkNotificaciones();
 setInterval(checkNotificaciones, 10000); // Verificar cada 10 segundos
+const logoImg = document.getElementById('logoImg');
+logoImg.src = getImageUrl('logo.png');
 </script>
 </body>
 </html>
