@@ -460,46 +460,4 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
       for (const it of pedido.items || []) {
         const prodId = it.id;
         console.log(`🔄 Restaurando stock para producto ${prodId} (+${it.cantidad})`);
-        const { data: prod } = await supabase
-          .from('productos')
-          .select('*')
-          .eq('id', prodId)
-          .single();
-        if (prod) {
-          const newStock = (Number(prod.stock) || 0) + (Number(it.cantidad) || 0);
-          await supabase.from('productos').update({ stock: newStock }).eq('id', prodId);
-        }
-      }
-    } else {
-      console.log('🚫 Pedido marcado como recibido, no se restaura el stock');
-    }
-    // Eliminar el pedido
-    await supabase.from('pedidos').delete().eq('id', id);
-    // Eliminar el PDF asociado (si existe)
-    const { error: delErr } = await supabase.storage
-      .from('pedidos-pdf')
-      .remove([`pedido_${id}.pdf`]);
-    if (delErr) console.warn('⚠️ Error borrando PDF:', delErr);
-    else console.log(`🗑️ PDF pedido_${id}.pdf eliminado`);
-    res.json({ ok: true, mensaje: `Pedido eliminado${!recibido ? ' y stock restaurado' : ''}`, pedidoId: id });
-  } catch (err) {
-    console.error('❌ Exception en eliminar-pedido:', err);
-    res.status(500).json({ error: 'Error interno' });
-  }
-});
-app.listen(PORT, () => {
-  console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
-});
-
-
-
-
-
-
-
-
-
-
-
-
-
+        const { data: prod } = await sup
