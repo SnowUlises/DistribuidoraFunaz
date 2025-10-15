@@ -402,6 +402,39 @@
       if (userDetail) userDetail.open = true;
     });
   }
+  const detailsContents = new Map();
+  function setupDetails(det) {
+    if (detailsContents.has(det)) return;
+    const content = [];
+    let child = det.firstChild;
+    while (child) {
+      if (child.tagName !== 'SUMMARY') {
+        content.push(child);
+      }
+      child = child.nextSibling;
+    }
+    detailsContents.set(det, content);
+    if (!det.open) {
+      content.forEach(node => det.removeChild(node));
+    }
+    det.addEventListener('toggle', function() {
+      if (this.open) {
+        const cont = detailsContents.get(this);
+        cont.forEach(node => this.appendChild(node));
+      } else {
+        const newContent = [];
+        let ch = this.firstChild;
+        while (ch) {
+          if (ch.tagName !== 'SUMMARY') {
+            newContent.push(ch);
+          }
+          ch = ch.nextSibling;
+        }
+        detailsContents.set(this, newContent);
+        newContent.forEach(node => this.removeChild(node));
+      }
+    });
+  }
   async function cargarUsuarios() {
     try {
       const listaPedidos = document.getElementById('listaUsuarios');
@@ -525,6 +558,9 @@
           });
         });
       });
+      // Configurar details para búsqueda solo en abierto
+      document.querySelectorAll('#listaUsuarios details').forEach(setupDetails);
+      setupDetails(document.querySelector('main details:nth-of-type(1)'));
     } catch (err) {
       console.error('Error en cargarUsuarios:', err);
       mostrarError('Error inesperado al cargar usuarios y pedidos.');
@@ -870,6 +906,9 @@
         `;
         listaPeticiones.appendChild(peticionDiv);
       });
+      // Configurar details para búsqueda solo en abierto
+      document.querySelectorAll('#listaPeticiones details').forEach(setupDetails);
+      setupDetails(document.querySelector('main details:nth-of-type(2)'));
     } catch (err) {
       console.error('Error en cargarPeticiones:', err);
       mostrarError(`Error inesperado al cargar peticiones: ${err.message}`);
@@ -1216,4 +1255,3 @@
 </script>
 </body>
 </html>
-
