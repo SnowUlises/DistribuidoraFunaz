@@ -416,6 +416,11 @@ async function cargarProductos() {
     const res = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/productos');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     productos = await res.json();
+    console.log('Loaded products:', productos.length);
+    if (productos.length > 0) {
+      console.log('Sample product:', productos[0]);
+      console.log('Sample imagen values:', productos.slice(0, 5).map(p => p.imagen));
+    }
     cambiarCantidadPagina();
   } catch (err) {
     console.error('Error cargando productos:', err);
@@ -440,6 +445,7 @@ function cambiarCantidadPagina() {
 function getImageUrl(fileName) {
   if (!fileName) return '';
   const cleanFileName = fileName.trim().replace(/^imagenes\//, '');
+  console.log('Original filename:', fileName, 'Cleaned:', cleanFileName);
   return `https://slroycxifwezthdomkny.supabase.co/storage/v1/object/public/imagenes/${cleanFileName}`;
 }
 function renderProductos() {
@@ -475,14 +481,25 @@ function renderProductos() {
     const img = document.createElement('img');
     img.alt = p.nombre;
     img.src = getImageUrl('placeholder.png');
+    console.log('Placeholder URL for', p.nombre, ':', img.src);
     if (p.imagen) {
       const publicUrl = getImageUrl(p.imagen);
       if (publicUrl) {
         const realImg = new Image();
         realImg.src = publicUrl;
-        realImg.onload = () => { img.src = publicUrl; };
-        realImg.onerror = () => { img.src = getImageUrl('placeholder.png'); };
+        realImg.onload = () => { 
+          console.log('Successfully loaded image for', p.nombre, 'from URL:', publicUrl);
+          img.src = publicUrl; 
+        };
+        realImg.onerror = () => { 
+          console.error('Failed to load image for', p.nombre, 'from URL:', publicUrl);
+          img.src = getImageUrl('placeholder.png'); 
+        };
+      } else {
+        console.warn('No public URL generated for', p.nombre);
       }
+    } else {
+      console.log('No image filename provided for product:', p.nombre);
     }
     div.innerHTML = `
       <h3>${p.nombre}</h3>
@@ -759,6 +776,8 @@ checkNotificaciones();
 setInterval(checkNotificaciones, 10000); // Verificar cada 10 segundos
 const logoImg = document.getElementById('logoImg');
 logoImg.src = getImageUrl('logo.png');
+logoImg.onload = () => console.log('Logo loaded successfully from:', logoImg.src);
+logoImg.onerror = () => console.error('Failed to load logo from:', logoImg.src);
 </script>
 </body>
 </html>
