@@ -376,7 +376,7 @@ app.post('/api/Enviar-Peticion', async (req, res) => {
     }
 });
 async function generarPDF(pedido) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     const items = Array.isArray(pedido.items) ? pedido.items : [];
     const doc = new PDFDocument({
       size: [267, 862], // Tamaño fijo para impresora térmica
@@ -386,15 +386,14 @@ async function generarPDF(pedido) {
     doc.on('data', c => chunks.push(c));
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
-    // Logo (centrado y más grande)
-    const logoPath = path.join(process.cwd(), 'public', 'logo.png');
-    if (fs.existsSync(logoPath)) {
-      const logoWidth = 150; // Aumentado de 100 a 150 para hacerlo más grande
-      const xPosition = (267 - logoWidth) / 2; // Cálculo para centrar (ancho página - ancho logo) / 2
-      doc.image(logoPath, xPosition, 20, { width: logoWidth });
-      doc.moveDown(10); // Ajustado para dar más espacio tras el logo más grande
+    // Logo from Supabase
+    const { data: logoBlob, error: logoError } = await supabase.storage.from('imagenes').download('logo.png');
+    if (logoError) {
+      console.error('Error downloading logo:', logoError);
     } else {
-      doc.moveDown(3);
+      const logoBuffer = Buffer.from(await logoBlob.arrayBuffer());
+      doc.image(logoBuffer, 100, 20, { width: 100 });
+      doc.moveDown(8);
     }
     // Encabezado
     doc.font('Helvetica-Bold').fontSize(16).text(`${pedido.user || 'Invitado'}`, { align: 'center' }); // Reemplazo de "Distribuidora Funaz"
@@ -460,4 +459,35 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
       for (const it of pedido.items || []) {
         const prodId = it.id;
         console.log(`🔄 Restaurando stock para producto ${prodId} (+${it.cantidad})`);
-        const { data: prod } = await sup
+        const { data: prod } = await supabase
+          .from('productos')
+          .select('*')
+          .eq('id', prodId)
+          .single();
+
+        if (prod) {
+          const newStock = (Number(prod.stock) || 0) + (Number(it.cantidad) || 0);
+          await supabase.from('productos').update({ stock: newStock }).eq('id', prodId);
+        }
+      }
+    }
+
+    await supabase.from('pedidos').delete().eq('id', id);
+
+    const { error: delErr } = await supabase.storage
+      .from('pedidos-pdf')
+      .remove([`pedido_${id}.pdf`]);
+
+    if (delErr) console.warn('⚠️ Error borrando PDF:', delErr);
+    else console.log(`🗑️ PDF pedido_${id}.pdf eliminado`);
+
+    res.json({ ok: true, mensaje: 'Pedido eliminado y stock restaurado', pedidoId: id });
+  } catch (err) {
+    console.error('❌ Exception en eliminar-pedido:', err);
+    res.status(500).json({ error: 'Error interno' });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
+});c
