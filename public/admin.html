@@ -301,6 +301,19 @@
       background: #dc3545;
       color: white;
     }
+    button.load-more {
+      background: #4a90e2;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: block;
+      margin: 1em auto;
+    }
+    button.load-more:hover {
+      background: #357ABD;
+    }
   </style>
 </head>
 <body>
@@ -343,6 +356,7 @@
   const usedButtons = JSON.parse(localStorage.getItem('usedButtons') || '{}');
   let productos = [];
   let currentPedidoId = null;
+  window.usersPedidos = {};
   function guardarEstados() {
     localStorage.setItem('estadosPedidos', JSON.stringify(estadosPedidos));
   }
@@ -435,6 +449,71 @@
       }
     });
   }
+  function buildPedidoHTML(pedido, index, userName) {
+    const items = pedido.items;
+    const pedidoId = pedido.id ?? `${userName}-${index}`;
+    const key = `${userName}-${index}`;
+    const estado = estadosPedidos[key] || {};
+    const total = items.reduce((sum, p) => sum + p.subtotal, 0);
+    const { formattedDate, formattedTime } = formatDateTime(pedido.fecha);
+    return `
+      <li>
+        <div class="pedido-item" id="pedido-${pedidoId}">
+          <div class="pedido-line">
+            <strong>Pedido #${index + 1}</strong> del ${formattedDate} ${formattedTime} (ID: ${pedidoId}) - <b>Total: <span id="total-${pedidoId}">${formatMoney(total)}</span></b>
+          </div>
+          <div class="peticion-items" id="items-${pedidoId}">
+            ${items.map((item, itemIndex) => `
+              <div class="item" data-item-index="${itemIndex}">
+                <span id="item-text-${pedidoId}-${itemIndex}">${item.nombre}: <span id="cantidad-${pedidoId}-${itemIndex}">${item.cantidad}</span> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}</span>
+                <div class="item-controls">
+                  <button class="increase" onclick="modificarCantidadPedido('${pedidoId}', ${itemIndex}, 1)">+</button>
+                  <button class="decrease" onclick="modificarCantidadPedido('${pedidoId}', ${itemIndex}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
+                  <button class="delete" onclick="eliminarItemPedido('${pedidoId}', ${itemIndex})">Eliminar</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <div class="pedido-actions">
+            <button onclick="eliminarPedido('${pedidoId}', '${userName}', ${index})">Eliminar pedido</button>
+            <button class="guardar-btn" data-pedidoid="${pedidoId}" data-username="${userName}" data-index="${index}">
+              Guardar pedido
+            </button>
+            <button class="preview-pdf" onclick="previewPDFPedido('${pedidoId}')">Descargar PDF Preview</button>
+            <button class="add-product" onclick="openAddModal('${pedidoId}')">Añadir producto</button>
+            <button class="confirmar" onclick="guardarCambiosPedido('${pedidoId}')">Guardar Cambios</button>
+            <span class="guardar-status" id="guardar-status-${pedidoId}" aria-hidden="true">
+              ${estado.guardado ? '✅ Guardado' : ''}
+            </span>
+          </div>
+          <div class='status-container'>
+            <label><input type='checkbox' ${estado.guardado ? 'checked' : ''} onchange="toggleGuardado('${userName}',${index}, this)"> Guardado</label>
+            <label><input type='checkbox' ${estado.recibido ? 'checked' : ''} onchange="toggleRecibido('${userName}',${index}, this)"> Recibido</label>
+          </div>
+        </div>
+      </li>`;
+  }
+  function addGuardarBtnListener(btn) {
+    btn.addEventListener('click', async () => {
+      const pedidoId = btn.dataset.pedidoid;
+      const username = btn.dataset.username;
+      const idx = Number(btn.dataset.index);
+      const statusSpan = document.getElementById(`guardar-status-${pedidoId}`);
+      if (statusSpan) statusSpan.textContent = '⏳ Guardando...';
+      try {
+        await guardarPedido(pedidoId);
+        if (statusSpan) statusSpan.textContent = '✅ Guardado';
+        const key = `${username}-${idx}`;
+        estadosPedidos[key] = estadosPedidos[key] || {};
+        estadosPedidos[key].guardado = true;
+        guardarEstados();
+      } catch (err) {
+        if (statusSpan) statusSpan.textContent = '❌ Error';
+        console.error('Error al guardar pedido:', err);
+        mostrarError(`Error al guardar pedido ${pedidoId}: ${err.message}`);
+      }
+    });
+  }
   async function cargarUsuarios() {
     try {
       const listaPedidos = document.getElementById('listaUsuarios');
@@ -457,9 +536,7 @@
       pedidosRaw.forEach(p => {
         const user = p.user || 'Invitado';
         if (!pedidosPorUsuario[user]) pedidosPorUsuario[user] = [];
-        // Parse items if it's a string
         let items = Array.isArray(p.items) ? p.items : typeof p.items === 'string' ? JSON.parse(p.items || '[]') : [];
-        // Sanitize items
         items = items.map(item => ({
           id: item.id || 'unknown',
           nombre: String(item.nombre || 'Sin nombre'),
@@ -476,59 +553,25 @@
       }
       Object.entries(pedidosPorUsuario).forEach(([userName, userPedidos]) => {
         userPedidos.sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
-        const userDiv = document.createElement('details');
-        userDiv.className = 'user-details';
+        usersPedidos[userName] = userPedidos;
+        const initialCount = 5;
+        const pedidosToShow = userPedidos.slice(0, initialCount);
         let pedidosHTML = '<ul>';
-        userPedidos.forEach((pedido, index) => {
-          const items = pedido.items;
-          const pedidoId = pedido.id ?? `${userName}-${index}`;
-          const key = `${userName}-${index}`;
-          const estado = estadosPedidos[key] || {};
-          const total = items.reduce((sum, p) => sum + p.subtotal, 0);
-          const { formattedDate, formattedTime } = formatDateTime(pedido.fecha);
-          pedidosHTML += `
-            <li>
-              <div class="pedido-item" id="pedido-${pedidoId}">
-                <div class="pedido-line">
-                  <strong>Pedido #${index + 1}</strong> del ${formattedDate} ${formattedTime} (ID: ${pedidoId}) - <b>Total: <span id="total-${pedidoId}">${formatMoney(total)}</span></b>
-                </div>
-                <div class="peticion-items" id="items-${pedidoId}">
-                  ${items.map((item, itemIndex) => `
-                    <div class="item" data-item-index="${itemIndex}">
-                      <span id="item-text-${pedidoId}-${itemIndex}">${item.nombre}: <span id="cantidad-${pedidoId}-${itemIndex}">${item.cantidad}</span> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}</span>
-                      <div class="item-controls">
-                        <button class="increase" onclick="modificarCantidadPedido('${pedidoId}', ${itemIndex}, 1)">+</button>
-                        <button class="decrease" onclick="modificarCantidadPedido('${pedidoId}', ${itemIndex}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
-                        <button class="delete" onclick="eliminarItemPedido('${pedidoId}', ${itemIndex})">Eliminar</button>
-                      </div>
-                    </div>
-                  `).join('')}
-                </div>
-                <div class="pedido-actions">
-                  <button onclick="eliminarPedido('${pedidoId}', '${userName}', ${index})">Eliminar pedido</button>
-                  <button class="guardar-btn" data-pedidoid="${pedidoId}" data-username="${userName}" data-index="${index}">
-                    Guardar pedido
-                  </button>
-                  <button class="preview-pdf" onclick="previewPDFPedido('${pedidoId}')">Descargar PDF Preview</button>
-                  <button class="add-product" onclick="openAddModal('${pedidoId}')">Añadir producto</button>
-                  <button class="confirmar" onclick="guardarCambiosPedido('${pedidoId}')">Guardar Cambios</button>
-                  <span class="guardar-status" id="guardar-status-${pedidoId}" aria-hidden="true">
-                    ${estado.guardado ? '✅ Guardado' : ''}
-                  </span>
-                </div>
-                <div class='status-container'>
-                  <label><input type='checkbox' ${estado.guardado ? 'checked' : ''} onchange="toggleGuardado('${userName}',${index}, this)"> Guardado</label>
-                  <label><input type='checkbox' ${estado.recibido ? 'checked' : ''} onchange="toggleRecibido('${userName}',${index}, this)"> Recibido</label>
-                </div>
-              </div>
-            </li>`;
+        pedidosToShow.forEach((pedido, index) => {
+          pedidosHTML += buildPedidoHTML(pedido, index, userName);
         });
         pedidosHTML += '</ul>';
+        const hasMore = userPedidos.length > initialCount;
+        if (hasMore) {
+          pedidosHTML += `<button class="load-more" data-username="${userName}" data-loaded="${initialCount}" onclick="loadMorePedidos(this)">Cargar más</button>`;
+        }
+        const userDiv = document.createElement('details');
+        userDiv.className = 'user-details';
         userDiv.innerHTML = `<summary>${userName}</summary>
           <div class='usuario-item'>${pedidosHTML}</div>`;
         listaPedidos.appendChild(userDiv);
-        // Set dataset.items programmatically
-        userPedidos.forEach((pedido, index) => {
+        // Set dataset.items
+        pedidosToShow.forEach((pedido, index) => {
           const pedidoId = pedido.id ?? `${userName}-${index}`;
           const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
           if (pedidoDiv) {
@@ -536,27 +579,8 @@
             pedidoDiv.dataset.originalItems = JSON.stringify(pedido.items);
           }
         });
-        userDiv.querySelectorAll('.guardar-btn').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            const pedidoId = btn.dataset.pedidoid;
-            const username = btn.dataset.username;
-            const idx = Number(btn.dataset.index);
-            const statusSpan = document.getElementById(`guardar-status-${pedidoId}`);
-            if (statusSpan) statusSpan.textContent = '⏳ Guardando...';
-            try {
-              await guardarPedido(pedidoId);
-              if (statusSpan) statusSpan.textContent = '✅ Guardado';
-              const key = `${username}-${idx}`;
-              estadosPedidos[key] = estadosPedidos[key] || {};
-              estadosPedidos[key].guardado = true;
-              guardarEstados();
-            } catch (err) {
-              if (statusSpan) statusSpan.textContent = '❌ Error';
-              console.error('Error al guardar pedido:', err);
-              mostrarError(`Error al guardar pedido ${pedidoId}: ${err.message}`);
-            }
-          });
-        });
+        // Add listeners to guardar-btn
+        userDiv.querySelectorAll('.guardar-btn').forEach(addGuardarBtnListener);
       });
       // Configurar details para búsqueda solo en abierto
       document.querySelectorAll('#listaUsuarios details').forEach(setupDetails);
@@ -566,6 +590,33 @@
       mostrarError('Error inesperado al cargar usuarios y pedidos.');
       const listaPedidos = document.getElementById('listaUsuarios');
       if (listaPedidos) listaPedidos.innerHTML = '<p>Error al cargar pedidos.</p>';
+    }
+  }
+  function loadMorePedidos(btn) {
+    const userName = btn.dataset.username;
+    const loaded = parseInt(btn.dataset.loaded);
+    const userPedidos = usersPedidos[userName];
+    const nextPedidos = userPedidos.slice(loaded, loaded + 5);
+    if (nextPedidos.length === 0) return;
+    const ul = btn.previousElementSibling;
+    nextPedidos.forEach((pedido, offset) => {
+      const index = loaded + offset;
+      const liHTML = buildPedidoHTML(pedido, index, userName);
+      ul.insertAdjacentHTML('beforeend', liHTML);
+      const pedidoId = pedido.id ?? `${userName}-${index}`;
+      const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
+      if (pedidoDiv) {
+        pedidoDiv.dataset.items = JSON.stringify(pedido.items);
+        pedidoDiv.dataset.originalItems = JSON.stringify(pedido.items);
+      }
+      const guardarBtn = pedidoDiv.querySelector('.guardar-btn');
+      if (guardarBtn) {
+        addGuardarBtnListener(guardarBtn);
+      }
+    });
+    btn.dataset.loaded = loaded + nextPedidos.length;
+    if (parseInt(btn.dataset.loaded) >= userPedidos.length) {
+      btn.remove();
     }
   }
   function modificarCantidadPedido(pedidoId, itemIndex, change) {
@@ -691,7 +742,7 @@
       const savedScroll = window.scrollY;
       await Promise.all([cargarPedidos(), cargarUsuarios()]);
       restoreOpenStates(openStates);
-      window.scrollTo(0, savedScroll);
+      setTimeout(() => window.scrollTo(0, savedScroll), 100);
     } catch (err) {
       console.error('Error al guardar cambios del pedido:', err);
       mostrarError(`No se pudo guardar los cambios del pedido ${pedidoId}: ${err.message}`);
@@ -790,9 +841,11 @@
       delete estadosPedidos[key];
       guardarEstados();
       const openStates = getOpenStates();
+      const savedScroll = window.scrollY;
       await cargarPedidos();
       await cargarUsuarios();
       restoreOpenStates(openStates);
+      setTimeout(() => window.scrollTo(0, savedScroll), 100);
       alert('Pedido eliminado correctamente.');
     } catch (err) {
       console.error('Error al eliminar pedido:', err);
@@ -1076,8 +1129,10 @@
       saveUsedButtons();
       alert(`Petición ${subtractThreePercent ? 'confirmada con -3%' : 'confirmada'} y eliminada con éxito.`);
       const openStates = getOpenStates();
+      const savedScroll = window.scrollY;
       await Promise.all([cargarPedidos(), cargarPeticiones(), cargarUsuarios()]);
       restoreOpenStates(openStates);
+      setTimeout(() => window.scrollTo(0, savedScroll), 100);
     } catch (err) {
       console.error('Error en confirmarPeticion:', err);
       mostrarError(`No se pudo confirmar la petición ${peticionId}: ${err.message}`);
