@@ -159,10 +159,12 @@
     .status-container input[type="checkbox"] {
       margin-right: 4px;
     }
-    .button-group {
+    .pedido-actions, .button-group {
       display: flex;
-      gap: 0.5em;
-      margin-top: 0.5em;
+      flex-wrap: wrap;
+      gap: 0.8em;
+      margin-top: 1em;
+      align-items: center;
     }
     button.confirmar {
       background: #28a745;
@@ -228,6 +230,28 @@
     }
     button.delete-peticion:hover {
       background: #c82333;
+    }
+    /* NUEVO BOTÓN ENFOCAR */
+    button.enfocar {
+      background: #9c27b0;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button.enfocar:hover {
+      background: #7b1fa2;
+    }
+    .pedido-item.enfocado {
+      background: #f3e5f5;
+      border: 3px solid #9c27b0;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(156, 39, 176, 0.3);
+      transform: scale(1.02);
+      transition: all 0.3s;
     }
     button:disabled {
       background: #ccc;
@@ -357,6 +381,7 @@
   let productos = [];
   let currentPedidoId = null;
   window.usersPedidos = {};
+
   function guardarEstados() {
     localStorage.setItem('estadosPedidos', JSON.stringify(estadosPedidos));
   }
@@ -368,6 +393,54 @@
     if (el) el.textContent = msg;
     else console.warn('mensajeError no encontrado:', msg);
   }
+
+  // ==================== NUEVA FUNCIÓN ENFOCAR ====================
+  function enfocarPedido(pedidoId) {
+    const selectedPedido = document.getElementById(`pedido-${pedidoId}`);
+    if (!selectedPedido) return;
+
+    const btn = selectedPedido.querySelector('.enfocar');
+    const wasFocused = selectedPedido.classList.contains('enfocado');
+
+    // Resetear todo siempre primero
+    document.querySelectorAll('.pedido-item').forEach(p => {
+      p.style.display = '';
+      p.classList.remove('enfocado');
+      const b = p.querySelector('.enfocar');
+      if (b) b.textContent = 'Enfocar';
+    });
+
+    const peticionesSection = document.querySelector('main details:nth-of-type(2)');
+    if (peticionesSection) peticionesSection.style.display = '';
+
+    if (!wasFocused) {
+      // Aplicar modo enfoque
+      document.querySelectorAll('.pedido-item').forEach(p => {
+        if (p.id !== `pedido-${pedidoId}`) {
+          p.style.display = 'none';
+        }
+      });
+
+      if (peticionesSection) peticionesSection.style.display = 'none';
+
+      selectedPedido.classList.add('enfocado');
+      btn.textContent = 'Mostrar todos';
+
+      // Abrir solo el usuario correspondiente
+      const userDetails = selectedPedido.closest('.user-details');
+      if (userDetails) {
+        userDetails.open = true;
+        document.querySelectorAll('.user-details').forEach(ud => {
+          if (ud !== userDetails) ud.open = false;
+        });
+      }
+
+      selectedPedido.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    // Si ya estaba enfocado → solo se reseteó arriba, queda normal
+  }
+  // ================================================================
+
   function toggleGuardado(usuario, idx, el) {
     const key = `${usuario}-${idx}`;
     const nuevo = !!el.checked;
@@ -482,6 +555,8 @@
             <button class="preview-pdf" onclick="previewPDFPedido('${pedidoId}')">Descargar PDF Preview</button>
             <button class="add-product" onclick="openAddModal('${pedidoId}')">Añadir producto</button>
             <button class="confirmar" onclick="guardarCambiosPedido('${pedidoId}')">Guardar Cambios</button>
+            <!-- BOTÓN ENFOCAR AÑADIDO AQUÍ -->
+            <button class="enfocar" onclick="enfocarPedido('${pedidoId}')">Enfocar</button>
             <span class="guardar-status" id="guardar-status-${pedidoId}" aria-hidden="true">
               ${estado.guardado ? '✅ Guardado' : ''}
             </span>
@@ -493,6 +568,7 @@
         </div>
       </li>`;
   }
+
   function addGuardarBtnListener(btn) {
     btn.addEventListener('click', async () => {
       const pedidoId = btn.dataset.pedidoid;
@@ -1310,3 +1386,4 @@
 </script>
 </body>
 </html>
+
