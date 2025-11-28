@@ -231,7 +231,6 @@
     button.delete-peticion:hover {
       background: #c82333;
     }
-    /* NUEVO BOTÓN ENFOCAR */
     button.enfocar {
       background: #9c27b0;
       border: none;
@@ -249,9 +248,11 @@
       background: #f3e5f5;
       border: 3px solid #9c27b0;
       border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(156, 39, 176, 0.3);
+      box-shadow: 0 10px 30px rgba(156, 39, 176, 0.4);
       transform: scale(1.02);
       transition: all 0.3s;
+      z-index: 10;
+      position: relative;
     }
     button:disabled {
       background: #ccc;
@@ -368,6 +369,7 @@
       <button type="button" onclick="closeAddModal()">Cancelar</button>
     </form>
   </dialog>
+
   <script>
   const apiBase = 'https://distribuidorafunaz-a2o6.onrender.com/api';
   // Security check
@@ -394,15 +396,15 @@
     else console.warn('mensajeError no encontrado:', msg);
   }
 
-  // ==================== NUEVA FUNCIÓN ENFOCAR ====================
+  // ==================== FUNCIÓN ENFOCAR ====================
   function enfocarPedido(pedidoId) {
     const selectedPedido = document.getElementById(`pedido-${pedidoId}`);
     if (!selectedPedido) return;
 
     const btn = selectedPedido.querySelector('.enfocar');
-    const wasFocused = selectedPedido.classList.contains('enfocado');
+    const estaEnfocado = selectedPedido.classList.contains('enfocado');
 
-    // Resetear todo siempre primero
+    // Resetear todo
     document.querySelectorAll('.pedido-item').forEach(p => {
       p.style.display = '';
       p.classList.remove('enfocado');
@@ -413,33 +415,35 @@
     const peticionesSection = document.querySelector('main details:nth-of-type(2)');
     if (peticionesSection) peticionesSection.style.display = '';
 
-    if (!wasFocused) {
-      // Aplicar modo enfoque
+    if (!estaEnfocado) {
+      // Ocultar todos los demás pedidos
       document.querySelectorAll('.pedido-item').forEach(p => {
         if (p.id !== `pedido-${pedidoId}`) {
           p.style.display = 'none';
         }
       });
 
+      // Ocultar sección de peticiones
       if (peticionesSection) peticionesSection.style.display = 'none';
 
+      // Resaltar el pedido seleccionado
       selectedPedido.classList.add('enfocado');
       btn.textContent = 'Mostrar todos';
 
-      // Abrir solo el usuario correspondiente
+      // Abrir solo el usuario correspondiente y cerrar los demás
       const userDetails = selectedPedido.closest('.user-details');
       if (userDetails) {
-        userDetails.open = true;
         document.querySelectorAll('.user-details').forEach(ud => {
-          if (ud !== userDetails) ud.open = false;
+          ud.open = false;
         });
+        userDetails.open = true;
       }
 
+      // Scroll suave al pedido
       selectedPedido.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-    // Si ya estaba enfocado → solo se reseteó arriba, queda normal
   }
-  // ================================================================
+  // ========================================================
 
   function toggleGuardado(usuario, idx, el) {
     const key = `${usuario}-${idx}`;
@@ -522,6 +526,7 @@
       }
     });
   }
+
   function buildPedidoHTML(pedido, index, userName) {
     const items = pedido.items;
     const pedidoId = pedido.id ?? `${userName}-${index}`;
@@ -555,7 +560,6 @@
             <button class="preview-pdf" onclick="previewPDFPedido('${pedidoId}')">Descargar PDF Preview</button>
             <button class="add-product" onclick="openAddModal('${pedidoId}')">Añadir producto</button>
             <button class="confirmar" onclick="guardarCambiosPedido('${pedidoId}')">Guardar Cambios</button>
-            <!-- BOTÓN ENFOCAR AÑADIDO AQUÍ -->
             <button class="enfocar" onclick="enfocarPedido('${pedidoId}')">Enfocar</button>
             <span class="guardar-status" id="guardar-status-${pedidoId}" aria-hidden="true">
               ${estado.guardado ? '✅ Guardado' : ''}
@@ -590,6 +594,7 @@
       }
     });
   }
+
   async function cargarUsuarios() {
     try {
       const listaPedidos = document.getElementById('listaUsuarios');
@@ -646,7 +651,6 @@
         userDiv.innerHTML = `<summary>${userName}</summary>
           <div class='usuario-item'>${pedidosHTML}</div>`;
         listaPedidos.appendChild(userDiv);
-        // Set dataset.items
         pedidosToShow.forEach((pedido, index) => {
           const pedidoId = pedido.id ?? `${userName}-${index}`;
           const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
@@ -655,10 +659,8 @@
             pedidoDiv.dataset.originalItems = JSON.stringify(pedido.items);
           }
         });
-        // Add listeners to guardar-btn
         userDiv.querySelectorAll('.guardar-btn').forEach(addGuardarBtnListener);
       });
-      // Configurar details para búsqueda solo en abierto
       document.querySelectorAll('#listaUsuarios details').forEach(setupDetails);
       setupDetails(document.querySelector('main details:nth-of-type(1)'));
     } catch (err) {
@@ -668,6 +670,7 @@
       if (listaPedidos) listaPedidos.innerHTML = '<p>Error al cargar pedidos.</p>';
     }
   }
+
   function loadMorePedidos(btn) {
     const userName = btn.dataset.username;
     const loaded = parseInt(btn.dataset.loaded);
@@ -695,6 +698,7 @@
       btn.remove();
     }
   }
+
   function modificarCantidadPedido(pedidoId, itemIndex, change) {
     console.log(`Modificando cantidad: pedidoId=${pedidoId}, itemIndex=${itemIndex}, change=${change}`);
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
@@ -716,8 +720,6 @@
     if (cantidadSpan && itemText) {
       cantidadSpan.textContent = items[itemIndex].cantidad;
       itemText.innerHTML = `${items[itemIndex].nombre}: <span id="cantidad-${pedidoId}-${itemIndex}">${items[itemIndex].cantidad}</span> x ${formatMoney(items[itemIndex].precio_unitario)} = ${formatMoney(items[itemIndex].subtotal)}`;
-    } else {
-      console.error(`Elementos cantidad-${pedidoId}-${itemIndex} o item-text-${pedidoId}-${itemIndex} no encontrados`);
     }
     const decreaseBtn = document.querySelector(`#items-${pedidoId} .item[data-item-index="${itemIndex}"] .decrease`);
     if (decreaseBtn) {
@@ -727,24 +729,14 @@
     const totalSpan = document.getElementById(`total-${pedidoId}`);
     if (totalSpan) {
       totalSpan.textContent = formatMoney(total);
-    } else {
-      console.error(`Total span total-${pedidoId} no encontrado`);
     }
   }
+
   function eliminarItemPedido(pedidoId, itemIndex) {
     if (!confirm('¿Eliminar este item del pedido?')) return;
-    console.log(`Eliminando item: pedidoId=${pedidoId}, itemIndex=${itemIndex}`);
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-    if (!pedidoDiv) {
-      console.error(`Pedido ${pedidoId} no encontrado en el DOM`);
-      mostrarError(`Pedido ${pedidoId} no encontrado`);
-      return;
-    }
+    if (!pedidoDiv) return;
     let items = JSON.parse(pedidoDiv.dataset.items || '[]');
-    if (!items[itemIndex]) {
-      console.error(`Item ${itemIndex} no encontrado en pedido ${pedidoId}`);
-      return;
-    }
     items = items.filter((_, idx) => idx !== itemIndex);
     pedidoDiv.dataset.items = JSON.stringify(items);
     const itemsContainer = document.getElementById(`items-${pedidoId}`);
@@ -761,27 +753,18 @@
       `).join('') : '<p>No hay items en este pedido.</p>';
       const total = items.reduce((sum, it) => sum + it.subtotal, 0);
       const totalSpan = document.getElementById(`total-${pedidoId}`);
-      if (totalSpan) {
-        totalSpan.textContent = formatMoney(total);
-      }
-    } else {
-      console.error(`Items container items-${pedidoId} no encontrado`);
+      if (totalSpan) totalSpan.textContent = formatMoney(total);
     }
   }
+
   async function guardarCambiosPedido(pedidoId) {
     if (!confirm('¿Guardar los cambios en este pedido?')) return;
-    console.log(`Guardando cambios para pedido ${pedidoId}`);
     try {
       const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-      if (!pedidoDiv) {
-        throw new Error('Pedido no encontrado en el DOM');
-      }
+      if (!pedidoDiv) throw new Error('Pedido no encontrado');
       const items = JSON.parse(pedidoDiv.dataset.items || '[]');
       const originalItems = JSON.parse(pedidoDiv.dataset.originalItems || '[]');
-      if (!items || items.length === 0) {
-        alert('No hay items en el pedido para guardar.');
-        return;
-      }
+      if (!items || items.length === 0) return alert('No hay items');
       const stockUpdates = [];
       items.forEach(item => {
         const originalItem = originalItems.find(oi => oi.id === item.id);
@@ -801,17 +784,13 @@
         })),
         stockUpdates
       };
-      console.log('💾 Enviando a actualizar-pedido:', JSON.stringify(payload, null, 2));
       const res = await fetch(`${apiBase}/actualizar-pedido/${pedidoId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
         cache: 'no-store'
       });
-      if (!res.ok) {
-        const txt = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-        throw new Error(txt.error || `HTTP ${res.status}`);
-      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       pedidoDiv.dataset.originalItems = JSON.stringify(items);
       alert('Cambios guardados con éxito.');
       const openStates = getOpenStates();
@@ -820,28 +799,16 @@
       restoreOpenStates(openStates);
       setTimeout(() => window.scrollTo(0, savedScroll), 100);
     } catch (err) {
-      console.error('Error al guardar cambios del pedido:', err);
-      mostrarError(`No se pudo guardar los cambios del pedido ${pedidoId}: ${err.message}`);
+      console.error(err);
+      mostrarError(`Error al guardar cambios: ${err.message}`);
     }
   }
+
   async function previewPDFPedido(pedidoId) {
     try {
       const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-      if (!pedidoDiv) {
-        throw new Error('Pedido no encontrado en el DOM');
-      }
-      console.log('Raw dataset.items (pedido):', pedidoDiv.dataset.items);
-      let items;
-      try {
-        items = JSON.parse(pedidoDiv.dataset.items || '[]');
-      } catch (parseErr) {
-        console.error('Invalid JSON in dataset.items:', pedidoDiv.dataset.items, parseErr);
-        throw new Error('Formato de items inválido');
-      }
-      if (!Array.isArray(items) || items.length === 0) {
-        alert('No hay items en el pedido para previsualizar.');
-        return;
-      }
+      if (!pedidoDiv) throw new Error('Pedido no encontrado');
+      let items = JSON.parse(pedidoDiv.dataset.items || '[]');
       const userName = pedidoDiv.closest('.user-details').querySelector('summary').textContent;
       const payload = {
         user: userName,
@@ -855,65 +822,50 @@
         total: items.reduce((sum, item) => sum + (Number(item.cantidad) * Number(item.precio_unitario)), 0),
         fecha: new Date().toISOString()
       };
-      console.log('📄 Enviando a generar-pdf-peticion:', JSON.stringify(payload, null, 2));
       const saveRes = await fetch(`${apiBase}/generar-pdf-peticion`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
         cache: 'no-store'
       });
-      if (!saveRes.ok) {
-        const txt = await saveRes.json().catch(() => ({ error: `HTTP ${saveRes.status}` }));
-        throw new Error(txt.error || `HTTP ${saveRes.status}`);
-      }
+      if (!saveRes.ok) throw new Error(`HTTP ${saveRes.status}`);
       const data = await saveRes.json();
       if (data.ok && data.pdf) {
         window.open(data.pdf, '_blank');
-      } else {
-        throw new Error('No se pudo generar el PDF de preview');
       }
     } catch (err) {
-      console.error('Error en previewPDFPedido:', err);
-      mostrarError(`No se pudo generar el PDF de preview para el pedido ${pedidoId}: ${err.message}`);
+      console.error(err);
+      mostrarError(`Error al generar PDF: ${err.message}`);
     }
   }
+
   async function guardarPedido(pedidoId) {
     try {
       const r = await fetch(`${apiBase}/pedidos/${pedidoId}/pdf`, { cache: 'no-store' });
-      if (!r.ok) {
-        const txt = await r.text().catch(() => '');
-        throw new Error(`Error del servidor: ${r.status} ${txt}`);
-      }
+      if (!r.ok) throw new Error(`Error del servidor: ${r.status}`);
       const data = await r.json();
       if (data.ok && data.pdf) {
         window.open(data.pdf, '_blank');
-      } else {
-        throw new Error('No se pudo generar el PDF');
       }
     } catch (err) {
-      console.error('No se pudo generar el PDF:', err);
+      console.error(err);
       throw err;
     }
   }
+
   async function eliminarPedido(pedidoId, usuario, index) {
     if (!confirm('¿Eliminar este pedido?')) return;
     try {
       const key = `${usuario}-${index}`;
       const estado = estadosPedidos[key] || {};
       const esRecibido = estado.recibido || false;
-      console.log(`Eliminando pedido ${pedidoId}, recibido: ${esRecibido}`);
       const res = await fetch(`${apiBase}/eliminar-pedido/${encodeURIComponent(pedidoId)}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ recibido: esRecibido }),
         cache: 'no-store'
       });
-      if (!res.ok) {
-        const txt = await res.text().catch(() => '');
-        console.warn('Error del servidor al eliminar pedido:', res.status, txt);
-        mostrarError(`No se pudo eliminar el pedido en ${apiBase}/eliminar-pedido/${pedidoId}: HTTP ${res.status}`);
-        return;
-      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       delete estadosPedidos[key];
       guardarEstados();
       const openStates = getOpenStates();
@@ -924,26 +876,22 @@
       setTimeout(() => window.scrollTo(0, savedScroll), 100);
       alert('Pedido eliminado correctamente.');
     } catch (err) {
-      console.error('Error al eliminar pedido:', err);
-      mostrarError(`Error de red al eliminar pedido: ${err.message}`);
+      console.error(err);
+      mostrarError(`Error al eliminar pedido: ${err.message}`);
     }
   }
+
   async function cargarPedidos() {
     try {
       const res = await fetch(`${apiBase}/pedidos`, { cache: 'no-store' });
-      if (!res.ok) {
-        console.warn('No se pudieron cargar pedidos:', res.status, await res.text().catch(() => ''));
-        mostrarError(`Error al cargar pedidos de ${apiBase}/pedidos: HTTP ${res.status}`);
-        return;
-      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       localStorage.setItem('pedidos', JSON.stringify(data));
-      console.log('Pedidos guardados en localStorage:', data);
     } catch (err) {
-      console.error('Error cargando pedidos:', err);
-      mostrarError(`Error de red al cargar pedidos: ${err.message}`);
+      console.error(err);
     }
   }
+
   function formatMoney(n) {
     try {
       return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n);
@@ -951,37 +899,26 @@
       return '$' + Number(n).toFixed(2);
     }
   }
+
   async function cargarProductos() {
     try {
       const res = await fetch(`${apiBase}/productos`, { cache: 'no-store' });
-      if (!res.ok) {
-        throw new Error(`Error al cargar productos: HTTP ${res.status}`);
-      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       productos = await res.json();
-      console.log('Productos cargados:', productos);
     } catch (err) {
-      console.error('Error en cargarProductos:', err);
-      mostrarError('Error al cargar productos para verificación de stock.');
+      console.error(err);
+      mostrarError('Error al cargar productos.');
     }
   }
+
   async function cargarPeticiones() {
     try {
       const listaPeticiones = document.getElementById('listaPeticiones');
-      if (!listaPeticiones) {
-        console.error('Elemento listaPeticiones no encontrado en el DOM');
-        mostrarError('Error: listaPeticiones no encontrado en el DOM');
-        return;
-      }
+      if (!listaPeticiones) return;
       listaPeticiones.innerHTML = '<p>Cargando peticiones...</p>';
       const res = await fetch(`${apiBase}/peticiones`, { cache: 'no-store' });
-      if (!res.ok) {
-        console.warn('Error al cargar peticiones:', res.status, await res.text().catch(() => ''));
-        mostrarError(`Error al cargar peticiones de ${apiBase}/peticiones: HTTP ${res.status}`);
-        listaPeticiones.innerHTML = '<p>No se pudieron cargar las peticiones.</p>';
-        return;
-      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const peticiones = await res.json();
-      console.log('Peticiones cargadas:', peticiones);
       listaPeticiones.innerHTML = '';
       if (peticiones.length === 0) {
         listaPeticiones.innerHTML = '<p>No hay peticiones registradas.</p>';
@@ -1021,7 +958,7 @@
                 `;
                 }).join('')}
               </div>
-              ${isUsed ? `<div class="status">Estado: ${isUsed === 'normal' ? 'Confirmado' : 'Confirmado -3%'}</div>` : `
+              ${isUsed ? `<div class="status">Estado: ${isUsed === 'plus7' ? 'Confirmado -3%' : 'Confirmado'}</div>` : `
                 <div class="button-group">
                   <button class="confirmar" onclick="confirmarPeticion(${peticion.id}, false)">Confirmar Pedido</button>
                   <button class="confirmar-plus" onclick="confirmarPeticion(${peticion.id}, true)">Confirmar Pedido -3%</button>
@@ -1035,30 +972,19 @@
         `;
         listaPeticiones.appendChild(peticionDiv);
       });
-      // Configurar details para búsqueda solo en abierto
       document.querySelectorAll('#listaPeticiones details').forEach(setupDetails);
       setupDetails(document.querySelector('main details:nth-of-type(2)'));
     } catch (err) {
-      console.error('Error en cargarPeticiones:', err);
-      mostrarError(`Error inesperado al cargar peticiones: ${err.message}`);
-      const listaPeticiones = document.getElementById('listaPeticiones');
-      if (listaPeticiones) listaPeticiones.innerHTML = '<p>Error al cargar peticiones.</p>';
+      console.error(err);
+      mostrarError('Error al cargar peticiones.');
     }
   }
+
   function modificarCantidad(peticionId, itemIndex, change) {
-    console.log(`Modificando cantidad: peticionId=${peticionId}, itemIndex=${itemIndex}, change=${change}`);
     const peticionDiv = document.getElementById(`peticion-${peticionId}`);
-    if (!peticionDiv) {
-      console.error(`Petición ${peticionId} no encontrada en el DOM`);
-      mostrarError(`Petición ${peticionId} no encontrada`);
-      return;
-    }
+    if (!peticionDiv) return;
     let items = JSON.parse(peticionDiv.dataset.items || '[]');
-    if (!items[itemIndex]) {
-      console.error(`Item ${itemIndex} no encontrado en petición ${peticionId}`);
-      return;
-    }
-    items[itemIndex].cantidad = Math.max(1, (items[itemIndex].cantidad || 1) + change);
+    items[itemIndex].cantidad = Math.max(1, items[itemIndex].cantidad + change);
     items[itemIndex].subtotal = items[itemIndex].cantidad * items[itemIndex].precio_unitario;
     peticionDiv.dataset.items = JSON.stringify(items);
     const cantidadSpan = document.getElementById(`cantidad-${peticionId}-${itemIndex}`);
@@ -1071,35 +997,19 @@
     if (cantidadSpan && itemText) {
       cantidadSpan.textContent = items[itemIndex].cantidad;
       itemText.innerHTML = `${items[itemIndex].nombre}: <span id="cantidad-${peticionId}-${itemIndex}">${items[itemIndex].cantidad}</span> x ${formatMoney(items[itemIndex].precio_unitario)} = ${formatMoney(items[itemIndex].subtotal)}${stockWarning}`;
-    } else {
-      console.error(`Elementos cantidad-${peticionId}-${itemIndex} o item-text-${peticionId}-${itemIndex} no encontrados`);
     }
     const decreaseBtn = document.querySelector(`#items-${peticionId} .item[data-item-index="${itemIndex}"] .decrease`);
-    if (decreaseBtn) {
-      decreaseBtn.disabled = items[itemIndex].cantidad <= 1;
-    }
+    if (decreaseBtn) decreaseBtn.disabled = items[itemIndex].cantidad <= 1;
     const total = items.reduce((sum, it) => sum + it.subtotal, 0);
     const totalSpan = document.getElementById(`total-${peticionId}`);
-    if (totalSpan) {
-      totalSpan.textContent = formatMoney(total);
-    } else {
-      console.error(`Total span total-${peticionId} no encontrado`);
-    }
+    if (totalSpan) totalSpan.textContent = formatMoney(total);
   }
+
   function eliminarItemPeticion(peticionId, itemIndex) {
     if (!confirm('¿Eliminar este item de la petición?')) return;
-    console.log(`Eliminando item: peticionId=${peticionId}, itemIndex=${itemIndex}`);
     const peticionDiv = document.getElementById(`peticion-${peticionId}`);
-    if (!peticionDiv) {
-      console.error(`Petición ${peticionId} no encontrada en el DOM`);
-      mostrarError(`Petición ${peticionId} no encontrada`);
-      return;
-    }
+    if (!peticionDiv) return;
     let items = JSON.parse(peticionDiv.dataset.items || '[]');
-    if (!items[itemIndex]) {
-      console.error(`Item ${itemIndex} no encontrado en petición ${peticionId}`);
-      return;
-    }
     items = items.filter((_, idx) => idx !== itemIndex);
     peticionDiv.dataset.items = JSON.stringify(items);
     const itemsContainer = document.getElementById(`items-${peticionId}`);
@@ -1107,9 +1017,7 @@
       itemsContainer.innerHTML = items.length > 0 ? items.map((item, index) => {
         let stockWarning = '';
         const product = productos.find(p => p.id === item.id);
-        if (product && item.cantidad > (product.stock || 0)) {
-          stockWarning = '<span style="color: red;"> Falta stock</span>';
-        }
+        if (product && item.cantidad > (product.stock || 0)) stockWarning = '<span style="color: red;"> Falta stock</span>';
         return `
         <div class="item" data-item-index="${index}">
           <span id="item-text-${peticionId}-${index}">${item.nombre}: <span id="cantidad-${peticionId}-${index}">${item.cantidad}</span> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}${stockWarning}</span>
@@ -1123,109 +1031,67 @@
       }).join('') : '<p>No hay items en esta petición.</p>';
       const total = items.reduce((sum, it) => sum + it.subtotal, 0);
       const totalSpan = document.getElementById(`total-${peticionId}`);
-      if (totalSpan) {
-        totalSpan.textContent = formatMoney(total);
-      }
-    } else {
-      console.error(`Items container items-${peticionId} no encontrado`);
+      if (totalSpan) totalSpan.textContent = formatMoney(total);
     }
   }
+
   async function eliminarPeticion(peticionId) {
     if (!confirm('¿Eliminar esta petición?')) return;
-    console.log(`Eliminando petición: ${peticionId}`);
     try {
-      const deleteRes = await fetch(`${apiBase}/peticiones/${peticionId}`, {
-        method: 'DELETE',
-        cache: 'no-store'
-      });
-      if (!deleteRes.ok) {
-        const txt = await deleteRes.text().catch(() => '');
-        throw new Error(`HTTP ${deleteRes.status}: ${txt}`);
-      }
+      const deleteRes = await fetch(`${apiBase}/peticiones/${peticionId}`, { method: 'DELETE', cache: 'no-store' });
+      if (!deleteRes.ok) throw new Error(`HTTP ${deleteRes.status}`);
       alert('Petición eliminada con éxito.');
       const openStates = getOpenStates();
       await cargarPeticiones();
       restoreOpenStates(openStates);
     } catch (err) {
-      console.error('Error al eliminar petición:', err);
-      mostrarError(`No se pudo eliminar la petición ${peticionId}: ${err.message}`);
+      mostrarError(`Error al eliminar petición: ${err.message}`);
     }
   }
+
   async function confirmarPeticion(peticionId, subtractThreePercent) {
-    if (!confirm(`¿Estás seguro de confirmar esta petición${subtractThreePercent ? ' con -3%' : ''}?`)) return;
+    if (!confirm(`¿Confirmar esta petición${subtractThreePercent ? ' con -3%' : ''}?`)) return;
     try {
-      if (usedButtons[peticionId]) {
-        alert('Este pedido ya ha sido confirmado.');
-        return;
-      }
+      if (usedButtons[peticionId]) return alert('Ya fue confirmado.');
       const peticionDiv = document.getElementById(`peticion-${peticionId}`);
-      if (!peticionDiv) {
-        throw new Error('Petición no encontrada en el DOM');
-      }
+      if (!peticionDiv) throw new Error('Petición no encontrada');
       const items = JSON.parse(peticionDiv.dataset.items || '[]');
-      if (!items || items.length === 0) {
-        alert('No hay items en la petición para confirmar.');
-        return;
-      }
+      if (items.length === 0) return alert('No hay items');
       const summary = peticionDiv.querySelector('summary');
-      if (!summary) {
-        throw new Error('Summary no encontrado para la petición');
-      }
       const nombre = summary.textContent.split(' - ')[1].split(' - ')[0];
       const pedidoItems = items.map(item => ({
         id: item.id,
         cantidad: item.cantidad,
         precio: subtractThreePercent ? item.precio_unitario * 0.97 : item.precio_unitario
       }));
-      const payload = {
-        user: nombre,
-        pedido: pedidoItems
-      };
-      console.log('💾 Enviando a guardar-pedidos:', JSON.stringify(payload, null, 2));
+      const payload = { user: nombre, pedido: pedidoItems };
       const saveRes = await fetch(`${apiBase}/guardar-pedidos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
         cache: 'no-store'
       });
-      if (!saveRes.ok) {
-        const txt = await saveRes.json().catch(() => ({ error: `HTTP ${saveRes.status}` }));
-        throw new Error(txt.error || `HTTP ${saveRes.status}`);
-      }
-      console.log(`Eliminando petición ${peticionId}`);
-      const deleteRes = await fetch(`${apiBase}/peticiones/${peticionId}`, {
-        method: 'DELETE',
-        cache: 'no-store'
-      });
-      if (!deleteRes.ok) {
-        const txt = await deleteRes.json().catch(() => ({ error: `HTTP ${deleteRes.status}` }));
-        throw new Error(txt.error || `HTTP ${deleteRes.status}`);
-      }
+      if (!saveRes.ok) throw new Error(`HTTP ${saveRes.status}`);
+      const deleteRes = await fetch(`${apiBase}/peticiones/${peticionId}`, { method: 'DELETE', cache: 'no-store' });
+      if (!deleteRes.ok) throw new Error(`HTTP ${deleteRes.status}`);
       usedButtons[peticionId] = subtractThreePercent ? 'plus7' : 'normal';
       saveUsedButtons();
-      alert(`Petición ${subtractThreePercent ? 'confirmada con -3%' : 'confirmada'} y eliminada con éxito.`);
+      alert(`Petición confirmada${subtractThreePercent ? ' con -3%' : ''} correctamente.`);
       const openStates = getOpenStates();
       const savedScroll = window.scrollY;
       await Promise.all([cargarPedidos(), cargarPeticiones(), cargarUsuarios()]);
       restoreOpenStates(openStates);
       setTimeout(() => window.scrollTo(0, savedScroll), 100);
     } catch (err) {
-      console.error('Error en confirmarPeticion:', err);
-      mostrarError(`No se pudo confirmar la petición ${peticionId}: ${err.message}`);
+      mostrarError(`Error al confirmar petición: ${err.message}`);
     }
   }
+
   async function previewPDF(peticionId) {
     try {
       const peticionDiv = document.getElementById(`peticion-${peticionId}`);
-      if (!peticionDiv) {
-        throw new Error('Petición no encontrada en el DOM');
-      }
-      console.log('Raw dataset.items (peticion):', peticionDiv.dataset.items);
+      if (!peticionDiv) throw new Error('Petición no encontrada');
       const items = JSON.parse(peticionDiv.dataset.items || '[]');
-      if (!items || items.length === 0) {
-        alert('No hay items en la petición para previsualizar.');
-        return;
-      }
       const nombre = peticionDiv.dataset.nombre;
       const payload = {
         user: nombre,
@@ -1239,54 +1105,39 @@
         total: items.reduce((sum, item) => sum + item.cantidad * (item.precio_unitario * 0.97 * 1.10), 0),
         fecha: new Date().toISOString()
       };
-      console.log('📄 Enviando a generar-pdf-peticion:', JSON.stringify(payload, null, 2));
       const saveRes = await fetch(`${apiBase}/generar-pdf-peticion`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
         cache: 'no-store'
       });
-      if (!saveRes.ok) {
-        const txt = await saveRes.json().catch(() => ({ error: `HTTP ${saveRes.status}` }));
-        throw new Error(txt.error || `HTTP ${saveRes.status}`);
-      }
+      if (!saveRes.ok) throw new Error(`HTTP ${saveRes.status}`);
       const data = await saveRes.json();
-      if (data.ok && data.pdf) {
-        window.open(data.pdf, '_blank');
-      } else {
-        throw new Error('No se pudo generar el PDF de preview');
-      }
+      if (data.ok && data.pdf) window.open(data.pdf, '_blank');
     } catch (err) {
-      console.error('Error en previewPDF:', err);
-      mostrarError(`No se pudo generar el PDF de preview para la petición ${peticionId}: ${err.message}`);
+      mostrarError(`Error al generar PDF: ${err.message}`);
     }
   }
+
   function copiarFaltantes(peticionId) {
     const peticionDiv = document.getElementById(`peticion-${peticionId}`);
-    if (!peticionDiv) {
-      alert('Petición no encontrada');
-      return;
-    }
+    if (!peticionDiv) return alert('Petición no encontrada');
     const items = JSON.parse(peticionDiv.dataset.items);
     let faltantes = [];
     for (const item of items) {
       const product = productos.find(p => p.id === item.id);
       const stock = product ? Math.max(product.stock || 0, 0) : 0;
       const missing = Math.max(0, item.cantidad - stock);
-      if (missing > 0) {
-        faltantes.push(`${missing} ${item.nombre}`);
-      }
+      if (missing > 0) faltantes.push(`${missing} ${item.nombre}`);
     }
     const textToCopy = faltantes.join('\n');
-    navigator.clipboard.writeText(textToCopy)
-      .then(() => {
-        alert('Faltantes copiados al portapapeles:\n' + textToCopy);
-      })
-      .catch(err => {
-        console.error('Error al copiar al portapapeles:', err);
-        alert('Error al copiar. Por favor, copia manualmente:\n' + textToCopy);
-      });
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      alert('Faltantes copiados:\n' + textToCopy);
+    }).catch(() => {
+      alert('Error al copiar. Copia manual:\n' + textToCopy);
+    });
   }
+
   function openAddModal(pedidoId) {
     currentPedidoId = pedidoId;
     document.getElementById('productsInput').value = '';
@@ -1296,28 +1147,20 @@
   function closeAddModal() {
     document.getElementById('addProductModal').close();
   }
+
   function addProductsToPedido() {
     const input = document.getElementById('productsInput').value.trim();
     const apply3 = document.getElementById('apply3percent').checked;
-    if (!input) {
-      alert('Ingrese productos en el formato especificado.');
-      return;
-    }
+    if (!input) return alert('Ingrese productos');
     const entries = input.split(',').map(s => s.trim()).filter(s => s);
     const newItems = [];
     for (const ent of entries) {
       const [idStr, qtyStr] = ent.split('x').map(s => s.trim());
       const id = parseInt(idStr);
       const qty = parseInt(qtyStr) || 1;
-      if (isNaN(id) || qty <= 0) {
-        console.warn(`Entrada inválida: ${ent}`);
-        continue;
-      }
+      if (isNaN(id) || qty <= 0) continue;
       const product = productos.find(p => p.id === id);
-      if (!product) {
-        console.warn(`Producto no encontrado: ID ${id}`);
-        continue;
-      }
+      if (!product) continue;
       let precio = product.precio * 1.10;
       if (apply3) precio *= 0.97;
       const subtotal = qty * precio;
@@ -1329,17 +1172,9 @@
         subtotal
       });
     }
-    if (newItems.length === 0) {
-      alert('No se encontraron productos válidos para añadir.');
-      closeAddModal();
-      return;
-    }
+    if (newItems.length === 0) return alert('No se encontraron productos válidos');
     const pedidoDiv = document.getElementById(`pedido-${currentPedidoId}`);
-    if (!pedidoDiv) {
-      alert('Pedido no encontrado.');
-      closeAddModal();
-      return;
-    }
+    if (!pedidoDiv) return alert('Pedido no encontrado');
     let items = JSON.parse(pedidoDiv.dataset.items || '[]');
     newItems.forEach(newItem => {
       const existingIndex = items.findIndex(i => i.id === newItem.id);
@@ -1369,21 +1204,20 @@
     if (totalSpan) totalSpan.textContent = formatMoney(total);
     closeAddModal();
   }
+
   async function init() {
     try {
-      console.log('Iniciando carga de datos...');
       await cargarProductos();
       await cargarPedidos();
       await cargarUsuarios();
       await cargarPeticiones();
-      console.log('Inicialización completada');
     } catch (err) {
       console.error('Error en init:', err);
-      mostrarError('Error al inicializar la página. Revisa la consola para más detalles.');
+      mostrarError('Error al inicializar la página.');
     }
   }
+
   window.onload = init;
-</script>
+  </script>
 </body>
 </html>
-
