@@ -4,63 +4,341 @@
   <meta charset="UTF-8" />
   <title>Panel de Administración - Distribuidora Funaz</title>
   <style>
-    body {font-family:'Segoe UI',sans-serif;margin:0;background:#f4f6f8;color:#333;padding:2em}
-    header {background:#4a90e2;color:white;text-align:center;padding:1.5em 0;font-size:2em;font-weight:bold;user-select:none;margin-bottom:2em;border-radius:8px;box-shadow:0 3px 8px rgba(0,0,0,0.15)}
-    button.btn-volver {background:#4a90e2;color:#fff;border:none;border-radius:6px;padding:10px 16px;font-weight:bold;cursor:pointer;transition:background .2s;margin-bottom:1.5em;display:inline-block}
-    button.btn-volver:hover {background:#357ABD}
-    main {max-width:900px;margin:0 auto}
-    details {background:white;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1);margin-bottom:1.5em;padding:1.5em;cursor:pointer;transition:box-shadow .3s}
-    details[open] {box-shadow:0 5px 20px rgba(0,0,0,0.15)}
-    summary {font-size:1.4em;font-weight:600;outline:none;list-style:none;cursor:pointer;user-select:none;margin-bottom:1em;display:flex;align-items:center;gap:.5em}
-    summary::-webkit-details-marker {display:none}
-    summary::before {content:"▶";display:inline-block;transition:transform .3s ease}
-    details[open] summary::before {transform:rotate(90deg)}
-    .usuario-item,.peticion-item {background:#eef3f7;border-radius:8px;margin-bottom:1em;padding:1em;box-shadow:inset 0 0 5px #bbb}
-    .peticion-details {margin-bottom:1em;background:#fff;padding:1em;border-radius:8px;box-shadow:0 1px 5px rgba(0,0,0,0.08)}
-    .peticion-details summary {font-size:1.2em;font-weight:600;cursor:pointer;user-select:none;margin-bottom:.5em;color:#3a3a3a}
-    .peticion-info {margin-bottom:.8em;font-size:.95em}
-    .peticion-items {margin-top:.5em;padding-left:1em}
-    .item {margin:.5em 0;display:flex;align-items:center;gap:.5em}
-    .item-controls {display:flex;gap:.5em}
-    .item-controls button {padding:4px 8px;border:none;border-radius:4px;cursor:pointer;font-size:.9em}
-    .item-controls button.increase {background:#28a745;color:white}
-    .item-controls button.increase:hover {background:#218838}
-    .item-controls button.decrease {background:#ffc107;color:black}
-    .item-controls button.decrease:hover {background:#e0a800}
-    .item-controls button.delete {background:#dc3545;color:white}
-    .item-controls button.delete:hover {background:#c82333}
-    .status-container {display:flex;gap:1em;align-items:center;margin-top:.5em}
-    .status-container label {font-size:.9em;cursor:pointer;user-select:none}
-    .status-container input[type="checkbox"] {margin-right:4px}
-    .pedido-actions,.button-group {display:flex;flex-wrap:wrap;gap:.8em;margin-top:1em;align-items:center}
-    button.confirmar {background:#28a745;border:none;color:white;padding:8px 16px;border-radius:6px;font-weight:bold;cursor:pointer;transition:background .2s}
-    button.confirmar:hover {background:#218838}
-    button.confirmar-plus {background:#17a2b8;border:none;color:white;padding:8px 16px;border-radius:6px;font-weight:bold;cursor:pointer;transition:background .2s}
-    button.confirmar-plus:hover {background:#138496}
-    button.preview-pdf {background:#6c757d;border:none;color:white;padding:8px 16px;border-radius:6px;font-weight:bold;cursor:pointer;transition:background .2s}
-    button.preview-pdf:hover {background:#5a6268}
-    button.copy-faltantes {background:#fd7e14;border:none;color:white;padding:8px 16px;border-radius:6px;font-weight:bold;cursor:pointer;transition:background .2s}
-    button.copy-faltantes:hover {background:#dd6b10}
-    button.delete-peticion {background:#dc3545;border:none;color:white;padding:8px 16px;border-radius:6px;font-weight:bold;cursor:pointer;transition:background .2s}
-    button.delete-peticion:hover {background:#c82333}
-    button.enfocar {background:#9c27b0;border:none;color:white;padding:8px 16px;border-radius:6px;font-weight:bold;cursor:pointer;transition:background .2s}
-    button.enfocar:hover {background:#7b1fa2}
-    .pedido-item.enfocado {background:#f3e5f5;border:3px solid #9c27b0;border-radius:12px;box-shadow:0 10px 30px rgba(156,39,176,0.4);transform:scale(1.02);transition:all .3s;z-index:10;position:relative}
-    button:disabled {background:#ccc;cursor:not-allowed}
-    .status {color:#d9534f;font-weight:bold;margin-top:.5em}
-    #mensajeError {margin-bottom:1em;color:red;font-weight:bold;max-width:900px;margin-left:auto;margin-right:auto}
-    footer {text-align:center;color:#777;margin-top:2em}
-    button.add-product {background:#007bff;border:none;color:white;padding:8px 16px;border-radius:6px;font-weight:bold;cursor:pointer;transition:background .2s}
-    button.add-product:hover {background:#0069d9}
-    dialog {padding:1.5em;border-radius:8px;box-shadow:0 5px 15px rgba(0,0,0,0.2);max-width:400px;width:90%}
-    dialog form {display:flex;flex-direction:column;gap:1em}
-    dialog label {display:flex;align-items:center;gap:.5em}
-    dialog input[type="text"] {flex:1;padding:.5em;border:1px solid #ccc;border-radius:4px}
-    dialog button {padding:.5em 1em;border:none;border-radius:4px;cursor:pointer}
-    dialog button[type="button"]:first-of-type {background:#28a745;color:white}
-    dialog button[type="button"]:last-of-type {background:#dc3545;color:white}
-    button.load-more {background:#4a90e2;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;display:block;margin:1em auto}
-    button.load-more:hover {background:#357ABD}
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      background: #f4f6f8;
+      color: #333;
+      padding: 2em;
+    }
+    header {
+      background: #4a90e2;
+      color: white;
+      text-align: center;
+      padding: 1.5em 0;
+      font-size: 2em;
+      font-weight: bold;
+      user-select: none;
+      margin-bottom: 2em;
+      border-radius: 8px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    }
+    button.btn-volver {
+      background: #4a90e2;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-bottom: 1.5em;
+      display: inline-block;
+    }
+    button.btn-volver:hover {
+      background: #357ABD;
+    }
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    details {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 1.5em;
+      padding: 1.5em;
+      cursor: pointer;
+      transition: box-shadow 0.3s;
+    }
+    details[open] {
+      box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    }
+    summary {
+      font-size: 1.4em;
+      font-weight: 600;
+      outline: none;
+      list-style: none;
+      cursor: pointer;
+      user-select: none;
+      margin-bottom: 1em;
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+    }
+    summary::-webkit-details-marker {
+      display: none;
+    }
+    summary::before {
+      content: "▶";
+      display: inline-block;
+      transition: transform 0.3s ease;
+    }
+    details[open] summary::before {
+      transform: rotate(90deg);
+    }
+    .usuario-item, .peticion-item {
+      background: #eef3f7;
+      border-radius: 8px;
+      margin-bottom: 1em;
+      padding: 1em;
+      box-shadow: inset 0 0 5px #bbb;
+    }
+    .peticion-details {
+      margin-bottom: 1em;
+      background: #fff;
+      padding: 1em;
+      border-radius: 8px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.08);
+    }
+    .peticion-details summary {
+      font-size: 1.2em;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      margin-bottom: 0.5em;
+      color: #3a3a3a;
+    }
+    .peticion-info {
+      margin-bottom: 0.8em;
+      font-size: 0.95em;
+    }
+    .peticion-items {
+      margin-top: 0.5em;
+      padding-left: 1em;
+    }
+    .item {
+      margin: 0.5em 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+    }
+    .item-controls {
+      display: flex;
+      gap: 0.5em;
+    }
+    .item-controls button {
+      padding: 4px 8px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9em;
+    }
+    .item-controls button.increase {
+      background: #28a745;
+      color: white;
+    }
+    .item-controls button.increase:hover {
+      background: #218838;
+    }
+    .item-controls button.decrease {
+      background: #ffc107;
+      color: black;
+    }
+    .item-controls button.decrease:hover {
+      background: #e0a800;
+    }
+    .item-controls button.delete {
+      background: #dc3545;
+      color: white;
+    }
+    .item-controls button.delete:hover {
+      background: #c82333;
+    }
+    .status-container {
+      display: flex;
+      gap: 1em;
+      align-items: center;
+      margin-top: 0.5em;
+    }
+    .status-container label {
+      font-size: 0.9em;
+      cursor: pointer;
+      user-select: none;
+    }
+    .status-container input[type="checkbox"] {
+      margin-right: 4px;
+    }
+    .pedido-actions, .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8em;
+      margin-top: 1em;
+      align-items: center;
+    }
+    button.confirmar {
+      background: #28a745;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button.confirmar:hover {
+      background: #218838;
+    }
+    button.confirmar-plus {
+      background: #17a2b8;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button.confirmar-plus:hover {
+      background: #138496;
+    }
+    button.preview-pdf {
+      background: #6c757d;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button.preview-pdf:hover {
+      background: #5a6268;
+    }
+    button.copy-faltantes {
+      background: #fd7e14;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button.copy-faltantes:hover {
+      background: #dd6b10;
+    }
+    button.delete-peticion {
+      background: #dc3545;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button.delete-peticion:hover {
+      background: #c82333;
+    }
+    button.enfocar {
+      background: #9c27b0;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button.enfocar:hover {
+      background: #7b1fa2;
+    }
+    .pedido-item.enfocado {
+      background: #f3e5f5;
+      border: 3px solid #9c27b0;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(156, 39, 176, 0.4);
+      transform: scale(1.02);
+      transition: all 0.3s;
+      z-index: 10;
+      position: relative;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .status {
+      color: #d9534f;
+      font-weight: bold;
+      margin-top: 0.5em;
+    }
+    #mensajeError {
+      margin-bottom: 1em;
+      color: red;
+      font-weight: bold;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    footer {
+      text-align: center;
+      color: #777;
+      margin-top: 2em;
+    }
+    button.add-product {
+      background: #007bff;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button.add-product:hover {
+      background: #0069d9;
+    }
+    dialog {
+      padding: 1.5em;
+      border-radius: 8px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      max-width: 400px;
+      width: 90%;
+    }
+    dialog form {
+      display: flex;
+      flex-direction: column;
+      gap: 1em;
+    }
+    dialog label {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+    }
+    dialog input[type="text"] {
+      flex: 1;
+      padding: 0.5em;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    dialog button {
+      padding: 0.5em 1em;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    dialog button[type="button"]:first-of-type {
+      background: #28a745;
+      color: white;
+    }
+    dialog button[type="button"]:last-of-type {
+      background: #dc3545;
+      color: white;
+    }
+    button.load-more {
+      background: #4a90e2;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: block;
+      margin: 1em auto;
+    }
+    button.load-more:hover {
+      background: #357ABD;
+    }
   </style>
 </head>
 <body>
@@ -68,16 +346,25 @@
   <main>
     <button class="btn-volver" onclick="location.href='index.html'">← Volver a tienda</button>
     <div id="mensajeError"></div>
-    <details><summary>Usuarios y pedidos</summary><div id="listaUsuarios"></div></details>
-    <details><summary>Peticiones</summary><div id="listaPeticiones"></div></details>
+    <details>
+      <summary>Usuarios y pedidos</summary>
+      <div id="listaUsuarios"></div>
+    </details>
+    <details>
+      <summary>Peticiones</summary>
+      <div id="listaPeticiones"></div>
+    </details>
   </main>
-  <footer>Distribuidora Funaz</footer>
-
+  <footer>
+    Distribuidora Funaz
+  </footer>
   <dialog id="addProductModal">
     <form>
       <label for="productsInput">Productos (IDxCantidad, separados por coma):</label>
       <input type="text" id="productsInput" placeholder="353x5,24x2">
-      <label><input type="checkbox" id="apply3percent"> Aplicar -3%</label>
+      <label>
+        <input type="checkbox" id="apply3percent"> Aplicar -3%
+      </label>
       <button type="button" onclick="addProductsToPedido()">Añadir</button>
       <button type="button" onclick="closeAddModal()">Cancelar</button>
     </form>
@@ -85,25 +372,39 @@
 
   <script>
   const apiBase = 'https://distribuidorafunaz-a2o6.onrender.com/api';
+  // Security check
   const user = localStorage.getItem('loggedUser');
-  if (user !== 'admin') window.location.href = 'index.html';
-
+  if (user !== 'admin') {
+    window.location.href = 'index.html';
+  }
+  // States
   let estadosPedidos = JSON.parse(localStorage.getItem('estadosPedidos') || '{}');
   const usedButtons = JSON.parse(localStorage.getItem('usedButtons') || '{}');
   let productos = [];
   let currentPedidoId = null;
   window.usersPedidos = {};
 
-  function guardarEstados() { localStorage.setItem('estadosPedidos', JSON.stringify(estadosPedidos)); }
-  function saveUsedButtons() { localStorage.setItem('usedButtons', JSON.stringify(usedButtons)); }
-  function mostrarError(msg) { const el = document.getElementById('mensajeError'); if (el) el.textContent = msg; }
+  function guardarEstados() {
+    localStorage.setItem('estadosPedidos', JSON.stringify(estadosPedidos));
+  }
+  function saveUsedButtons() {
+    localStorage.setItem('usedButtons', JSON.stringify(usedButtons));
+  }
+  function mostrarError(msg) {
+    const el = document.getElementById('mensajeError');
+    if (el) el.textContent = msg;
+    else console.warn('mensajeError no encontrado:', msg);
+  }
 
+  // ==================== FUNCIÓN ENFOCAR ====================
   function enfocarPedido(pedidoId) {
     const selectedPedido = document.getElementById(`pedido-${pedidoId}`);
     if (!selectedPedido) return;
+
     const btn = selectedPedido.querySelector('.enfocar');
     const estaEnfocado = selectedPedido.classList.contains('enfocado');
 
+    // Resetear todo
     document.querySelectorAll('.pedido-item').forEach(p => {
       p.style.display = '';
       p.classList.remove('enfocado');
@@ -115,46 +416,115 @@
     if (peticionesSection) peticionesSection.style.display = '';
 
     if (!estaEnfocado) {
+      // Ocultar todos los demás pedidos
       document.querySelectorAll('.pedido-item').forEach(p => {
-        if (p.id !== `pedido-${pedidoId}`) p.style.display = 'none';
+        if (p.id !== `pedido-${pedidoId}`) {
+          p.style.display = 'none';
+        }
       });
+
+      // Ocultar sección de peticiones
       if (peticionesSection) peticionesSection.style.display = 'none';
+
+      // Resaltar el pedido seleccionado
       selectedPedido.classList.add('enfocado');
       btn.textContent = 'Mostrar todos';
+
+      // Abrir solo el usuario correspondiente y cerrar los demás
       const userDetails = selectedPedido.closest('.user-details');
       if (userDetails) {
-        document.querySelectorAll('.user-details').forEach(ud => ud.open = false);
+        document.querySelectorAll('.user-details').forEach(ud => {
+          ud.open = false;
+        });
         userDetails.open = true;
       }
+
+      // Scroll suave al pedido
       selectedPedido.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }
+  // ========================================================
 
   function toggleGuardado(usuario, idx, el) {
     const key = `${usuario}-${idx}`;
     const nuevo = !!el.checked;
-    const confirmado = confirm(nuevo ? '¿Marcar pedido como guardado?' : '¿Desmarcar pedido guardado?');
+    const confirmado = confirm(nuevo
+      ? '¿Marcar pedido como guardado?'
+      : '¿Desmarcar pedido guardado?');
     if (!confirmado) { el.checked = !nuevo; return; }
     estadosPedidos[key] = { ...estadosPedidos[key], guardado: nuevo };
     guardarEstados();
   }
-
   function toggleRecibido(usuario, idx, el) {
     const key = `${usuario}-${idx}`;
     const nuevo = !!el.checked;
-    const confirmado = confirm(nuevo ? '¿Marcar pedido como recibido?' : '¿Desmarcar pedido recibido?');
+    const confirmado = confirm(nuevo
+      ? '¿Marcar pedido como recibido?'
+      : '¿Desmarcar pedido recibido?');
     if (!confirmado) { el.checked = !nuevo; return; }
     estadosPedidos[key] = { ...estadosPedidos[key], recibido: nuevo };
     guardarEstados();
   }
-
   function formatDateTime(fecha) {
     const date = new Date(fecha);
-    const days = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-    const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
     const formattedDate = `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
-    const formattedTime = `${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
-    return {formattedDate, formattedTime};
+    const formattedTime = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+    return { formattedDate, formattedTime };
+  }
+  function getOpenStates() {
+    const mainUsersDetails = document.querySelector('details > summary:first-child').parentElement;
+    const mainPeticionesDetails = document.querySelectorAll('details')[1];
+    const openUserNames = Array.from(document.querySelectorAll('.user-details[open]')).map(d => d.querySelector('summary').textContent.trim());
+    return {
+      usersOpen: mainUsersDetails?.open || false,
+      peticionesOpen: mainPeticionesDetails?.open || false,
+      openUserNames
+    };
+  }
+  function restoreOpenStates(states) {
+    const mainUsersDetails = document.querySelector('details > summary:first-child').parentElement;
+    if (mainUsersDetails && states.usersOpen) mainUsersDetails.open = true;
+    const mainPeticionesDetails = document.querySelectorAll('details')[1];
+    if (mainPeticionesDetails && states.peticionesOpen) mainPeticionesDetails.open = true;
+    states.openUserNames.forEach(name => {
+      const userDetail = Array.from(document.querySelectorAll('.user-details')).find(d => d.querySelector('summary').textContent.trim() === name);
+      if (userDetail) userDetail.open = true;
+    });
+  }
+  const detailsContents = new Map();
+  function setupDetails(det) {
+    if (detailsContents.has(det)) return;
+    const content = [];
+    let child = det.firstChild;
+    while (child) {
+      if (child.tagName !== 'SUMMARY') {
+        content.push(child);
+      }
+      child = child.nextSibling;
+    }
+    detailsContents.set(det, content);
+    if (!det.open) {
+      content.forEach(node => det.removeChild(node));
+    }
+    det.addEventListener('toggle', function() {
+      if (this.open) {
+        const cont = detailsContents.get(this);
+        cont.forEach(node => this.appendChild(node));
+      } else {
+        const newContent = [];
+        let ch = this.firstChild;
+        while (ch) {
+          if (ch.tagName !== 'SUMMARY') {
+            newContent.push(ch);
+          }
+          ch = ch.nextSibling;
+        }
+        detailsContents.set(this, newContent);
+        newContent.forEach(node => this.removeChild(node));
+      }
+    });
   }
 
   function buildPedidoHTML(pedido, index, userName) {
@@ -163,7 +533,7 @@
     const key = `${userName}-${index}`;
     const estado = estadosPedidos[key] || {};
     const total = items.reduce((sum, p) => sum + p.subtotal, 0);
-    const {formattedDate, formattedTime} = formatDateTime(pedido.fecha);
+    const { formattedDate, formattedTime } = formatDateTime(pedido.fecha);
     return `
       <li>
         <div class="pedido-item" id="pedido-${pedidoId}">
@@ -184,16 +554,20 @@
           </div>
           <div class="pedido-actions">
             <button onclick="eliminarPedido('${pedidoId}', '${userName}', ${index})">Eliminar pedido</button>
-            <button class="guardar-btn" data-pedidoid="${pedidoId}" data-username="${userName}" data-index="${index}">Guardar pedido</button>
+            <button class="guardar-btn" data-pedidoid="${pedidoId}" data-username="${userName}" data-index="${index}">
+              Guardar pedido
+            </button>
             <button class="preview-pdf" onclick="previewPDFPedido('${pedidoId}')">Descargar PDF Preview</button>
             <button class="add-product" onclick="openAddModal('${pedidoId}')">Añadir producto</button>
             <button class="confirmar" onclick="guardarCambiosPedido('${pedidoId}')">Guardar Cambios</button>
             <button class="enfocar" onclick="enfocarPedido('${pedidoId}')">Enfocar</button>
-            <span class="guardar-status" id="guardar-status-${pedidoId}">${estado.guardado ? '✅ Guardado' : ''}</span>
+            <span class="guardar-status" id="guardar-status-${pedidoId}" aria-hidden="true">
+              ${estado.guardado ? '✅ Guardado' : ''}
+            </span>
           </div>
-          <div class="status-container">
-            <label><input type="checkbox" ${estado.guardado ? 'checked' : ''} onchange="toggleGuardado('${userName}',${index}, this)"> Guardado</label>
-            <label><input type="checkbox" ${estado.recibido ? 'checked' : ''} onchange="toggleRecibido('${userName}',${index}, this)"> Recibido</label>
+          <div class='status-container'>
+            <label><input type='checkbox' ${estado.guardado ? 'checked' : ''} onchange="toggleGuardado('${userName}',${index}, this)"> Guardado</label>
+            <label><input type='checkbox' ${estado.recibido ? 'checked' : ''} onchange="toggleRecibido('${userName}',${index}, this)"> Recibido</label>
           </div>
         </div>
       </li>`;
@@ -847,4 +1221,3 @@
   </script>
 </body>
 </html>
-
