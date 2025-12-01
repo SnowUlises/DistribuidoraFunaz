@@ -17,7 +17,7 @@
       --warning: #ffa726;
       --border-radius: 12px;
       --shadow: 0 4px 12px rgba(0,0,0,0.05);
-      --cols: 5; /* Configuración del Grid por defecto */
+      --cols: 5; 
     }
 
     * { box-sizing: border-box; outline: none; }
@@ -30,7 +30,7 @@
       padding-bottom: 3rem;
     }
 
-    /* HEADER & CONTROLS */
+    /* HEADER & CONTROLS (Igual que antes) */
     header {
       background: var(--surface);
       padding: 1rem 2rem;
@@ -45,81 +45,27 @@
       justify-content: space-between;
     }
 
-    .brand {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--primary);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .controls {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    input[type="text"], input[type="number"] {
-      padding: 0.6rem 1rem;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      transition: all 0.2s;
-    }
-
-    input[type="text"]:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
-    }
-
-    .search-bar {
-      min-width: 250px;
-    }
-
-    button {
-      padding: 0.6rem 1.2rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.2s;
-      background: #eee;
-      color: #333;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
+    .brand { font-size: 1.5rem; font-weight: 700; color: var(--primary); display:flex; gap:0.5rem; align-items:center; }
+    .controls { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+    input[type="text"], input[type="number"] { padding: 0.6rem 1rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; }
+    input[type="text"]:focus { border-color: var(--primary); }
+    button { padding: 0.6rem 1.2rem; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; background: #eee; color: #333; display: flex; align-items: center; gap: 0.5rem; }
     button:hover { background: #ddd; }
-    
     button.primary { background: var(--primary); color: white; }
     button.primary:hover { background: var(--primary-hover); }
-    
     button.danger { background: white; color: var(--danger); border: 1px solid var(--danger); }
     button.danger:hover { background: var(--danger); color: white; }
-
-    button.group-mode-btn.active {
-      background: var(--warning);
-      color: white;
-      animation: pulse 2s infinite;
-    }
+    button.group-mode-btn.active { background: var(--warning); color: white; animation: pulse 2s infinite; }
 
     /* GRID LAYOUT */
-    .grid-controls {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.8rem;
-      color: var(--text-sec);
-    }
-
+    .grid-controls { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--text-sec); }
+    
     .orders-grid {
       display: grid;
-      grid-template-columns: repeat(var(--cols), 1fr); /* GRID DINÁMICO */
+      grid-template-columns: repeat(var(--cols), 1fr);
       gap: 1.5rem;
       padding: 2rem;
+      align-items: start; /* Importante para que no se estiren */
     }
     
     @media (max-width: 1400px) { :root { --cols: 4; } }
@@ -127,157 +73,92 @@
     @media (max-width: 800px) { :root { --cols: 2; } }
     @media (max-width: 500px) { :root { --cols: 1; } }
 
-    /* ORDER CARD */
-    .order-card {
+    /* CLIENT CARD (Agrupador) */
+    .client-card {
       background: var(--surface);
       border-radius: var(--border-radius);
       box-shadow: var(--shadow);
-      padding: 1.2rem;
-      position: relative;
+      padding: 0; /* Padding interno controlado */
+      overflow: hidden;
       border: 2px solid transparent;
-      transition: transform 0.2s, box-shadow 0.2s;
-      display: flex;
-      flex-direction: column;
+      transition: transform 0.2s;
     }
+    .client-card:hover { transform: translateY(-3px); }
+    .client-card.selected-merge { border-color: var(--warning); background: #fff8e1; }
 
-    .order-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-    }
-
-    .order-card.selected-merge {
-      border-color: var(--warning);
-      background: #fff8e1;
-    }
-
-    .card-header {
+    .client-header {
+      background: var(--primary);
+      color: white;
+      padding: 1rem;
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 1rem;
+      align-items: center;
+    }
+    .client-name { font-size: 1.1rem; font-weight: 700; }
+    .client-total-debt { font-size: 0.9rem; opacity: 0.9; }
+
+    /* SUB ORDER (Pedido individual dentro del cliente) */
+    .sub-order {
       border-bottom: 1px solid #eee;
-      padding-bottom: 0.5rem;
+      padding: 1rem;
+      background: #fff;
     }
-
-    .client-name {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--primary);
-    }
-
-    .order-meta {
+    .sub-order:last-child { border-bottom: none; }
+    
+    .sub-order-header {
+      display: flex;
+      justify-content: space-between;
       font-size: 0.8rem;
       color: var(--text-sec);
-    }
-
-    .items-list {
-      flex: 1;
-      margin-bottom: 1rem;
-      max-height: 200px;
-      overflow-y: auto;
-    }
-
-    .order-item {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.9rem;
-      padding: 0.3rem 0;
-      border-bottom: 1px dashed #eee;
+      margin-bottom: 0.5rem;
     }
     
-    .item-controls {
+    .sub-items { margin-bottom: 0.5rem; font-size: 0.9rem; }
+    .sub-item-row { display: flex; justify-content: space-between; padding: 2px 0; }
+
+    .sub-actions {
       display: flex;
-      gap: 4px;
-      margin-left: 8px;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
     }
-    .btn-xs {
-      padding: 2px 6px;
-      font-size: 0.7rem;
+    
+    .btn-small {
+      padding: 4px 8px;
+      font-size: 0.75rem;
       border-radius: 4px;
     }
 
-    .card-footer {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-top: auto;
-      padding-top: 1rem;
-      border-top: 1px solid #eee;
-    }
-
-    .card-total {
-      font-size: 1.2rem;
-      font-weight: bold;
-      text-align: right;
-      width: 100%;
-      color: var(--text);
-      margin-bottom: 0.5rem;
-    }
-
-    .checkbox-group {
-      display: flex;
-      gap: 1rem;
-      font-size: 0.8rem;
-      margin-bottom: 0.5rem;
-      width: 100%;
-    }
+    /* LOAD MORE BUTTON */
+    .hidden-orders { display: none; }
+    .hidden-orders.show { display: block; animation: fadeIn 0.3s; }
     
-    /* MODAL */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      backdrop-filter: blur(2px);
-    }
-    
-    .modal-overlay.open { display: flex; }
-
-    .modal {
-      background: white;
-      padding: 2rem;
-      border-radius: var(--border-radius);
-      width: 90%;
-      max-width: 500px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-    }
-
-    .product-search-results {
-      max-height: 200px;
-      overflow-y: auto;
-      border: 1px solid #eee;
-      border-radius: 8px;
-      margin-top: 0.5rem;
-      display: none;
-    }
-    .product-search-results.active { display: block; }
-
-    .search-result-item {
+    .load-more-container {
+      text-align: center;
       padding: 0.5rem;
+      background: #f9f9f9;
       cursor: pointer;
-      border-bottom: 1px solid #eee;
+      font-size: 0.85rem;
+      color: var(--primary);
+      font-weight: 600;
+      transition: background 0.2s;
     }
-    .search-result-item:hover { background: #f1f8e9; }
+    .load-more-container:hover { background: #e0e0e0; }
 
-    /* UTILS */
-    .loading { text-align: center; width: 100%; padding: 2rem; color: var(--text-sec); }
-    .badge { 
-      font-size: 0.75rem; 
-      padding: 2px 6px; 
-      border-radius: 4px; 
-      background: #eee; 
-    }
+    /* MODAL (Mismo estilo) */
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(2px); }
+    .modal-overlay.open { display: flex; }
+    .modal { background: white; padding: 2rem; border-radius: var(--border-radius); width: 90%; max-width: 500px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+    .product-search-results { max-height: 200px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; margin-top: 0.5rem; display: none; }
+    .product-search-results.active { display: block; }
+    .search-result-item { padding: 0.5rem; cursor: pointer; border-bottom: 1px solid #eee; }
+    .search-result-item:hover { background: #f1f8e9; }
+    .badge { font-size: 0.7rem; padding: 2px 5px; border-radius: 4px; background: #eee; }
     .badge.guardado { background: #c8e6c9; color: #2e7d32; }
 
-    @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(255, 167, 38, 0.7); }
-      70% { box-shadow: 0 0 0 10px rgba(255, 167, 38, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(255, 167, 38, 0); }
-    }
-  </style>
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 167, 38, 0.7); } 100% { box-shadow: 0 0 0 10px rgba(255, 167, 38, 0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+</style>
 </head>
 <body>
 
@@ -353,22 +234,18 @@
   const user = localStorage.getItem('loggedUser');
   if (user !== 'admin') window.location.href = 'index.html';
 
-  // ================= ESTADO GLOBAL =================
-  let globalOrders = [];       // Todos los pedidos crudos
-  let productsCatalog = [];    // Catálogo de productos para el buscador
-  let groupingMode = false;    // Estado del modo agrupar
-  let mergeSelection = [];     // IDs de pedidos seleccionados para agrupar
-  let currentTargetPedidoId = null; // ID del pedido al que se le añade producto
-
-  // Estados locales (Guardado/Recibido)
+  // ================= ESTADO =================
+  let globalOrders = [];       // Todos los pedidos planos
+  let productsCatalog = [];    
+  let groupingMode = false;    
+  let mergeSelection = [];     // Nombres de usuarios seleccionados para agrupar
+  let currentTargetPedidoId = null; 
   let localStates = JSON.parse(localStorage.getItem('estadosPedidos') || '{}');
 
   // ================= INICIO =================
   document.addEventListener('DOMContentLoaded', () => {
     loadAllData();
-    loadProductsCatalog(); // Intentar cargar productos en segundo plano
-    
-    // Restaurar config de grid si existe
+    loadProductsCatalog();
     const savedCols = localStorage.getItem('gridCols') || 5;
     updateGridCols(savedCols);
     document.getElementById('gridSlider').value = savedCols;
@@ -376,26 +253,17 @@
 
   // ================= CARGA DE DATOS =================
   async function loadAllData() {
-    const grid = document.getElementById('ordersGrid');
     const msg = document.getElementById('loadingMsg');
-    
     try {
         const res = await fetch(`${apiBase}/pedidos`);
         if (!res.ok) throw new Error('Error API');
         const data = await res.json();
         
-        // Procesar datos
         globalOrders = data.map((pedido, idx) => {
-            // Normalizar items
             let items = [];
-            try {
-                items = typeof pedido.items === 'string' ? JSON.parse(pedido.items) : pedido.items;
-                if(!Array.isArray(items)) items = [];
-            } catch(e) { items = []; }
-
-            // Calcular ID único si no viene
+            try { items = typeof pedido.items === 'string' ? JSON.parse(pedido.items) : pedido.items; } catch(e) { items = []; }
+            if(!Array.isArray(items)) items = [];
             const uid = pedido.id || `temp-${pedido.user}-${idx}`;
-            
             return {
                 ...pedido,
                 uid: uid,
@@ -404,116 +272,156 @@
             };
         });
 
-        // Ordenar por fecha (más reciente primero)
+        // Ordenar global por fecha más reciente
         globalOrders.sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
-
         msg.style.display = 'none';
-        renderOrders(globalOrders);
+        
+        renderGroups(); // Llama a la nueva función de renderizado por grupos
 
     } catch (err) {
-        msg.textContent = 'Error al cargar pedidos. Revisa la consola.';
+        msg.textContent = 'Error al cargar. ' + err.message;
         console.error(err);
     }
   }
 
-  // Carga catálogo de productos para el autocompletado
   async function loadProductsCatalog() {
       try {
           const res = await fetch(`${apiBase}/productos`); 
-          if(res.ok) {
-              productsCatalog = await res.json();
-          } else {
-              console.warn("No se pudo cargar el catálogo de productos (Endpoint /productos quizas no existe)");
-          }
-      } catch(e) { console.warn("Error cargando productos", e); }
+          if(res.ok) productsCatalog = await res.json();
+      } catch(e) {}
   }
 
-  // ================= RENDERIZADO (GRID) =================
-  function renderOrders(orders) {
+  // ================= LÓGICA DE GRUPOS =================
+  function groupOrdersByUser(orders) {
+      const groups = {};
+      orders.forEach(o => {
+          const uName = o.user || 'Invitado';
+          if (!groups[uName]) groups[uName] = [];
+          groups[uName].push(o);
+      });
+      return groups;
+  }
+
+  function renderGroups(ordersToRender = globalOrders) {
     const grid = document.getElementById('ordersGrid');
     grid.innerHTML = '';
 
-    if (orders.length === 0) {
+    const grouped = groupOrdersByUser(ordersToRender);
+    const userNames = Object.keys(grouped);
+
+    if (userNames.length === 0) {
         grid.innerHTML = '<p style="grid-column: 1/-1; text-align:center;">No se encontraron pedidos.</p>';
         return;
     }
 
-    orders.forEach(pedido => {
-        const localKey = getLocalKey(pedido);
-        const state = localStates[localKey] || {};
-        
-        // Crear Tarjeta HTML
+    userNames.forEach(uName => {
+        const userOrders = grouped[uName];
+        // Calcular deuda total de este usuario
+        const totalDebt = userOrders.reduce((sum, o) => sum + o.total, 0);
+
+        // Crear Tarjeta de Cliente
         const card = document.createElement('div');
-        card.className = 'order-card';
-        card.id = `card-${pedido.uid}`;
-        card.onclick = (e) => handleCardClick(e, pedido);
+        card.className = 'client-card';
+        card.dataset.user = uName; // Para seleccionar en modo merge
+        card.onclick = (e) => handleGroupClick(e, uName);
 
-        const dateObj = new Date(pedido.fecha);
-        const dateStr = dateObj.toLocaleDateString('es-ES', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'});
-
-        // HTML ITEMS
-        const itemsHtml = pedido.items.map((item, idx) => `
-            <div class="order-item">
-                <span style="flex:1"><b>${item.cantidad}</b> x ${item.nombre}</span>
-                <span>$${formatMoney(item.subtotal)}</span>
-                <div class="item-controls">
-                    <button class="btn-xs danger" onclick="event.stopPropagation(); deleteItem('${pedido.uid}', ${idx})">x</button>
-                </div>
+        // Header del Cliente
+        let html = `
+            <div class="client-header">
+                <div class="client-name">${uName}</div>
+                <div class="client-total-debt">Total: $${formatMoney(totalDebt)}</div>
             </div>
-        `).join('');
-
-        card.innerHTML = `
-            <div class="card-header">
-                <div>
-                    <div class="client-name">${pedido.user || 'Cliente'}</div>
-                    <div class="order-meta">${dateStr}</div>
-                </div>
-                ${state.guardado ? '<span class="badge guardado">Guardado</span>' : ''}
-            </div>
-
-            <div class="items-list">
-                ${itemsHtml.length ? itemsHtml : '<i style="color:#999">Sin productos</i>'}
-            </div>
-
-            <div class="card-total">
-                Total: $${formatMoney(pedido.total)}
-            </div>
-
-            <div class="card-footer">
-                <div class="checkbox-group">
-                    <label onclick="event.stopPropagation()">
-                        <input type="checkbox" ${state.guardado ? 'checked' : ''} onchange="toggleLocalState('${pedido.uid}', 'guardado', this)"> Guardado
-                    </label>
-                    <label onclick="event.stopPropagation()">
-                        <input type="checkbox" ${state.recibido ? 'checked' : ''} onchange="toggleLocalState('${pedido.uid}', 'recibido', this)"> Recibido
-                    </label>
-                </div>
-                
-                <button class="primary" style="flex:1; justify-content:center; font-size:0.8rem" 
-                        onclick="event.stopPropagation(); saveChanges('${pedido.uid}')">💾 Guardar Cambios</button>
-                
-                <button style="flex:1; justify-content:center; font-size:0.8rem" 
-                        onclick="event.stopPropagation(); openProductModal('${pedido.uid}')">➕ Producto</button>
-                
-                <button class="danger" style="width:100%; justify-content:center; margin-top:4px" 
-                        onclick="event.stopPropagation(); deletePedido('${pedido.uid}')">Eliminar Pedido</button>
-                
-                <button style="width:100%; justify-content:center; background:#607d8b; color:white" 
-                         onclick="event.stopPropagation(); previewPDF('${pedido.uid}')">📄 PDF</button>
-            </div>
+            <div class="client-body">
         `;
+
+        // Lógica de "Mostrar solo X"
+        const SHOW_LIMIT = 2; // Cantidad a mostrar inicialmente
+        const hasMore = userOrders.length > SHOW_LIMIT;
+
+        userOrders.forEach((pedido, index) => {
+            const isHidden = index >= SHOW_LIMIT;
+            const hiddenClass = isHidden ? 'hidden-orders' : '';
+            const localKey = getLocalKey(pedido);
+            const state = localStates[localKey] || {};
+            const dateStr = new Date(pedido.fecha).toLocaleDateString('es-ES', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'});
+
+            html += `
+            <div class="sub-order ${hiddenClass}" id="sub-order-${pedido.uid}">
+                <div class="sub-order-header">
+                    <span>📅 ${dateStr} (ID: ${pedido.uid.toString().slice(-4)})</span>
+                    ${state.guardado ? '<span class="badge guardado">Guardado</span>' : ''}
+                </div>
+                
+                <div class="sub-items">
+                    ${pedido.items.map((it, i) => `
+                        <div class="sub-item-row">
+                            <span>${it.cantidad}x ${it.nombre}</span>
+                            <span>
+                                $${formatMoney(it.subtotal)} 
+                                <button class="btn-xs danger" style="display:inline; padding:0 4px; margin-left:5px" onclick="event.stopPropagation(); deleteItem('${pedido.uid}', ${i})">x</button>
+                            </span>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div style="text-align:right; font-weight:bold; font-size:0.9rem; margin-bottom:5px">
+                   Subtotal: $${formatMoney(pedido.total)}
+                </div>
+
+                <div class="sub-actions">
+                    <label style="font-size:0.8rem; display:flex; align-items:center; gap:4px" onclick="event.stopPropagation()">
+                        <input type="checkbox" ${state.guardado ? 'checked' : ''} onchange="toggleLocalState('${pedido.uid}', 'guardado', this)"> 💾
+                    </label>
+                    <button class="btn-small primary" onclick="event.stopPropagation(); openProductModal('${pedido.uid}')">+ Prod</button>
+                    <button class="btn-small" onclick="event.stopPropagation(); saveChanges('${pedido.uid}')">✅ Guardar</button>
+                    <button class="btn-small danger" onclick="event.stopPropagation(); deletePedido('${pedido.uid}')">🗑️</button>
+                    <button class="btn-small" style="background:#607d8b; color:white" onclick="event.stopPropagation(); previewPDF('${pedido.uid}')">📄</button>
+                </div>
+            </div>`;
+        });
+
+        html += `</div>`; // Cerrar client-body
+
+        // Botón Ver Más
+        if (hasMore) {
+            html += `
+            <div class="load-more-container" onclick="event.stopPropagation(); toggleShowMore(this)">
+                Ver ${userOrders.length - SHOW_LIMIT} pedidos más ▼
+            </div>`;
+        }
+
+        card.innerHTML = html;
         grid.appendChild(card);
     });
   }
 
-  // ================= LÓGICA DE FILTRADO =================
+  function toggleShowMore(btn) {
+      const card = btn.closest('.client-card');
+      const hidden = card.querySelectorAll('.hidden-orders');
+      
+      if(hidden.length > 0) {
+          // Mostrar
+          hidden.forEach(el => el.classList.add('show'));
+          btn.innerHTML = 'Ocultar pedidos ▲';
+      } else {
+          // Ocultar (necesitamos quitar la clase show)
+          const all = card.querySelectorAll('.sub-order');
+          all.forEach((el, idx) => {
+              if(idx >= 2) el.classList.remove('show');
+          });
+          btn.innerHTML = `Ver más pedidos ▼`;
+      }
+  }
+
+  // ================= FILTRADO =================
   function filterOrders() {
       const query = document.getElementById('searchInput').value.toLowerCase();
+      // Filtramos sobre el global, pero renderGroups se encarga de agrupar
       const filtered = globalOrders.filter(o => 
           (o.user && o.user.toLowerCase().includes(query)) || 
           (o.uid && o.uid.toString().includes(query))
       );
-      renderOrders(filtered);
+      renderGroups(filtered);
   }
 
   function updateGridCols(val) {
@@ -522,7 +430,7 @@
       localStorage.setItem('gridCols', val);
   }
 
-  // ================= LÓGICA AGRUPAMIENTO (MERGE) =================
+  // ================= AGRUPAMIENTO DE CLIENTES (MERGE) =================
   function toggleGroupMode() {
       groupingMode = !groupingMode;
       mergeSelection = [];
@@ -530,103 +438,78 @@
       
       if(groupingMode) {
           btn.classList.add('active');
-          btn.innerHTML = '❌ Cancelar Agrupamiento';
-          alert('MODO AGRUPAR ACTIVADO:\n1. Selecciona el PRIMER pedido (base).\n2. Selecciona el SEGUNDO pedido (se unirá al primero).');
+          btn.innerHTML = '❌ Cancelar';
+          alert('MODO FUSIÓN DE CLIENTES:\n1. Selecciona el Cliente DESTINO (el que quedará).\n2. Selecciona el Cliente A MOVER (el que desaparecerá).');
       } else {
           btn.classList.remove('active');
           btn.innerHTML = '🔗 Modo Agrupar';
-          document.querySelectorAll('.order-card').forEach(c => c.classList.remove('selected-merge'));
+          document.querySelectorAll('.client-card').forEach(c => c.classList.remove('selected-merge'));
       }
   }
 
-  async function handleCardClick(e, pedido) {
-      if (!groupingMode) return; // Si no está en modo agrupar, no hace nada al clickear la carta
-
-      const card = document.getElementById(`card-${pedido.uid}`);
+  async function handleGroupClick(e, uName) {
+      if (!groupingMode) return;
       
-      // Si ya estaba seleccionado, deseleccionar
-      if (mergeSelection.includes(pedido.uid)) {
-          mergeSelection = mergeSelection.filter(id => id !== pedido.uid);
+      // Encontrar la carta visualmente para marcarla
+      const card = e.currentTarget;
+      
+      if (mergeSelection.includes(uName)) {
+          mergeSelection = mergeSelection.filter(n => n !== uName);
           card.classList.remove('selected-merge');
           return;
       }
 
-      // Seleccionar
-      mergeSelection.push(pedido.uid);
+      mergeSelection.push(uName);
       card.classList.add('selected-merge');
 
-      // Si tenemos 2 seleccionados, ejecutar fusión
       if (mergeSelection.length === 2) {
-          await executeMerge();
+          await executeClientMerge();
       }
   }
 
-  async function executeMerge() {
-      const idA = mergeSelection[0];
-      const idB = mergeSelection[1];
+  async function executeClientMerge() {
+      const targetUser = mergeSelection[0]; // El primero seleccionado es el destino
+      const sourceUser = mergeSelection[1]; // El segundo se une al primero
       
-      const orderA = globalOrders.find(o => o.uid === idA);
-      const orderB = globalOrders.find(o => o.uid === idB);
-
-      const newName = prompt(`Vas a unir el pedido de "${orderB.user}" con el de "${orderA.user}".\n\nIngresa el NUEVO NOMBRE para este pedido unificado:`, orderA.user);
-
-      if (!newName) {
-          // Cancelar
-          toggleGroupMode(); 
-          return;
-      }
-
-      if(!confirm("¿Estás seguro? Esto eliminará el segundo pedido y moverá sus items al primero.")) {
+      if(!confirm(`¿Unir todos los pedidos de "${sourceUser}" dentro de "${targetUser}"?\n\n"${sourceUser}" desaparecerá.`)) {
           toggleGroupMode();
           return;
       }
 
-      // Lógica de Fusión
-      const combinedItems = [...orderA.items, ...orderB.items];
-
+      // Encontrar todos los pedidos del sourceUser
+      const sourceOrders = globalOrders.filter(o => o.user === sourceUser);
+      
       try {
-          // 1. Actualizar Pedido A con items combinados y nuevo nombre
-          // NOTA: Tu API "actualizar-pedido" recibía items. Si soporta cambiar nombre, genial. 
-          // Si no, solo se actualizan items y el nombre se cambia visualmente o requiere otro endpoint.
-          // Asumiré que enviamos los items nuevos. El nombre quizás deba gestionarse creando uno nuevo si la API es estricta.
+          // Para cada pedido del usuario origen, actualizamos su nombre al usuario destino
+          // Esto es más eficiente que fusionar arrays gigantes, mantenemos pedidos individuales pero bajo un solo nombre.
           
-          // Simulamos update enviando la data completa
-          const payload = {
-              items: combinedItems,
-              stockUpdates: [] // En un merge puro no cambia el stock total consumido, solo se mueve
-          };
-          
-          // Actualizamos A
-          const resA = await fetch(`${apiBase}/actualizar-pedido/${idA}`, {
-              method: 'PUT',
-              headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify(payload)
-          });
-          
-          if(!resA.ok) throw new Error("Error actualizando pedido A");
+          for (const order of sourceOrders) {
+             const payload = { 
+                 items: order.items, 
+                 total: order.total,
+                 user: targetUser // AQUÍ EL CAMBIO CLAVE
+             };
 
-          // 2. Eliminar Pedido B
-          const resB = await fetch(`${apiBase}/eliminar-pedido/${encodeURIComponent(idB)}`, {
-              method: 'DELETE',
-              headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify({recibido: false})
-          });
+             // Usamos el mismo endpoint de actualizar
+             await fetch(`${apiBase}/actualizar-pedido/${order.uid}`, {
+                 method: 'PUT',
+                 headers: {'Content-Type': 'application/json'},
+                 body: JSON.stringify(payload)
+             });
+          }
 
-          // Hack local para actualizar nombre si la API no tiene endpoint específico de renombrar
-          // (Si tu API guarda el nombre basado en el login, esto es complejo, pero visualmente lo haremos aquí)
-          
-          alert('¡Pedidos fusionados correctamente!');
-          toggleGroupMode(); // Apagar modo
-          loadAllData(); // Recargar todo
+          alert('Clientes fusionados con éxito.');
+          toggleGroupMode();
+          loadAllData();
 
       } catch (err) {
           console.error(err);
-          alert('Error al fusionar pedidos: ' + err.message);
+          alert('Error al fusionar clientes.');
           toggleGroupMode();
       }
   }
 
-  // ================= MODAL PRODUCTOS =================
+  // ================= MODAL PRODUCTOS Y UTILS (Sin cambios mayores) =================
   function openProductModal(pedidoId) {
       currentTargetPedidoId = pedidoId;
       document.getElementById('productModal').classList.add('open');
@@ -647,17 +530,8 @@
       const list = document.getElementById('prodResults');
       list.innerHTML = '';
       if(query.length < 2) { list.classList.remove('active'); return; }
-
-      // Filtrar catálogo local
       const matches = productsCatalog.filter(p => p.nombre.toLowerCase().includes(query.toLowerCase()));
       
-      // Si no hay catálogo cargado, permitir escribir libremente sin sugerencias o mostrar mensaje
-      if(productsCatalog.length === 0) {
-          list.innerHTML = '<div style="padding:5px; color:#777">No hay catálogo cargado. Escribe manual.</div>';
-          list.classList.add('active');
-          return;
-      }
-
       if(matches.length > 0) {
           list.classList.add('active');
           matches.slice(0, 10).forEach(p => {
@@ -667,172 +541,106 @@
               div.onclick = () => selectProduct(p);
               list.appendChild(div);
           });
-      } else {
-          list.classList.remove('active');
-      }
+      } else list.classList.remove('active');
   }
 
   function selectProduct(prod) {
       document.getElementById('selectedProdName').value = prod.nombre;
       document.getElementById('prodPrice').value = prod.precio;
       document.getElementById('prodResults').classList.remove('active');
-      document.getElementById('prodSearch').value = prod.nombre; // Visual feedback
+      document.getElementById('prodSearch').value = prod.nombre;
   }
 
   async function submitAddProduct() {
       if(!currentTargetPedidoId) return;
-      
       const name = document.getElementById('prodSearch').value || document.getElementById('selectedProdName').value;
       const qty = parseFloat(document.getElementById('prodQty').value);
       const price = parseFloat(document.getElementById('prodPrice').value);
       const applyDisc = document.getElementById('applyDiscount').checked;
 
-      if(!name || !qty || isNaN(price)) {
-          alert('Por favor completa los datos del producto.');
-          return;
-      }
+      if(!name || !qty || isNaN(price)) { alert('Datos incompletos'); return; }
+      let finalPrice = applyDisc ? price * 0.97 : price;
 
-      let finalPrice = price;
-      if(applyDisc) finalPrice = price * 0.97;
-
-      // Buscar pedido en memoria
       const pedido = globalOrders.find(o => o.uid === currentTargetPedidoId);
       if(!pedido) return;
 
-      // Crear nuevo item
-      const newItem = {
-          id: 'manual-' + Date.now(), // ID temporal si no viene de DB
-          nombre: name,
-          cantidad: qty,
-          precio_unitario: finalPrice,
-          subtotal: qty * finalPrice
-      };
-
+      const newItem = { id: 'manual-'+Date.now(), nombre: name, cantidad: qty, precio_unitario: finalPrice, subtotal: qty * finalPrice };
       pedido.items.push(newItem);
       
-      // Guardar cambios en API
-      await savePedidoToApi(pedido);
-      
+      // Al añadir producto, nos aseguramos de enviar el user actual para no perder nombre si se renombró
+      await savePedidoToApi(pedido); 
       closeProductModal();
-      renderOrders(globalOrders); // Re-renderizar para ver cambios
+      // Recargar solo renderizado visual para rapidez
+      renderGroups(); 
   }
 
-  // ================= ACCIONES DE ITEM (Borrar, Guardar) =================
   async function deleteItem(pedidoId, itemIndex) {
       if(!confirm('¿Borrar producto?')) return;
       const pedido = globalOrders.find(o => o.uid === pedidoId);
       if(pedido) {
           pedido.items.splice(itemIndex, 1);
-          renderOrders(globalOrders); // Update visual instantáneo
+          renderGroups();
       }
   }
 
   async function saveChanges(pedidoId) {
       const pedido = globalOrders.find(o => o.uid === pedidoId);
-      if(!pedido) return;
-      
-      if(!confirm(`¿Confirmar cambios en pedido de ${pedido.user}?`)) return;
-      
-      // Calcular stockDiff si es necesario (basado en lógica antigua)
-      // Como estamos trabajando sobre el estado actual, enviamos items actuales.
-      // La API deberá manejar la diferencia de stock.
-      
+      if(!pedido || !confirm(`¿Guardar cambios en pedido de ${pedido.user}?`)) return;
       await savePedidoToApi(pedido);
-      alert('Pedido actualizado');
+      alert('Guardado.');
   }
 
   async function savePedidoToApi(pedido) {
-      // Recrear estructura items para API
       const itemsPayload = pedido.items.map(i => ({
-          id: i.id,
-          nombre: i.nombre,
-          cantidad: i.cantidad,
-          precio_unitario: i.precio_unitario,
-          subtotal: i.cantidad * i.precio_unitario
+          id: i.id, nombre: i.nombre, cantidad: i.cantidad, precio_unitario: i.precio_unitario, subtotal: i.cantidad * i.precio_unitario
       }));
+      // Importante: Enviamos el 'user' en el payload para asegurar que el backend sepa de quien es
+      const payload = { items: itemsPayload, stockUpdates: [], user: pedido.user };
 
-      // NOTA: Para stock updates precisos, idealmente deberíamos comparar con la versión original
-      // Como simplificación, enviamos items. Si tu backend requiere 'stockUpdates' explicito,
-      // la lógica se complica un poco sin tener el estado "original" guardado por separado.
-      // Enviamos array vacío para no romper, o implementamos lógica diff si es crítico.
-      
-      const payload = {
-          items: itemsPayload,
-          stockUpdates: [] // Implementar diff si el backend no lo calcula solo
-      };
-
-      const res = await fetch(`${apiBase}/actualizar-pedido/${pedido.uid}`, {
-          method: 'PUT',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify(payload)
+      await fetch(`${apiBase}/actualizar-pedido/${pedido.uid}`, {
+          method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
       });
-      
-      if(!res.ok) throw new Error('Error guardando en API');
   }
 
   async function deletePedido(uid) {
-      if(!confirm('¿ELIMINAR este pedido permanentemente?')) return;
+      if(!confirm('¿Eliminar pedido permanentemente?')) return;
       try {
           const res = await fetch(`${apiBase}/eliminar-pedido/${encodeURIComponent(uid)}`, {
-              method: 'DELETE',
-              headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify({ recibido: false })
+              method: 'DELETE', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ recibido: false })
           });
           if(res.ok) {
               globalOrders = globalOrders.filter(o => o.uid !== uid);
-              renderOrders(globalOrders);
-          } else {
-              alert('Error al eliminar');
+              renderGroups();
           }
-      } catch(e) { console.error(e); alert('Error de red'); }
+      } catch(e) { console.error(e); }
   }
 
-  // ================= PDF =================
   async function previewPDF(uid) {
       const pedido = globalOrders.find(o => o.uid === uid);
       if(!pedido) return;
-
       const payload = {
-        user: pedido.user,
-        items: pedido.items,
-        total: pedido.items.reduce((s, i) => s + (i.cantidad * i.precio_unitario), 0),
-        fecha: pedido.fecha || new Date().toISOString()
+        user: pedido.user, items: pedido.items, total: pedido.items.reduce((s, i) => s + (i.cantidad * i.precio_unitario), 0), fecha: pedido.fecha
       };
-
       try {
           const res = await fetch(`${apiBase}/generar-pdf-peticion`, {
-              method: 'POST',
-              headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify(payload)
+              method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
           });
           const data = await res.json();
           if(data.ok && data.pdf) window.open(data.pdf, '_blank');
-          else alert('Error generando PDF');
-      } catch(e) { console.error(e); alert('Error PDF'); }
+      } catch(e) { console.error(e); }
   }
 
-  // ================= UTILS & LOCAL STORAGE =================
-  function formatMoney(amount) {
-      return parseFloat(amount).toFixed(2);
-  }
-
-  function getLocalKey(pedido) {
-      // Usamos user + fecha o ID para key única en localStorage
-      return pedido.id || `${pedido.user}-${new Date(pedido.fecha).getTime()}`;
-  }
-
+  function formatMoney(amount) { return parseFloat(amount).toFixed(2); }
+  function getLocalKey(pedido) { return pedido.id || `${pedido.user}-${new Date(pedido.fecha).getTime()}`; }
   function toggleLocalState(uid, type, checkbox) {
       const pedido = globalOrders.find(o => o.uid === uid);
       const key = getLocalKey(pedido);
-      
       if(!localStates[key]) localStates[key] = {};
       localStates[key][type] = checkbox.checked;
-      
       localStorage.setItem('estadosPedidos', JSON.stringify(localStates));
-      
-      // Actualizar visualmente badges si es necesario
-      renderOrders(globalOrders); 
+      renderGroups();
   }
 </script>
 </body>
 </html>
+
