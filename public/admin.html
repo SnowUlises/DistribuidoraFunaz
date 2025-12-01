@@ -369,7 +369,6 @@
       <button type="button" onclick="closeAddModal()">Cancelar</button>
     </form>
   </dialog>
-
   <script>
   const apiBase = 'https://distribuidorafunaz-a2o6.onrender.com/api';
   // Security check
@@ -383,7 +382,6 @@
   let productos = [];
   let currentPedidoId = null;
   window.usersPedidos = {};
-
   function guardarEstados() {
     localStorage.setItem('estadosPedidos', JSON.stringify(estadosPedidos));
   }
@@ -395,15 +393,12 @@
     if (el) el.textContent = msg;
     else console.warn('mensajeError no encontrado:', msg);
   }
-
   // ==================== FUNCIÓN ENFOCAR ====================
   function enfocarPedido(pedidoId) {
     const selectedPedido = document.getElementById(`pedido-${pedidoId}`);
     if (!selectedPedido) return;
-
     const btn = selectedPedido.querySelector('.enfocar');
     const estaEnfocado = selectedPedido.classList.contains('enfocado');
-
     // Resetear todo
     document.querySelectorAll('.pedido-item').forEach(p => {
       p.style.display = '';
@@ -411,10 +406,8 @@
       const b = p.querySelector('.enfocar');
       if (b) b.textContent = 'Enfocar';
     });
-
     const peticionesSection = document.querySelector('main details:nth-of-type(2)');
     if (peticionesSection) peticionesSection.style.display = '';
-
     if (!estaEnfocado) {
       // Ocultar todos los demás pedidos
       document.querySelectorAll('.pedido-item').forEach(p => {
@@ -422,14 +415,11 @@
           p.style.display = 'none';
         }
       });
-
       // Ocultar sección de peticiones
       if (peticionesSection) peticionesSection.style.display = 'none';
-
       // Resaltar el pedido seleccionado
       selectedPedido.classList.add('enfocado');
       btn.textContent = 'Mostrar todos';
-
       // Abrir solo el usuario correspondiente y cerrar los demás
       const userDetails = selectedPedido.closest('.user-details');
       if (userDetails) {
@@ -438,13 +428,11 @@
         });
         userDetails.open = true;
       }
-
       // Scroll suave al pedido
       selectedPedido.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }
   // ========================================================
-
   function toggleGuardado(usuario, idx, el) {
     const key = `${usuario}-${idx}`;
     const nuevo = !!el.checked;
@@ -526,7 +514,6 @@
       }
     });
   }
-
   function buildPedidoHTML(pedido, index, userName) {
     const items = pedido.items;
     const pedidoId = pedido.id ?? `${userName}-${index}`;
@@ -568,11 +555,11 @@
           <div class='status-container'>
             <label><input type='checkbox' ${estado.guardado ? 'checked' : ''} onchange="toggleGuardado('${userName}',${index}, this)"> Guardado</label>
             <label><input type='checkbox' ${estado.recibido ? 'checked' : ''} onchange="toggleRecibido('${userName}',${index}, this)"> Recibido</label>
+            <label><input type="checkbox" id="modo-devolucion-${pedidoId}"> Modo Devolución</label>
           </div>
         </div>
       </li>`;
   }
-
   function addGuardarBtnListener(btn) {
     btn.addEventListener('click', async () => {
       const pedidoId = btn.dataset.pedidoid;
@@ -594,7 +581,6 @@
       }
     });
   }
-
   async function cargarUsuarios() {
     try {
       const listaPedidos = document.getElementById('listaUsuarios');
@@ -670,7 +656,6 @@
       if (listaPedidos) listaPedidos.innerHTML = '<p>Error al cargar pedidos.</p>';
     }
   }
-
   function loadMorePedidos(btn) {
     const userName = btn.dataset.username;
     const loaded = parseInt(btn.dataset.loaded);
@@ -698,7 +683,6 @@
       btn.remove();
     }
   }
-
   function modificarCantidadPedido(pedidoId, itemIndex, change) {
     console.log(`Modificando cantidad: pedidoId=${pedidoId}, itemIndex=${itemIndex}, change=${change}`);
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
@@ -731,7 +715,6 @@
       totalSpan.textContent = formatMoney(total);
     }
   }
-
   function eliminarItemPedido(pedidoId, itemIndex) {
     if (!confirm('¿Eliminar este item del pedido?')) return;
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
@@ -756,7 +739,6 @@
       if (totalSpan) totalSpan.textContent = formatMoney(total);
     }
   }
-
   async function guardarCambiosPedido(pedidoId) {
     if (!confirm('¿Guardar los cambios en este pedido?')) return;
     try {
@@ -765,15 +747,24 @@
       const items = JSON.parse(pedidoDiv.dataset.items || '[]');
       const originalItems = JSON.parse(pedidoDiv.dataset.originalItems || '[]');
       if (!items || items.length === 0) return alert('No hay items');
-      const stockUpdates = [];
+      
+      const modoDevolucion = document.getElementById(`modo-devolucion-${pedidoId}`)?.checked || false;
+
+      // Cálculo de deltas para stock
+      const deltaMap = new Map();
+      originalItems.forEach(oi => deltaMap.set(oi.id, -oi.cantidad));
       items.forEach(item => {
-        const originalItem = originalItems.find(oi => oi.id === item.id);
-        const originalCantidad = originalItem ? originalItem.cantidad : 0;
-        const cantidadDiferencia = item.cantidad - originalCantidad;
-        if (cantidadDiferencia > 0) {
-          stockUpdates.push({ id: item.id, cantidad: cantidadDiferencia });
-        }
+        const curr = deltaMap.get(item.id) || 0;
+        deltaMap.set(item.id, curr + item.cantidad);
       });
+
+      const stockUpdates = [];
+      for (const [id, delta] of deltaMap.entries()) {
+        if (delta !== 0 && (delta > 0 || modoDevolucion)) {
+          stockUpdates.push({id, cantidad: delta});
+        }
+      }
+
       const payload = {
         items: items.map(item => ({
           id: item.id,
@@ -803,7 +794,6 @@
       mostrarError(`Error al guardar cambios: ${err.message}`);
     }
   }
-
   async function previewPDFPedido(pedidoId) {
     try {
       const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
@@ -838,7 +828,6 @@
       mostrarError(`Error al generar PDF: ${err.message}`);
     }
   }
-
   async function guardarPedido(pedidoId) {
     try {
       const r = await fetch(`${apiBase}/pedidos/${pedidoId}/pdf`, { cache: 'no-store' });
@@ -852,7 +841,6 @@
       throw err;
     }
   }
-
   async function eliminarPedido(pedidoId, usuario, index) {
     if (!confirm('¿Eliminar este pedido?')) return;
     try {
@@ -880,7 +868,6 @@
       mostrarError(`Error al eliminar pedido: ${err.message}`);
     }
   }
-
   async function cargarPedidos() {
     try {
       const res = await fetch(`${apiBase}/pedidos`, { cache: 'no-store' });
@@ -891,7 +878,6 @@
       console.error(err);
     }
   }
-
   function formatMoney(n) {
     try {
       return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n);
@@ -899,7 +885,6 @@
       return '$' + Number(n).toFixed(2);
     }
   }
-
   async function cargarProductos() {
     try {
       const res = await fetch(`${apiBase}/productos`, { cache: 'no-store' });
@@ -910,7 +895,6 @@
       mostrarError('Error al cargar productos.');
     }
   }
-
   async function cargarPeticiones() {
     try {
       const listaPeticiones = document.getElementById('listaPeticiones');
@@ -979,7 +963,6 @@
       mostrarError('Error al cargar peticiones.');
     }
   }
-
   function modificarCantidad(peticionId, itemIndex, change) {
     const peticionDiv = document.getElementById(`peticion-${peticionId}`);
     if (!peticionDiv) return;
@@ -1004,7 +987,6 @@
     const totalSpan = document.getElementById(`total-${peticionId}`);
     if (totalSpan) totalSpan.textContent = formatMoney(total);
   }
-
   function eliminarItemPeticion(peticionId, itemIndex) {
     if (!confirm('¿Eliminar este item de la petición?')) return;
     const peticionDiv = document.getElementById(`peticion-${peticionId}`);
@@ -1034,7 +1016,6 @@
       if (totalSpan) totalSpan.textContent = formatMoney(total);
     }
   }
-
   async function eliminarPeticion(peticionId) {
     if (!confirm('¿Eliminar esta petición?')) return;
     try {
@@ -1048,7 +1029,6 @@
       mostrarError(`Error al eliminar petición: ${err.message}`);
     }
   }
-
   async function confirmarPeticion(peticionId, subtractThreePercent) {
     if (!confirm(`¿Confirmar esta petición${subtractThreePercent ? ' con -3%' : ''}?`)) return;
     try {
@@ -1086,7 +1066,6 @@
       mostrarError(`Error al confirmar petición: ${err.message}`);
     }
   }
-
   async function previewPDF(peticionId) {
     try {
       const peticionDiv = document.getElementById(`peticion-${peticionId}`);
@@ -1118,7 +1097,6 @@
       mostrarError(`Error al generar PDF: ${err.message}`);
     }
   }
-
   function copiarFaltantes(peticionId) {
     const peticionDiv = document.getElementById(`peticion-${peticionId}`);
     if (!peticionDiv) return alert('Petición no encontrada');
@@ -1137,7 +1115,6 @@
       alert('Error al copiar. Copia manual:\n' + textToCopy);
     });
   }
-
   function openAddModal(pedidoId) {
     currentPedidoId = pedidoId;
     document.getElementById('productsInput').value = '';
@@ -1147,7 +1124,6 @@
   function closeAddModal() {
     document.getElementById('addProductModal').close();
   }
-
   function addProductsToPedido() {
     const input = document.getElementById('productsInput').value.trim();
     const apply3 = document.getElementById('apply3percent').checked;
@@ -1204,7 +1180,6 @@
     if (totalSpan) totalSpan.textContent = formatMoney(total);
     closeAddModal();
   }
-
   async function init() {
     try {
       await cargarProductos();
@@ -1216,7 +1191,6 @@
       mostrarError('Error al inicializar la página.');
     }
   }
-
   window.onload = init;
   </script>
 </body>
