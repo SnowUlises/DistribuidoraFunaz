@@ -146,6 +146,11 @@
       background: #c82333;
     }
     .status-container {
+      color: #d9534f;
+      font-weight: bold;
+      margin-top: 0.5em;
+    }
+    .status-container {
       display: flex;
       gap: 1em;
       align-items: center;
@@ -178,6 +183,19 @@
     }
     button.actualizar-precios:hover {
       background: #e68900;
+    }
+    button.actualizar-precios-descuento {
+      background: #4caf50;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button.actualizar-precios-descuento:hover {
+      background: #45a049;
     }
     button.ver-original {
       background: #673ab7;
@@ -286,11 +304,6 @@
     button:disabled {
       background: #ccc;
       cursor: not-allowed;
-    }
-    .status {
-      color: #d9534f;
-      font-weight: bold;
-      margin-top: 0.5em;
     }
     #mensajeError {
       margin-bottom: 1em;
@@ -527,14 +540,15 @@
     if (totalSpan) totalSpan.textContent = formatMoney(total);
   }
 
-  async function actualizarPreciosPedido(pedidoId) {
+  async function actualizarPreciosPedido(pedidoId, applyDiscount = false) {
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
     if (pedidoDiv.classList.contains('viewing-original')) {
       alert('Salí de la vista original antes de actualizar precios.');
       return;
     }
 
-    if (!confirm('¿Actualizar todos los precios del pedido según la lista actual (se mantienen las cantidades)?')) return;
+    const descuentoTexto = applyDiscount ? ' con -3% (cliente con descuento)' : '';
+    if (!confirm(`¿Actualizar todos los precios del pedido según lista actual${descuentoTexto}? (se mantienen las cantidades)`)) return;
 
     try {
       const res = await fetch(`${apiBase}/productos`, { cache: 'no-store' });
@@ -545,10 +559,12 @@
       let items = JSON.parse(pedidoDiv.dataset.items || '[]');
       let changed = false;
 
+      const multiplier = applyDiscount ? 1.10 * 0.97 : 1.10;
+
       const updatedItems = items.map(item => {
         const basePrecio = precioMap.get(item.id);
         if (basePrecio !== undefined) {
-          const nuevoPrecio = Number((basePrecio * 1.10).toFixed(2));
+          const nuevoPrecio = Number((basePrecio * multiplier).toFixed(2));
           if (nuevoPrecio !== item.precio_unitario) changed = true;
           return {
             ...item,
@@ -556,17 +572,17 @@
             subtotal: nuevoPrecio * item.cantidad
           };
         }
-        return item; // si no existe el producto, se mantiene el precio viejo
+        return item;
       });
 
       if (!changed) {
-        alert('Todos los precios ya están actualizados.');
+        alert('Todos los precios ya están actualizados con este criterio.');
         return;
       }
 
       pedidoDiv.dataset.items = JSON.stringify(updatedItems);
       updatePedidoItems(pedidoId, updatedItems);
-      alert('Precios actualizados correctamente.');
+      alert(`Precios actualizados correctamente${descuentoTexto}.`);
     } catch (e) {
       mostrarError('Error al actualizar precios: ' + e.message);
     }
@@ -650,7 +666,7 @@
     });
   }
 
-  function buildPedidoHTML(pedido, index, userName) {
+  function buildPedidoHTML(pedido, index, index, userName) {
     const items = pedido.items;
     const pedidoId = pedido.id ?? `${userName}-${index}`;
     const key = `${userName}-${index}`;
@@ -680,7 +696,8 @@
             </button>
             <button class="preview-pdf" onclick="previewPDFPedido('${pedidoId}')">Descargar PDF Preview</button>
             <button class="add-product" onclick="openAddModal('${pedidoId}')">Añadir producto</button>
-            <button class="actualizar-precios" onclick="actualizarPreciosPedido('${pedidoId}')">Actualizar precios</button>
+            <button class="actualizar-precios" onclick="actualizarPreciosPedido('${pedidoId}', false)">Actualizar precios</button>
+            <button class="actualizar-precios-descuento" onclick="actualizarPreciosPedido('${pedidoId}', true)">Actualizar precios -3%</button>
             <button class="ver-original" onclick="toggleViewOriginal('${pedidoId}')">Ver original</button>
             <button class="confirmar" onclick="guardarCambiosPedido('${pedidoId}')">Guardar Cambios</button>
             <button class="enfocar" onclick="enfocarPedido('${pedidoId}')">Enfocar</button>
@@ -776,7 +793,6 @@
           <div class='usuario-item'>${pedidosHTML}</div>`;
         listaPedidos.appendChild(userDiv);
 
-        // GUARDAR ORIGINAL SI ES NUEVO
         pedidosToShow.forEach((pedido, index) => {
           const pedidoId = pedido.id ?? `${userName}-${index}`;
           if (pedido.id && !originalPedidosCache[pedidoId]) {
