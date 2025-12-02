@@ -166,6 +166,35 @@
       margin-top: 1em;
       align-items: center;
     }
+    button.actualizar-precios {
+      background: #ff9800;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button.actualizar-precios:hover {
+      background: #e68900;
+    }
+    button.ver-original {
+      background: #673ab7;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button.ver-original:hover {
+      background: #512da8;
+    }
+    button.ver-original.viewing {
+      background: #4a148c;
+    }
     button.confirmar {
       background: #28a745;
       border: none;
@@ -376,23 +405,33 @@
   if (user !== 'admin') {
     window.location.href = 'index.html';
   }
+
+  // CACHE DE PEDIDOS ORIGINALES (solo la primera versión al aceptar)
+  let originalPedidosCache = JSON.parse(localStorage.getItem('originalPedidosCache') || '{}');
+
   // States
   let estadosPedidos = JSON.parse(localStorage.getItem('estadosPedidos') || '{}');
   const usedButtons = JSON.parse(localStorage.getItem('usedButtons') || '{}');
   let productos = [];
   let currentPedidoId = null;
   window.usersPedidos = {};
+
   function guardarEstados() {
     localStorage.setItem('estadosPedidos', JSON.stringify(estadosPedidos));
   }
   function saveUsedButtons() {
     localStorage.setItem('usedButtons', JSON.stringify(usedButtons));
   }
+  function guardarOriginalCache() {
+    localStorage.setItem('originalPedidosCache', JSON.stringify(originalPedidosCache));
+  }
+
   function mostrarError(msg) {
     const el = document.getElementById('mensajeError');
     if (el) el.textContent = msg;
     else console.warn('mensajeError no encontrado:', msg);
   }
+
   // ==================== FUNCIÓN ENFOCAR ====================
   function enfocarPedido(pedidoId) {
     const selectedPedido = document.getElementById(`pedido-${pedidoId}`);
@@ -433,6 +472,7 @@
     }
   }
   // ========================================================
+
   function toggleGuardado(usuario, idx, el) {
     const key = `${usuario}-${idx}`;
     const nuevo = !!el.checked;
@@ -453,6 +493,7 @@
     estadosPedidos[key] = { ...estadosPedidos[key], recibido: nuevo };
     guardarEstados();
   }
+
   function formatDateTime(fecha) {
     const date = new Date(fecha);
     const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -461,6 +502,98 @@
     const formattedTime = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
     return { formattedDate, formattedTime };
   }
+
+  function renderItemsHTML(pedidoId, items, editable = true) {
+    return items.map((item, itemIndex) => `
+      <div class="item" ${editable ? `data-item-index="${itemIndex}"` : ''}>
+        <span id="item-text-${pedidoId}-${itemIndex}">${item.nombre}: <span id="cantidad-${pedidoId}-${itemIndex}">${item.cantidad}</span> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}</span>
+        ${editable ? `
+        <div class="item-controls">
+          <button class="increase" onclick="modificarCantidadPedido('${pedidoId}', ${itemIndex}, 1)">+</button>
+          <button class="decrease" onclick="modificarCantidadPedido('${pedidoId}', ${itemIndex}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
+          <button class="delete" onclick="eliminarItemPedido('${pedidoId}', ${itemIndex})">Eliminar</button>
+        </div>
+        ` : ''}
+      </div>
+    `).join('');
+  }
+
+  function updatePedidoItems(pedidoId, items, editable = true) {
+    const container = document.getElementById(`items-${pedidoId}`);
+    if (!container) return;
+    container.innerHTML = renderItemsHTML(pedidoId, items, editable);
+    const total = items.reduce((acc, item) => acc + item.subtotal, 0);
+    const totalSpan = document.getElementById(`total-${pedidoId}`);
+    if (totalSpan) totalSpan.textContent = formatMoney(total);
+  }
+
+  async function actualizarPreciosPedido(pedidoId) {
+    const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
+    if (pedidoDiv.classList.contains('viewing-original')) {
+      alert('Salí de la vista original antes de actualizar precios.');
+      return;
+    }
+
+    if (!confirm('¿Actualizar todos los precios del pedido según la lista actual (se mantienen las cantidades)?')) return;
+
+    try {
+      const res = await fetch(`${apiBase}/productos`, { cache: 'no-store' });
+      if (!res.ok) throw new Error('Error al cargar productos');
+      const currentProductos = await res.json();
+      const precioMap = new Map(currentProductos.map(p => [p.id, p.precio]));
+
+      let items = JSON.parse(pedidoDiv.dataset.items || '[]');
+      let changed = false;
+
+      const updatedItems = items.map(item => {
+        const basePrecio = precioMap.get(item.id);
+        if (basePrecio !== undefined) {
+          const nuevoPrecio = Number((basePrecio * 1.10).toFixed(2));
+          if (nuevoPrecio !== item.precio_unitario) changed = true;
+          return {
+            ...item,
+            precio_unitario: nuevoPrecio,
+            subtotal: nuevoPrecio * item.cantidad
+          };
+        }
+        return item; // si no existe el producto, se mantiene el precio viejo
+      });
+
+      if (!changed) {
+        alert('Todos los precios ya están actualizados.');
+        return;
+      }
+
+      pedidoDiv.dataset.items = JSON.stringify(updatedItems);
+      updatePedidoItems(pedidoId, updatedItems);
+      alert('Precios actualizados correctamente.');
+    } catch (e) {
+      mostrarError('Error al actualizar precios: ' + e.message);
+    }
+  }
+
+  function toggleViewOriginal(pedidoId) {
+    const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
+    const isViewingOriginal = pedidoDiv.classList.toggle('viewing-original');
+
+    const itemsToShow = isViewingOriginal 
+      ? JSON.parse(pedidoDiv.dataset.veryOriginalItems)
+      : JSON.parse(pedidoDiv.dataset.items);
+
+    updatePedidoItems(pedidoId, itemsToShow, !isViewingOriginal);
+
+    const btn = pedidoDiv.querySelector('.ver-original');
+    btn.textContent = isViewingOriginal ? 'Volver a versión modificada' : 'Ver original';
+    btn.classList.toggle('viewing', isViewingOriginal);
+
+    // Deshabilitar todos los botones de acción excepto "Ver original"
+    pedidoDiv.querySelectorAll('button').forEach(b => {
+      if (!b.classList.contains('ver-original')) {
+        b.disabled = isViewingOriginal;
+      }
+    });
+  }
+
   function getOpenStates() {
     const mainUsersDetails = document.querySelector('details > summary:first-child').parentElement;
     const mainPeticionesDetails = document.querySelectorAll('details')[1];
@@ -471,6 +604,7 @@
       openUserNames
     };
   }
+
   function restoreOpenStates(states) {
     const mainUsersDetails = document.querySelector('details > summary:first-child').parentElement;
     if (mainUsersDetails && states.usersOpen) mainUsersDetails.open = true;
@@ -481,6 +615,7 @@
       if (userDetail) userDetail.open = true;
     });
   }
+
   const detailsContents = new Map();
   function setupDetails(det) {
     if (detailsContents.has(det)) return;
@@ -514,6 +649,7 @@
       }
     });
   }
+
   function buildPedidoHTML(pedido, index, userName) {
     const items = pedido.items;
     const pedidoId = pedido.id ?? `${userName}-${index}`;
@@ -521,23 +657,21 @@
     const estado = estadosPedidos[key] || {};
     const total = items.reduce((sum, p) => sum + p.subtotal, 0);
     const { formattedDate, formattedTime } = formatDateTime(pedido.fecha);
+
+    // GUARDAR VERSIÓN ORIGINAL LA PRIMERA VEZ QUE SE CARGA
+    if (pedido.id && !originalPedidosCache[pedidoId]) {
+      originalPedidosCache[pedidoId] = structuredClone(items);
+      guardarOriginalCache();
+    }
+
     return `
       <li>
-        <div class="pedido-item" id="pedido-${pedidoId}">
+        <div class="pedido-item" id="pedido-${pedidoId}" data-items='${JSON.stringify(items)}' data-veryOriginalItems='${JSON.stringify(originalPedidosCache[pedidoId] || items)}'>
           <div class="pedido-line">
             <strong>Pedido #${index + 1}</strong> del ${formattedDate} ${formattedTime} (ID: ${pedidoId}) - <b>Total: <span id="total-${pedidoId}">${formatMoney(total)}</span></b>
           </div>
           <div class="peticion-items" id="items-${pedidoId}">
-            ${items.map((item, itemIndex) => `
-              <div class="item" data-item-index="${itemIndex}">
-                <span id="item-text-${pedidoId}-${itemIndex}">${item.nombre}: <span id="cantidad-${pedidoId}-${itemIndex}">${item.cantidad}</span> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}</span>
-                <div class="item-controls">
-                  <button class="increase" onclick="modificarCantidadPedido('${pedidoId}', ${itemIndex}, 1)">+</button>
-                  <button class="decrease" onclick="modificarCantidadPedido('${pedidoId}', ${itemIndex}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
-                  <button class="delete" onclick="eliminarItemPedido('${pedidoId}', ${itemIndex})">Eliminar</button>
-                </div>
-              </div>
-            `).join('')}
+            ${renderItemsHTML(pedidoId, items)}
           </div>
           <div class="pedido-actions">
             <button onclick="eliminarPedido('${pedidoId}', '${userName}', ${index})">Eliminar pedido</button>
@@ -546,6 +680,8 @@
             </button>
             <button class="preview-pdf" onclick="previewPDFPedido('${pedidoId}')">Descargar PDF Preview</button>
             <button class="add-product" onclick="openAddModal('${pedidoId}')">Añadir producto</button>
+            <button class="actualizar-precios" onclick="actualizarPreciosPedido('${pedidoId}')">Actualizar precios</button>
+            <button class="ver-original" onclick="toggleViewOriginal('${pedidoId}')">Ver original</button>
             <button class="confirmar" onclick="guardarCambiosPedido('${pedidoId}')">Guardar Cambios</button>
             <button class="enfocar" onclick="enfocarPedido('${pedidoId}')">Enfocar</button>
             <span class="guardar-status" id="guardar-status-${pedidoId}" aria-hidden="true">
@@ -560,6 +696,7 @@
         </div>
       </li>`;
   }
+
   function addGuardarBtnListener(btn) {
     btn.addEventListener('click', async () => {
       const pedidoId = btn.dataset.pedidoid;
@@ -581,6 +718,7 @@
       }
     });
   }
+
   async function cargarUsuarios() {
     try {
       const listaPedidos = document.getElementById('listaUsuarios');
@@ -637,14 +775,20 @@
         userDiv.innerHTML = `<summary>${userName}</summary>
           <div class='usuario-item'>${pedidosHTML}</div>`;
         listaPedidos.appendChild(userDiv);
+
+        // GUARDAR ORIGINAL SI ES NUEVO
         pedidosToShow.forEach((pedido, index) => {
           const pedidoId = pedido.id ?? `${userName}-${index}`;
+          if (pedido.id && !originalPedidosCache[pedidoId]) {
+            originalPedidosCache[pedidoId] = structuredClone(pedido.items);
+            guardarOriginalCache();
+          }
           const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
           if (pedidoDiv) {
-            pedidoDiv.dataset.items = JSON.stringify(pedido.items);
-            pedidoDiv.dataset.originalItems = JSON.stringify(pedido.items);
+            pedidoDiv.dataset.veryOriginalItems = JSON.stringify(originalPedidosCache[pedidoId] || pedido.items);
           }
         });
+
         userDiv.querySelectorAll('.guardar-btn').forEach(addGuardarBtnListener);
       });
       document.querySelectorAll('#listaUsuarios details').forEach(setupDetails);
@@ -656,6 +800,7 @@
       if (listaPedidos) listaPedidos.innerHTML = '<p>Error al cargar pedidos.</p>';
     }
   }
+
   function loadMorePedidos(btn) {
     const userName = btn.dataset.username;
     const loaded = parseInt(btn.dataset.loaded);
@@ -667,12 +812,17 @@
       const index = loaded + offset;
       const liHTML = buildPedidoHTML(pedido, index, userName);
       ul.insertAdjacentHTML('beforeend', liHTML);
+
       const pedidoId = pedido.id ?? `${userName}-${index}`;
       const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-      if (pedidoDiv) {
-        pedidoDiv.dataset.items = JSON.stringify(pedido.items);
-        pedidoDiv.dataset.originalItems = JSON.stringify(pedido.items);
+      pedidoDiv.dataset.items = JSON.stringify(pedido.items);
+
+      if (pedido.id && !originalPedidosCache[pedidoId]) {
+        originalPedidosCache[pedidoId] = structuredClone(pedido.items);
+        guardarOriginalCache();
       }
+      pedidoDiv.dataset.veryOriginalItems = JSON.stringify(originalPedidosCache[pedidoId] || pedido.items);
+
       const guardarBtn = pedidoDiv.querySelector('.guardar-btn');
       if (guardarBtn) {
         addGuardarBtnListener(guardarBtn);
@@ -683,73 +833,43 @@
       btn.remove();
     }
   }
+
   function modificarCantidadPedido(pedidoId, itemIndex, change) {
-    console.log(`Modificando cantidad: pedidoId=${pedidoId}, itemIndex=${itemIndex}, change=${change}`);
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-    if (!pedidoDiv) {
-      console.error(`Pedido ${pedidoId} no encontrado en el DOM`);
-      mostrarError(`Pedido ${pedidoId} no encontrado`);
-      return;
-    }
+    if (pedidoDiv.classList.contains('viewing-original')) return;
+
     let items = JSON.parse(pedidoDiv.dataset.items || '[]');
-    if (!items[itemIndex]) {
-      console.error(`Item ${itemIndex} no encontrado en pedido ${pedidoId}`);
-      return;
-    }
-    items[itemIndex].cantidad = Math.max(1, (items[itemIndex].cantidad || 1) + change);
+    items[itemIndex].cantidad = Math.max(1, items[itemIndex].cantidad + change);
     items[itemIndex].subtotal = items[itemIndex].cantidad * items[itemIndex].precio_unitario;
     pedidoDiv.dataset.items = JSON.stringify(items);
-    const cantidadSpan = document.getElementById(`cantidad-${pedidoId}-${itemIndex}`);
-    const itemText = document.getElementById(`item-text-${pedidoId}-${itemIndex}`);
-    if (cantidadSpan && itemText) {
-      cantidadSpan.textContent = items[itemIndex].cantidad;
-      itemText.innerHTML = `${items[itemIndex].nombre}: <span id="cantidad-${pedidoId}-${itemIndex}">${items[itemIndex].cantidad}</span> x ${formatMoney(items[itemIndex].precio_unitario)} = ${formatMoney(items[itemIndex].subtotal)}`;
-    }
-    const decreaseBtn = document.querySelector(`#items-${pedidoId} .item[data-item-index="${itemIndex}"] .decrease`);
-    if (decreaseBtn) {
-      decreaseBtn.disabled = items[itemIndex].cantidad <= 1;
-    }
-    const total = items.reduce((sum, it) => sum + it.subtotal, 0);
-    const totalSpan = document.getElementById(`total-${pedidoId}`);
-    if (totalSpan) {
-      totalSpan.textContent = formatMoney(total);
-    }
+    updatePedidoItems(pedidoId, items);
   }
+
   function eliminarItemPedido(pedidoId, itemIndex) {
     if (!confirm('¿Eliminar este item del pedido?')) return;
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-    if (!pedidoDiv) return;
+    if (pedidoDiv.classList.contains('viewing-original')) return;
+
     let items = JSON.parse(pedidoDiv.dataset.items || '[]');
     items = items.filter((_, idx) => idx !== itemIndex);
     pedidoDiv.dataset.items = JSON.stringify(items);
-    const itemsContainer = document.getElementById(`items-${pedidoId}`);
-    if (itemsContainer) {
-      itemsContainer.innerHTML = items.length > 0 ? items.map((item, index) => `
-        <div class="item" data-item-index="${index}">
-          <span id="item-text-${pedidoId}-${index}">${item.nombre}: <span id="cantidad-${pedidoId}-${index}">${item.cantidad}</span> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}</span>
-          <div class="item-controls">
-            <button class="increase" onclick="modificarCantidadPedido('${pedidoId}', ${index}, 1)">+</button>
-            <button class="decrease" onclick="modificarCantidadPedido('${pedidoId}', ${index}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
-            <button class="delete" onclick="eliminarItemPedido('${pedidoId}', ${index})">Eliminar</button>
-          </div>
-        </div>
-      `).join('') : '<p>No hay items en este pedido.</p>';
-      const total = items.reduce((sum, it) => sum + it.subtotal, 0);
-      const totalSpan = document.getElementById(`total-${pedidoId}`);
-      if (totalSpan) totalSpan.textContent = formatMoney(total);
-    }
+    updatePedidoItems(pedidoId, items);
   }
+
   async function guardarCambiosPedido(pedidoId) {
+    const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
+    if (pedidoDiv.classList.contains('viewing-original')) {
+      alert('Estás viendo la versión original. No se puede guardar desde aquí.');
+      return;
+    }
+
     if (!confirm('¿Guardar los cambios en este pedido?')) return;
     try {
-      const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-      if (!pedidoDiv) throw new Error('Pedido no encontrado');
       const items = JSON.parse(pedidoDiv.dataset.items || '[]');
       const originalItems = JSON.parse(pedidoDiv.dataset.originalItems || '[]');
       if (!items || items.length === 0) return alert('No hay items');
-      
+     
       const modoDevolucion = document.getElementById(`modo-devolucion-${pedidoId}`)?.checked || false;
-
       // Cálculo de deltas para stock
       const deltaMap = new Map();
       originalItems.forEach(oi => deltaMap.set(oi.id, -oi.cantidad));
@@ -757,14 +877,12 @@
         const curr = deltaMap.get(item.id) || 0;
         deltaMap.set(item.id, curr + item.cantidad);
       });
-
       const stockUpdates = [];
       for (const [id, delta] of deltaMap.entries()) {
         if (delta !== 0 && (delta > 0 || modoDevolucion)) {
           stockUpdates.push({id, cantidad: delta});
         }
       }
-
       const payload = {
         items: items.map(item => ({
           id: item.id,
@@ -794,6 +912,7 @@
       mostrarError(`Error al guardar cambios: ${err.message}`);
     }
   }
+
   async function previewPDFPedido(pedidoId) {
     try {
       const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
@@ -828,6 +947,7 @@
       mostrarError(`Error al generar PDF: ${err.message}`);
     }
   }
+
   async function guardarPedido(pedidoId) {
     try {
       const r = await fetch(`${apiBase}/pedidos/${pedidoId}/pdf`, { cache: 'no-store' });
@@ -841,6 +961,7 @@
       throw err;
     }
   }
+
   async function eliminarPedido(pedidoId, usuario, index) {
     if (!confirm('¿Eliminar este pedido?')) return;
     try {
@@ -868,6 +989,7 @@
       mostrarError(`Error al eliminar pedido: ${err.message}`);
     }
   }
+
   async function cargarPedidos() {
     try {
       const res = await fetch(`${apiBase}/pedidos`, { cache: 'no-store' });
@@ -878,6 +1000,7 @@
       console.error(err);
     }
   }
+
   function formatMoney(n) {
     try {
       return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n);
@@ -885,6 +1008,7 @@
       return '$' + Number(n).toFixed(2);
     }
   }
+
   async function cargarProductos() {
     try {
       const res = await fetch(`${apiBase}/productos`, { cache: 'no-store' });
@@ -895,6 +1019,7 @@
       mostrarError('Error al cargar productos.');
     }
   }
+
   async function cargarPeticiones() {
     try {
       const listaPeticiones = document.getElementById('listaPeticiones');
@@ -963,6 +1088,7 @@
       mostrarError('Error al cargar peticiones.');
     }
   }
+
   function modificarCantidad(peticionId, itemIndex, change) {
     const peticionDiv = document.getElementById(`peticion-${peticionId}`);
     if (!peticionDiv) return;
@@ -987,6 +1113,7 @@
     const totalSpan = document.getElementById(`total-${peticionId}`);
     if (totalSpan) totalSpan.textContent = formatMoney(total);
   }
+
   function eliminarItemPeticion(peticionId, itemIndex) {
     if (!confirm('¿Eliminar este item de la petición?')) return;
     const peticionDiv = document.getElementById(`peticion-${peticionId}`);
@@ -1016,6 +1143,7 @@
       if (totalSpan) totalSpan.textContent = formatMoney(total);
     }
   }
+
   async function eliminarPeticion(peticionId) {
     if (!confirm('¿Eliminar esta petición?')) return;
     try {
@@ -1029,6 +1157,7 @@
       mostrarError(`Error al eliminar petición: ${err.message}`);
     }
   }
+
   async function confirmarPeticion(peticionId, subtractThreePercent) {
     if (!confirm(`¿Confirmar esta petición${subtractThreePercent ? ' con -3%' : ''}?`)) return;
     try {
@@ -1066,6 +1195,7 @@
       mostrarError(`Error al confirmar petición: ${err.message}`);
     }
   }
+
   async function previewPDF(peticionId) {
     try {
       const peticionDiv = document.getElementById(`peticion-${peticionId}`);
@@ -1097,6 +1227,7 @@
       mostrarError(`Error al generar PDF: ${err.message}`);
     }
   }
+
   function copiarFaltantes(peticionId) {
     const peticionDiv = document.getElementById(`peticion-${peticionId}`);
     if (!peticionDiv) return alert('Petición no encontrada');
@@ -1115,6 +1246,7 @@
       alert('Error al copiar. Copia manual:\n' + textToCopy);
     });
   }
+
   function openAddModal(pedidoId) {
     currentPedidoId = pedidoId;
     document.getElementById('productsInput').value = '';
@@ -1124,6 +1256,7 @@
   function closeAddModal() {
     document.getElementById('addProductModal').close();
   }
+
   function addProductsToPedido() {
     const input = document.getElementById('productsInput').value.trim();
     const apply3 = document.getElementById('apply3percent').checked;
@@ -1162,24 +1295,10 @@
       }
     });
     pedidoDiv.dataset.items = JSON.stringify(items);
-    const itemsContainer = document.getElementById(`items-${currentPedidoId}`);
-    if (itemsContainer) {
-      itemsContainer.innerHTML = items.map((item, index) => `
-        <div class="item" data-item-index="${index}">
-          <span id="item-text-${currentPedidoId}-${index}">${item.nombre}: <span id="cantidad-${currentPedidoId}-${index}">${item.cantidad}</span> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}</span>
-          <div class="item-controls">
-            <button class="increase" onclick="modificarCantidadPedido('${currentPedidoId}', ${index}, 1)">+</button>
-            <button class="decrease" onclick="modificarCantidadPedido('${currentPedidoId}', ${index}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
-            <button class="delete" onclick="eliminarItemPedido('${currentPedidoId}', ${index})">Eliminar</button>
-          </div>
-        </div>
-      `).join('');
-    }
-    const total = items.reduce((sum, it) => sum + it.subtotal, 0);
-    const totalSpan = document.getElementById(`total-${currentPedidoId}`);
-    if (totalSpan) totalSpan.textContent = formatMoney(total);
+    updatePedidoItems(currentPedidoId, items);
     closeAddModal();
   }
+
   async function init() {
     try {
       await cargarProductos();
@@ -1191,6 +1310,7 @@
       mostrarError('Error al inicializar la página.');
     }
   }
+
   window.onload = init;
   </script>
 </body>
