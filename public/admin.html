@@ -682,61 +682,56 @@
   }
 
   function addGuardarBtnListener(btn) {
-    btn.addEventListener('click', async () => {
-      const pedidoId = btn.dataset.pedidoid;
-      const username = btn.dataset.username;
-      const idx = Number(btn.dataset.index);
-      const statusSpan = document.getElementById(`guardar-status-${pedidoId}`);
-      const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
+  btn.addEventListener('click', async () => {
+    const pedidoId = btn.dataset.pedidoid;
+    const username = btn.dataset.username;
+    const idx = Number(btn.dataset.index);
+    const statusSpan = document.getElementById(`guardar-status-${pedidoId}`);
+    const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
+    
+    if (statusSpan) statusSpan.textContent = '⏳';
+    
+    try {
+      const items = JSON.parse(pedidoDiv.dataset.items || '[]');
       
-      if (statusSpan) statusSpan.textContent = '⏳';
+      // *** CAMBIO CRÍTICO: Estructura de envío adaptada al backend actual ***
+      // Se envía el array de 'items' bajo la clave 'pedido', y el 'user' aparte.
+      const payload = {
+        pedido: items, 
+        user: username,
+      };
+
+      const res = await fetch(`${apiBase}/guardar-pedidos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error(await res.text());
       
-      try {
-        const items = JSON.parse(pedidoDiv.dataset.items || '[]');
-        const total = items.reduce((sum, p) => sum + p.subtotal, 0);
+      const data = await res.json();
+      
+      if (statusSpan) statusSpan.textContent = '✅';
+      const key = `${username}-${idx}`;
+      estadosPedidos[key] = estadosPedidos[key] || {};
+      estadosPedidos[key].guardado = true;
+      guardarEstados();
 
-        // *** CORRECCIÓN CLAVE: El servidor espera la estructura del pedido completo bajo la clave 'pedido' ***
-        const payload = {
-          pedido: {
-              user: username,
-              items: items,
-              total: total,
-              fecha: new Date().toISOString()
-          }
-        };
-
-        const res = await fetch(`${apiBase}/guardar-pedidos`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) throw new Error(await res.text());
-        
-        const data = await res.json();
-        
-        if (statusSpan) statusSpan.textContent = '✅';
-        const key = `${username}-${idx}`;
-        estadosPedidos[key] = estadosPedidos[key] || {};
-        estadosPedidos[key].guardado = true;
-        guardarEstados();
-
-        // Abre el PDF normal que el servidor devuelve
-        if (data.endpoint_pdf) {
-            // Aseguramos que el path sea correcto si el server devuelve /api/...
-            const pdfUrl = data.endpoint_pdf.startsWith('/api') ? apiBase.replace('/api', '') + data.endpoint_pdf : data.endpoint_pdf;
-            window.open(pdfUrl, '_blank'); 
-        } else {
-             alert('Pedido guardado, pero no se recibió URL del PDF.');
-        }
-
-      } catch (err) {
-        if (statusSpan) statusSpan.textContent = '❌';
-        console.error('Error al guardar pedido:', err);
-        mostrarError(`Error al guardar: ${err.message}`);
+      // Abre el PDF normal que el servidor devuelve
+      if (data.endpoint_pdf) {
+          const pdfUrl = data.endpoint_pdf.startsWith('/api') ? apiBase.replace('/api', '') + data.endpoint_pdf : data.endpoint_pdf;
+          window.open(pdfUrl, '_blank'); 
+      } else {
+           alert('Pedido guardado, pero no se recibió URL del PDF.');
       }
-    });
-  }
+
+    } catch (err) {
+      if (statusSpan) statusSpan.textContent = '❌';
+      console.error('Error al guardar pedido:', err);
+      mostrarError(`Error al guardar: ${err.message}`);
+    }
+  });
+}
 
   // --- PDF PREVIEW (CON AUMENTO) ---
   async function previewPDFPedido(pedidoId) {
@@ -1057,4 +1052,5 @@
 </script>
 </body>
 </html>
+
 
