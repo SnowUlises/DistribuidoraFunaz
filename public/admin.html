@@ -689,13 +689,19 @@
     const statusSpan = document.getElementById(`guardar-status-${pedidoId}`);
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
     
-    if (statusSpan) statusSpan.textContent = '⏳';
-    
+    if (statusSpan) statusSpan.textContent = '⏳ Guardando...'; // Muestra "Cargando"
+
     try {
+      if (!pedidoDiv) throw new Error("Elemento de pedido no encontrado.");
+      
       const items = JSON.parse(pedidoDiv.dataset.items || '[]');
       
-      // *** CAMBIO CRÍTICO: Estructura de envío adaptada al backend actual ***
-      // Se envía el array de 'items' bajo la clave 'pedido', y el 'user' aparte.
+      if (items.length === 0) {
+         throw new Error("El pedido está vacío. No se puede guardar.");
+      }
+
+      // *** ESTO ES LO QUE SOLUCIONA EL ERROR "PEDIDO INVÁLIDO" ***
+      // Se envía el array de items directamente bajo la clave 'pedido'.
       const payload = {
         pedido: items, 
         user: username,
@@ -707,28 +713,47 @@
         body: JSON.stringify(payload)
       });
 
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText); 
+      }
       
       const data = await res.json();
       
-      if (statusSpan) statusSpan.textContent = '✅';
+      if (statusSpan) statusSpan.textContent = '✅ Guardado'; // Muestra "Éxito"
+      
+      // Actualizar estado local
       const key = `${username}-${idx}`;
       estadosPedidos[key] = estadosPedidos[key] || {};
       estadosPedidos[key].guardado = true;
       guardarEstados();
 
-      // Abre el PDF normal que el servidor devuelve
+      // Abrir PDF
       if (data.endpoint_pdf) {
-          const pdfUrl = data.endpoint_pdf.startsWith('/api') ? apiBase.replace('/api', '') + data.endpoint_pdf : data.endpoint_pdf;
+          // Construir la URL completa usando la base de la API
+          const pdfUrl = data.endpoint_pdf.startsWith('/api') 
+            ? apiBase.replace('/api', '') + data.endpoint_pdf 
+            : data.endpoint_pdf;
           window.open(pdfUrl, '_blank'); 
       } else {
            alert('Pedido guardado, pero no se recibió URL del PDF.');
       }
 
     } catch (err) {
-      if (statusSpan) statusSpan.textContent = '❌';
+      if (statusSpan) statusSpan.textContent = '❌ Error'; // Muestra "Error"
       console.error('Error al guardar pedido:', err);
-      mostrarError(`Error al guardar: ${err.message}`);
+      
+      // Intenta mostrar el mensaje de error exacto del servidor (e.g., {"error":"..."})
+      let errorMsg = err.message;
+      try {
+          const serverErrorMatch = errorMsg.match(/{"error":"(.*?)"}/);
+          if (serverErrorMatch && serverErrorMatch[1]) {
+              errorMsg = serverErrorMatch[1];
+          }
+      } catch (e) {
+          // Ignorar si el parseo falla
+      }
+      mostrarError(`Error al guardar: ${errorMsg}`);
     }
   });
 }
@@ -1052,5 +1077,6 @@
 </script>
 </body>
 </html>
+
 
 
