@@ -90,7 +90,6 @@
     }
 
     /* --- Estructura de Secciones --- */
-    /* Ocultamos los marcadores default de details para estilizarlos nosotros */
     details > summary {
       list-style: none;
     }
@@ -98,7 +97,6 @@
       display: none;
     }
 
-    /* Estilo para las secciones principales (Usuarios / Peticiones) */
     body > main > details {
       margin-bottom: 2em;
     }
@@ -130,7 +128,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
       gap: 1.5em;
-      align-items: start; /* Para que las tarjetas no se estiren raro al abrir */
+      align-items: start;
     }
 
     /* Tarjetas de Usuario (Clientes) */
@@ -150,7 +148,6 @@
       transform: translateY(-2px);
     }
 
-    /* Cabecera de la tarjeta del cliente */
     .user-details > summary {
       background: linear-gradient(to right, #ffffff, #f9fafb);
       padding: 1.2em;
@@ -239,7 +236,6 @@
       gap: 4px;
     }
     
-    /* Botones pequeños de items */
     .item-controls button {
       padding: 2px 8px;
       border-radius: 4px;
@@ -254,7 +250,7 @@
 
     .item-controls button:hover { opacity: 0.8; }
 
-    /* --- Botonera de Acciones (Minimalista) --- */
+    /* --- Botonera de Acciones --- */
     .pedido-actions {
       display: flex;
       flex-wrap: wrap;
@@ -277,7 +273,6 @@
       transition: all 0.2s;
     }
 
-    /* Colores específicos para acciones pero más sutiles */
     .pedido-actions button:hover { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 
     .pedido-actions button.guardar-btn { border-color: var(--primary-light); color: var(--primary); }
@@ -296,7 +291,6 @@
     .pedido-actions button[onclick*="eliminarPedido"] { color: #c62828; border-color: #ffcdd2; }
     .pedido-actions button[onclick*="eliminarPedido"]:hover { background: #ffebee; }
 
-    /* Status Checkboxes */
     .status-container {
       margin-top: 1em;
       display: flex;
@@ -314,7 +308,6 @@
       gap: 4px;
     }
 
-    /* --- Peticiones --- */
     .peticion-details {
       background: white;
       border-left: 4px solid #ff9800;
@@ -324,7 +317,6 @@
       margin-bottom: 1em;
     }
 
-    /* --- Dialogs / Modals --- */
     dialog {
       border: none;
       border-radius: 12px;
@@ -340,7 +332,6 @@
     dialog form { display: flex; flex-direction: column; gap: 1em; }
     dialog button { padding: 10px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; }
     
-    /* Mensajes de error y carga */
     #mensajeError {
       text-align: center;
       color: #d32f2f;
@@ -348,7 +339,7 @@
       padding: 10px;
       border-radius: 8px;
       margin-bottom: 1em;
-      display: none; /* Ocultar si está vacío */
+      display: none; 
     }
     #mensajeError:not(:empty) { display: block; }
 
@@ -370,7 +361,6 @@
       margin-top: 4em;
     }
 
-    /* Responsive adjustments */
     @media (max-width: 600px) {
       #listaUsuarios {
         grid-template-columns: 1fr;
@@ -430,23 +420,19 @@
 
   <script>
   const apiBase = 'https://distribuidorafunaz-a2o6.onrender.com/api';
+  
   // Security check
   const user = localStorage.getItem('loggedUser');
   if (user !== 'admin') {
     window.location.href = 'index.html';
   }
 
-  // CACHE DE PEDIDOS ORIGINALES (solo la primera versión al aceptar)
   let originalPedidosCache = JSON.parse(localStorage.getItem('originalPedidosCache') || '{}');
-
-  // States
   let estadosPedidos = JSON.parse(localStorage.getItem('estadosPedidos') || '{}');
   const usedButtons = JSON.parse(localStorage.getItem('usedButtons') || '{}');
-  let productos = [];
   let currentPedidoId = null;
   window.usersPedidos = {};
 
-  // --- NUEVA FUNCIÓN PARA EL BUSCADOR (Visual) ---
   function filtrarClientes() {
     const input = document.getElementById('buscadorCliente');
     const filter = input.value.toLowerCase();
@@ -465,13 +451,9 @@
       }       
     }
   }
-  // ------------------------------------------------
 
   function guardarEstados() {
     localStorage.setItem('estadosPedidos', JSON.stringify(estadosPedidos));
-  }
-  function saveUsedButtons() {
-    localStorage.setItem('usedButtons', JSON.stringify(usedButtons));
   }
   function guardarOriginalCache() {
     localStorage.setItem('originalPedidosCache', JSON.stringify(originalPedidosCache));
@@ -489,7 +471,7 @@
     if (!selectedPedido) return;
     const btn = selectedPedido.querySelector('.enfocar');
     const estaEnfocado = selectedPedido.classList.contains('enfocado');
-    // Resetear todo
+    
     document.querySelectorAll('.pedido-item').forEach(p => {
       p.style.display = '';
       p.classList.remove('enfocado');
@@ -498,61 +480,51 @@
     });
     const peticionesSection = document.querySelector('main details:nth-of-type(2)');
     if (peticionesSection) peticionesSection.style.display = '';
+    
     if (!estaEnfocado) {
-      // Ocultar todos los demás pedidos
       document.querySelectorAll('.pedido-item').forEach(p => {
         if (p.id !== `pedido-${pedidoId}`) {
           p.style.display = 'none';
         }
       });
-      // Ocultar sección de peticiones
       if (peticionesSection) peticionesSection.style.display = 'none';
-      // Resaltar el pedido seleccionado
       selectedPedido.classList.add('enfocado');
       btn.textContent = 'Mostrar todos';
-      // Abrir solo el usuario correspondiente y cerrar los demás
       const userDetails = selectedPedido.closest('.user-details');
       if (userDetails) {
-        // En Grid View, a veces queremos mantener abiertos otros para referencia, 
-        // pero la logica original cerraba todo. Mantenemos logica original.
         document.querySelectorAll('.user-details').forEach(ud => {
           ud.open = false;
         });
         userDetails.open = true;
-        // Ocultar los otros user-details visualmente para enfoque total (opcional, pero ayuda al focus)
         document.querySelectorAll('.user-details').forEach(ud => {
              if(ud !== userDetails) ud.style.display = 'none';
         });
       }
-      // Scroll suave al pedido
       selectedPedido.scrollIntoView({ behavior: 'smooth', block: 'center' });
     } else {
-        // Restaurar vista grid completa
         document.querySelectorAll('.user-details').forEach(ud => {
              ud.style.display = '';
         });
-        filtrarClientes(); // Re-aplicar filtro si existía
+        filtrarClientes(); 
     }
   }
-  // ========================================================
 
   function toggleGuardado(usuario, idx, el) {
     const key = `${usuario}-${idx}`;
     const nuevo = !!el.checked;
-    const confirmado = confirm(nuevo
-      ? '¿Marcar pedido como guardado?'
-      : '¿Desmarcar pedido guardado?');
-    if (!confirmado) { el.checked = !nuevo; return; }
+    if (!confirm(nuevo ? '¿Marcar pedido como guardado?' : '¿Desmarcar?')) { 
+        el.checked = !nuevo; return; 
+    }
     estadosPedidos[key] = { ...estadosPedidos[key], guardado: nuevo };
     guardarEstados();
   }
+
   function toggleRecibido(usuario, idx, el) {
     const key = `${usuario}-${idx}`;
     const nuevo = !!el.checked;
-    const confirmado = confirm(nuevo
-      ? '¿Marcar pedido como recibido?'
-      : '¿Desmarcar pedido recibido?');
-    if (!confirmado) { el.checked = !nuevo; return; }
+    if (!confirm(nuevo ? '¿Marcar pedido como recibido?' : '¿Desmarcar?')) { 
+        el.checked = !nuevo; return; 
+    }
     estadosPedidos[key] = { ...estadosPedidos[key], recibido: nuevo };
     guardarEstados();
   }
@@ -598,7 +570,7 @@
     }
 
     const descuentoTexto = applyDiscount ? ' con -3% (cliente con descuento)' : '';
-    if (!confirm(`¿Actualizar todos los precios del pedido según lista actual${descuentoTexto}? (se mantienen las cantidades)`)) return;
+    if (!confirm(`¿Actualizar todos los precios del pedido según lista actual${descuentoTexto}?`)) return;
 
     try {
       const res = await fetch(`${apiBase}/productos`, { cache: 'no-store' });
@@ -608,7 +580,6 @@
 
       let items = JSON.parse(pedidoDiv.dataset.items || '[]');
       let changed = false;
-
       const multiplier = applyDiscount ? 1.10 * 0.97 : 1.10;
 
       const updatedItems = items.map(item => {
@@ -632,7 +603,7 @@
 
       pedidoDiv.dataset.items = JSON.stringify(updatedItems);
       updatePedidoItems(pedidoId, updatedItems);
-      alert(`Precios actualizados correctamente${descuentoTexto}.`);
+      alert(`Precios actualizados correctamente.`);
     } catch (e) {
       mostrarError('Error al actualizar precios: ' + e.message);
     }
@@ -641,7 +612,6 @@
   function toggleViewOriginal(pedidoId) {
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
     const isViewingOriginal = pedidoDiv.classList.toggle('viewing-original');
-
     const itemsToShow = isViewingOriginal 
       ? JSON.parse(pedidoDiv.dataset.veryOriginalItems)
       : JSON.parse(pedidoDiv.dataset.items);
@@ -652,7 +622,6 @@
     btn.textContent = isViewingOriginal ? 'Volver a versión modificada' : 'Ver original';
     btn.classList.toggle('viewing', isViewingOriginal);
 
-    // Deshabilitar todos los botones de acción excepto "Ver original"
     pedidoDiv.querySelectorAll('button').forEach(b => {
       if (!b.classList.contains('ver-original')) {
         b.disabled = isViewingOriginal;
@@ -660,64 +629,12 @@
     });
   }
 
-  function getOpenStates() {
-    const mainUsersDetails = document.querySelector('details > summary:first-child').parentElement;
-    const mainPeticionesDetails = document.querySelectorAll('details')[1];
-    const openUserNames = Array.from(document.querySelectorAll('.user-details[open]')).map(d => d.querySelector('summary').textContent.trim());
-    return {
-      usersOpen: mainUsersDetails?.open || false,
-      peticionesOpen: mainPeticionesDetails?.open || false,
-      openUserNames
-    };
-  }
-
-  function restoreOpenStates(states) {
-    const mainUsersDetails = document.querySelector('details > summary:first-child').parentElement;
-    if (mainUsersDetails && states.usersOpen) mainUsersDetails.open = true;
-    const mainPeticionesDetails = document.querySelectorAll('details')[1];
-    if (mainPeticionesDetails && states.peticionesOpen) mainPeticionesDetails.open = true;
-    states.openUserNames.forEach(name => {
-      // Necesitamos una coincidencia un poco laxa porque el summary ahora tiene un "after" y elementos dentro
-      const userDetail = Array.from(document.querySelectorAll('.user-details')).find(d => d.querySelector('summary').innerText.includes(name));
-      if (userDetail) userDetail.open = true;
-    });
-  }
-
-  const detailsContents = new Map();
   function setupDetails(det) {
-    if (detailsContents.has(det)) return;
-    const content = [];
-    let child = det.firstChild;
-    while (child) {
-      if (child.tagName !== 'SUMMARY') {
-        content.push(child);
-      }
-      child = child.nextSibling;
-    }
-    detailsContents.set(det, content);
-    if (!det.open) {
-      content.forEach(node => det.removeChild(node));
-    }
-    det.addEventListener('toggle', function() {
-      if (this.open) {
-        const cont = detailsContents.get(this);
-        cont.forEach(node => this.appendChild(node));
-      } else {
-        const newContent = [];
-        let ch = this.firstChild;
-        while (ch) {
-          if (ch.tagName !== 'SUMMARY') {
-            newContent.push(ch);
-          }
-          ch = ch.nextSibling;
-        }
-        detailsContents.set(this, newContent);
-        newContent.forEach(node => this.removeChild(node));
-      }
-    });
+    if (!det) return;
+    // Lógica simple para detalles si es necesario
   }
 
-  function buildPedidoHTML(pedido, index, index, userName) {
+  function buildPedidoHTML(pedido, index, userName) {
     const items = pedido.items;
     const pedidoId = pedido.id ?? `${userName}-${index}`;
     const key = `${userName}-${index}`;
@@ -725,7 +642,6 @@
     const total = items.reduce((sum, p) => sum + p.subtotal, 0);
     const { formattedDate, formattedTime } = formatDateTime(pedido.fecha);
 
-    // GUARDAR VERSIÓN ORIGINAL LA PRIMERA VEZ QUE SE CARGA
     if (pedido.id && !originalPedidosCache[pedidoId]) {
       originalPedidosCache[pedidoId] = structuredClone(items);
       guardarOriginalCache();
@@ -771,41 +687,96 @@
       const username = btn.dataset.username;
       const idx = Number(btn.dataset.index);
       const statusSpan = document.getElementById(`guardar-status-${pedidoId}`);
+      const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
+      
       if (statusSpan) statusSpan.textContent = '⏳';
+      
       try {
-        await guardarPedido(pedidoId);
+        // Obtenemos los items actuales
+        const items = JSON.parse(pedidoDiv.dataset.items || '[]');
+        
+        // Llamada a la API que espera el server: /api/guardar-pedidos
+        const res = await fetch(`${apiBase}/guardar-pedidos`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user: username,
+            items: items // Tu server acepta "items" o "pedido"
+          })
+        });
+
+        if (!res.ok) throw new Error(await res.text());
+        
+        const data = await res.json();
+        
         if (statusSpan) statusSpan.textContent = '✅';
         const key = `${username}-${idx}`;
         estadosPedidos[key] = estadosPedidos[key] || {};
         estadosPedidos[key].guardado = true;
         guardarEstados();
+
+        // **AQUÍ ESTÁ LA MAGIA**: El server devuelve "endpoint_pdf", lo abrimos.
+        // Esto genera el PDF NORMAL.
+        if (data.endpoint_pdf) {
+            window.open(apiBase + '/..' + data.endpoint_pdf, '_blank'); 
+            // Nota: endpoint_pdf viene como /api/pedidos/ID/pdf, lo adjuntamos a la base
+        } else {
+             alert('Pedido guardado, pero no se recibió URL del PDF.');
+        }
+
       } catch (err) {
         if (statusSpan) statusSpan.textContent = '❌';
         console.error('Error al guardar pedido:', err);
-        mostrarError(`Error al guardar pedido ${pedidoId}: ${err.message}`);
+        mostrarError(`Error al guardar: ${err.message}`);
       }
     });
+  }
+
+  // --- PDF PREVIEW (CON AUMENTO) ---
+  // Este botón llama al endpoint que tiene el 1.1x hardcodeado en el server
+  async function previewPDFPedido(pedidoId) {
+    const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
+    const items = JSON.parse(pedidoDiv.dataset.items || '[]');
+    const total = items.reduce((sum, p) => sum + p.subtotal, 0);
+    const username = pedidoDiv.closest('.user-details').querySelector('summary').innerText.replace('+','').replace('−','').trim();
+
+    try {
+        const res = await fetch(`${apiBase}/generar-pdf-peticion`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user: username,
+                items: items,
+                total: total,
+                fecha: new Date().toISOString()
+            })
+        });
+
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        
+        if (data.pdf) {
+            window.open(data.pdf, '_blank');
+        } else {
+            alert('No se recibió la URL del PDF');
+        }
+    } catch (e) {
+        alert('Error al generar PDF preview: ' + e.message);
+    }
   }
 
   async function cargarUsuarios() {
     try {
       const listaPedidos = document.getElementById('listaUsuarios');
-      if (!listaPedidos) {
-        console.error('Elemento listaUsuarios no encontrado en el DOM');
-        mostrarError('Error: listaUsuarios no encontrado en el DOM');
-        return;
-      }
       listaPedidos.innerHTML = '<p style="text-align:center; width:100%;">Cargando pedidos...</p>';
       const res = await fetch(`${apiBase}/pedidos`, { cache: 'no-store' });
       if (!res.ok) {
-        console.warn('Error al cargar pedidos:', res.status, await res.text().catch(() => ''));
-        mostrarError(`Error al cargar pedidos de ${apiBase}/pedidos: HTTP ${res.status}`);
         listaPedidos.innerHTML = '<p>No se pudieron cargar los pedidos.</p>';
         return;
       }
       const pedidosRaw = await res.json();
-      console.log('Pedidos API response:', JSON.stringify(pedidosRaw, null, 2));
       const pedidosPorUsuario = {};
+      
       pedidosRaw.forEach(p => {
         const user = p.user || 'Invitado';
         if (!pedidosPorUsuario[user]) pedidosPorUsuario[user] = [];
@@ -858,13 +829,9 @@
 
         userDiv.querySelectorAll('.guardar-btn').forEach(addGuardarBtnListener);
       });
-      document.querySelectorAll('#listaUsuarios details').forEach(setupDetails);
-      setupDetails(document.querySelector('main details:nth-of-type(1)'));
     } catch (err) {
-      console.error('Error en cargarUsuarios:', err);
-      mostrarError('Error inesperado al cargar usuarios y pedidos.');
-      const listaPedidos = document.getElementById('listaUsuarios');
-      if (listaPedidos) listaPedidos.innerHTML = '<p>Error al cargar pedidos.</p>';
+      console.error(err);
+      document.getElementById('listaUsuarios').innerHTML = '<p>Error al cargar pedidos.</p>';
     }
   }
 
@@ -879,17 +846,14 @@
       const index = loaded + offset;
       const liHTML = buildPedidoHTML(pedido, index, userName);
       ul.insertAdjacentHTML('beforeend', liHTML);
-
       const pedidoId = pedido.id ?? `${userName}-${index}`;
       const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
       pedidoDiv.dataset.items = JSON.stringify(pedido.items);
-
       if (pedido.id && !originalPedidosCache[pedidoId]) {
         originalPedidosCache[pedidoId] = structuredClone(pedido.items);
         guardarOriginalCache();
       }
       pedidoDiv.dataset.veryOriginalItems = JSON.stringify(originalPedidosCache[pedidoId] || pedido.items);
-
       const guardarBtn = pedidoDiv.querySelector('.guardar-btn');
       if (guardarBtn) {
         addGuardarBtnListener(guardarBtn);
@@ -904,7 +868,6 @@
   function modificarCantidadPedido(pedidoId, itemIndex, change) {
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
     if (pedidoDiv.classList.contains('viewing-original')) return;
-
     let items = JSON.parse(pedidoDiv.dataset.items || '[]');
     items[itemIndex].cantidad = Math.max(1, items[itemIndex].cantidad + change);
     items[itemIndex].subtotal = items[itemIndex].cantidad * items[itemIndex].precio_unitario;
@@ -916,40 +879,45 @@
     if (!confirm('¿Eliminar este item del pedido?')) return;
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
     if (pedidoDiv.classList.contains('viewing-original')) return;
-
     let items = JSON.parse(pedidoDiv.dataset.items || '[]');
     items = items.filter((_, idx) => idx !== itemIndex);
     pedidoDiv.dataset.items = JSON.stringify(items);
     updatePedidoItems(pedidoId, items);
   }
 
+  // --- CONFIRMAR CAMBIOS (UPDATE) ---
+  // Corregido: usa /api/actualizar-pedido/:id con el formato que espera tu server
   async function guardarCambiosPedido(pedidoId) {
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
     if (pedidoDiv.classList.contains('viewing-original')) {
-      alert('Estás viendo la versión original. No se puede guardar desde aquí.');
+      alert('Estás viendo la versión original.');
       return;
     }
 
     if (!confirm('¿Guardar los cambios en este pedido?')) return;
     try {
       const items = JSON.parse(pedidoDiv.dataset.items || '[]');
-      const originalItems = JSON.parse(pedidoDiv.dataset.originalItems || '[]');
+      const originalItems = JSON.parse(pedidoDiv.dataset.veryOriginalItems || '[]'); 
       if (!items || items.length === 0) return alert('No hay items');
       
       const modoDevolucion = document.getElementById(`modo-devolucion-${pedidoId}`)?.checked || false;
+      
       // Cálculo de deltas para stock
       const deltaMap = new Map();
-      originalItems.forEach(oi => deltaMap.set(oi.id, -oi.cantidad));
+      // Ojo: originalItems a veces no tiene cantidad si viene de cache viejo, aseguramos.
+      originalItems.forEach(oi => deltaMap.set(oi.id, -Number(oi.cantidad || 0)));
       items.forEach(item => {
         const curr = deltaMap.get(item.id) || 0;
-        deltaMap.set(item.id, curr + item.cantidad);
+        deltaMap.set(item.id, curr + Number(item.cantidad || 0));
       });
+      
       const stockUpdates = [];
       for (const [id, delta] of deltaMap.entries()) {
         if (delta !== 0 && (delta > 0 || modoDevolucion)) {
           stockUpdates.push({id, cantidad: delta});
         }
       }
+      
       const payload = {
         items: items.map(item => ({
           id: item.id,
@@ -960,51 +928,50 @@
         })),
         stockUpdates
       };
-      const res = await fetch(`${apiBase}/pedidos/${pedidoId}`, {
+
+      // RUTA DEL SERVER: /api/actualizar-pedido/:id
+      const res = await fetch(`${apiBase}/actualizar-pedido/${pedidoId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+      
       if (!res.ok) throw new Error(await res.text());
+      
       alert('Cambios guardados correctamente.');
-      // Actualizar dataset originalItems con lo nuevo
-      pedidoDiv.dataset.originalItems = JSON.stringify(items);
+      // Actualizar dataset originalItems con lo nuevo para futuros cambios
+      pedidoDiv.dataset.veryOriginalItems = JSON.stringify(items);
+      originalPedidosCache[pedidoId] = items;
+      guardarOriginalCache();
+
     } catch (e) {
       mostrarError(`Error al guardar cambios: ${e.message}`);
     }
   }
 
+  // --- ELIMINAR PEDIDO ---
+  // Corregido: usa /api/eliminar-pedido/:id y pasa "recibido" en el body
   async function eliminarPedido(pedidoId, userName, index) {
     if (!confirm('¿Seguro que quieres eliminar este pedido permanentemente?')) return;
+    
+    // Check si estaba marcado como recibido en el DOM
+    const chkRecibido = document.querySelector(`#pedido-${pedidoId} input[onchange*='toggleRecibido']`);
+    const esRecibido = chkRecibido ? chkRecibido.checked : false;
+
     try {
-      const res = await fetch(`${apiBase}/pedidos/${pedidoId}`, { method: 'DELETE' });
+      const res = await fetch(`${apiBase}/eliminar-pedido/${pedidoId}`, { 
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recibido: esRecibido }) 
+      });
+      
       if (!res.ok) throw new Error(await res.text());
+      
       alert('Pedido eliminado');
       location.reload();
     } catch (e) {
       mostrarError(`Error al eliminar pedido: ${e.message}`);
     }
-  }
-
-  async function guardarPedido(pedidoId) {
-    const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-    const items = JSON.parse(pedidoDiv.dataset.items || '[]');
-    // Mock save logic or real API call to save status if needed
-    // In current logic, we just confirm action and update UI states usually
-    // But function is async so we pretend an API call
-    await new Promise(r => setTimeout(r, 500)); 
-    // Real logic if endpoint existed:
-    // await fetch(`${apiBase}/pedidos/${pedidoId}/guardar`, { method: 'POST' });
-  }
-
-  function previewPDFPedido(pedidoId) {
-    const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-    const items = JSON.parse(pedidoDiv.dataset.items || '[]');
-    const total = items.reduce((sum, p) => sum + p.subtotal, 0);
-    // Simple alert preview as requested functionality replacement not fully defined in snippet
-    // In real app, this would generate PDF using a library like jsPDF
-    const texto = items.map(i => `${i.cantidad}x ${i.nombre} ($${i.precio_unitario})`).join('\n');
-    alert(`VISTA PREVIA PDF:\n\n${texto}\n\nTOTAL: ${formatMoney(total)}`);
   }
 
   // --- ADD PRODUCT MODAL ---
@@ -1045,18 +1012,16 @@
         return;
       }
       let items = JSON.parse(pedidoDiv.dataset.items || '[]');
-
       const multiplier = apply3 ? 1.10 * 0.97 : 1.10;
 
       prodsToAdd.forEach(({id, cant}) => {
         const pInfo = prodMap.get(id);
         if (pInfo) {
           const precio = Number((pInfo.precio * multiplier).toFixed(2));
-          // Check if exists
           const existing = items.find(i => String(i.id) === id);
           if (existing) {
             existing.cantidad += cant;
-            existing.subtotal = existing.cantidad * existing.precio_unitario; // Usa precio antiguo o actual? Mantenemos logica de update despues
+            existing.subtotal = existing.cantidad * existing.precio_unitario;
           } else {
             items.push({
               id: pInfo.id,
@@ -1083,14 +1048,8 @@
     return '$' + Number(amount).toLocaleString('es-AR', { minimumFractionDigits: 2 });
   }
 
-  // Init
   window.addEventListener('DOMContentLoaded', () => {
     cargarUsuarios();
-    
-    // Peticiones (Simuladas en este bloque ya que el endpoint real lo maneja)
-    const peticionesDiv = document.getElementById('listaPeticiones');
-    // Fetch peticiones... (mantenemos lógica simple o vacía si no hay endpoint en snippet)
-    peticionesDiv.innerHTML = '<p style="padding:1em; color:#777;">Sin peticiones pendientes.</p>';
   });
   </script>
 </body>
