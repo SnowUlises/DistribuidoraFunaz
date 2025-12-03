@@ -564,7 +564,7 @@
 
   async function actualizarPreciosPedido(pedidoId, applyDiscount = false) {
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-    if (pedidoDiv.classList.contains('viewing-original')) {
+    if (!pedidoDiv || pedidoDiv.classList.contains('viewing-original')) {
       alert('Salí de la vista original antes de actualizar precios.');
       return;
     }
@@ -692,17 +692,23 @@
       if (statusSpan) statusSpan.textContent = '⏳';
       
       try {
-        // Obtenemos los items actuales
         const items = JSON.parse(pedidoDiv.dataset.items || '[]');
-        
-        // Llamada a la API que espera el server: /api/guardar-pedidos
+        const total = items.reduce((sum, p) => sum + p.subtotal, 0);
+
+        // *** CORRECCIÓN CLAVE: El servidor espera la estructura del pedido completo bajo la clave 'pedido' ***
+        const payload = {
+          pedido: {
+              user: username,
+              items: items,
+              total: total,
+              fecha: new Date().toISOString()
+          }
+        };
+
         const res = await fetch(`${apiBase}/guardar-pedidos`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user: username,
-            items: items // Tu server acepta "items" o "pedido"
-          })
+          body: JSON.stringify(payload)
         });
 
         if (!res.ok) throw new Error(await res.text());
@@ -715,11 +721,11 @@
         estadosPedidos[key].guardado = true;
         guardarEstados();
 
-        // **AQUÍ ESTÁ LA MAGIA**: El server devuelve "endpoint_pdf", lo abrimos.
-        // Esto genera el PDF NORMAL.
+        // Abre el PDF normal que el servidor devuelve
         if (data.endpoint_pdf) {
-            window.open(apiBase + '/..' + data.endpoint_pdf, '_blank'); 
-            // Nota: endpoint_pdf viene como /api/pedidos/ID/pdf, lo adjuntamos a la base
+            // Aseguramos que el path sea correcto si el server devuelve /api/...
+            const pdfUrl = data.endpoint_pdf.startsWith('/api') ? apiBase.replace('/api', '') + data.endpoint_pdf : data.endpoint_pdf;
+            window.open(pdfUrl, '_blank'); 
         } else {
              alert('Pedido guardado, pero no se recibió URL del PDF.');
         }
@@ -733,9 +739,10 @@
   }
 
   // --- PDF PREVIEW (CON AUMENTO) ---
-  // Este botón llama al endpoint que tiene el 1.1x hardcodeado en el server
   async function previewPDFPedido(pedidoId) {
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
+    if (!pedidoDiv) return;
+
     const items = JSON.parse(pedidoDiv.dataset.items || '[]');
     const total = items.reduce((sum, p) => sum + p.subtotal, 0);
     const username = pedidoDiv.closest('.user-details').querySelector('summary').innerText.replace('+','').replace('−','').trim();
@@ -886,10 +893,9 @@
   }
 
   // --- CONFIRMAR CAMBIOS (UPDATE) ---
-  // Corregido: usa /api/actualizar-pedido/:id con el formato que espera tu server
   async function guardarCambiosPedido(pedidoId) {
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-    if (pedidoDiv.classList.contains('viewing-original')) {
+    if (!pedidoDiv || pedidoDiv.classList.contains('viewing-original')) {
       alert('Estás viendo la versión original.');
       return;
     }
@@ -902,9 +908,7 @@
       
       const modoDevolucion = document.getElementById(`modo-devolucion-${pedidoId}`)?.checked || false;
       
-      // Cálculo de deltas para stock
       const deltaMap = new Map();
-      // Ojo: originalItems a veces no tiene cantidad si viene de cache viejo, aseguramos.
       originalItems.forEach(oi => deltaMap.set(oi.id, -Number(oi.cantidad || 0)));
       items.forEach(item => {
         const curr = deltaMap.get(item.id) || 0;
@@ -929,7 +933,6 @@
         stockUpdates
       };
 
-      // RUTA DEL SERVER: /api/actualizar-pedido/:id
       const res = await fetch(`${apiBase}/actualizar-pedido/${pedidoId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -939,7 +942,6 @@
       if (!res.ok) throw new Error(await res.text());
       
       alert('Cambios guardados correctamente.');
-      // Actualizar dataset originalItems con lo nuevo para futuros cambios
       pedidoDiv.dataset.veryOriginalItems = JSON.stringify(items);
       originalPedidosCache[pedidoId] = items;
       guardarOriginalCache();
@@ -950,11 +952,9 @@
   }
 
   // --- ELIMINAR PEDIDO ---
-  // Corregido: usa /api/eliminar-pedido/:id y pasa "recibido" en el body
   async function eliminarPedido(pedidoId, userName, index) {
     if (!confirm('¿Seguro que quieres eliminar este pedido permanentemente?')) return;
     
-    // Check si estaba marcado como recibido en el DOM
     const chkRecibido = document.querySelector(`#pedido-${pedidoId} input[onchange*='toggleRecibido']`);
     const esRecibido = chkRecibido ? chkRecibido.checked : false;
 
@@ -1006,11 +1006,14 @@
       const prodMap = new Map(allProds.map(p => [String(p.id), p]));
 
       const pedidoDiv = document.getElementById(`pedido-${currentPedidoId}`);
-      if (pedidoDiv.classList.contains('viewing-original')) {
+      
+      // *** CORRECCIÓN: Chequeo de nulidad más robusto antes de classList ***
+      if (!pedidoDiv || pedidoDiv.classList.contains('viewing-original')) {
         alert('Salí de la vista original para añadir productos.');
         closeAddModal();
         return;
       }
+      
       let items = JSON.parse(pedidoDiv.dataset.items || '[]');
       const multiplier = apply3 ? 1.10 * 0.97 : 1.10;
 
@@ -1051,6 +1054,7 @@
   window.addEventListener('DOMContentLoaded', () => {
     cargarUsuarios();
   });
-  </script>
+</script>
 </body>
 </html>
+
