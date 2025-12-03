@@ -14,7 +14,6 @@
       --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
       --radius: 12px;
     }
-
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       margin: 0;
@@ -22,7 +21,6 @@
       color: var(--text);
       padding: 0;
     }
-
     /* --- Header Minimalista --- */
     header {
       background: var(--primary);
@@ -35,13 +33,11 @@
       box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2);
       margin-bottom: 2em;
     }
-
     main {
-      max-width: 1400px; /* Más ancho para aprovechar el Grid */
+      max-width: 1400px;
       margin: 0 auto;
       padding: 0 2em 4em 2em;
     }
-
     /* --- Controles Superiores y Buscador --- */
     .top-controls {
       display: flex;
@@ -51,13 +47,11 @@
       align-items: center;
       margin-bottom: 2em;
     }
-
     .search-box {
       flex: 1;
       max-width: 400px;
       position: relative;
     }
-
     .search-box input {
       width: 100%;
       padding: 12px 16px;
@@ -68,12 +62,10 @@
       outline: none;
       box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
     }
-
     .search-box input:focus {
       border-color: var(--primary-light);
       box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
     }
-
     button.btn-volver {
       background: transparent;
       color: var(--primary);
@@ -88,7 +80,6 @@
       background: var(--primary);
       color: #fff;
     }
-
     /* --- Estructura de Secciones --- */
     details > summary {
       list-style: none;
@@ -96,11 +87,10 @@
     details > summary::-webkit-details-marker {
       display: none;
     }
-
     body > main > details {
       margin-bottom: 2em;
     }
-    
+   
     body > main > details > summary {
       font-size: 1.6em;
       font-weight: 700;
@@ -111,7 +101,7 @@
       align-items: center;
       gap: 0.5em;
     }
-    
+   
     body > main > details > summary::before {
       content: "›";
       font-size: 1.2em;
@@ -122,7 +112,6 @@
     body > main > details[open] > summary::before {
       transform: rotate(90deg);
     }
-
     /* --- GRID VIEW PARA CLIENTES --- */
     #listaUsuarios {
       display: grid;
@@ -130,7 +119,6 @@
       gap: 1.5em;
       align-items: start;
     }
-
     /* Tarjetas de Usuario (Clientes) */
     .user-details {
       background: var(--card-bg);
@@ -142,12 +130,10 @@
       display: flex;
       flex-direction: column;
     }
-
     .user-details:hover {
       box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
       transform: translateY(-2px);
     }
-
     .user-details > summary {
       background: linear-gradient(to right, #ffffff, #f9fafb);
       padding: 1.2em;
@@ -160,13 +146,12 @@
       justify-content: space-between;
       align-items: center;
     }
-
     .user-details[open] > summary {
       border-bottom: 1px solid #eee;
       color: var(--primary);
       background: var(--accent);
     }
-    
+   
     .user-details > summary::after {
       content: "+";
       font-weight: normal;
@@ -177,19 +162,16 @@
       content: "−";
       color: var(--primary);
     }
-
     .usuario-item {
       padding: 1em;
       background: #fff;
     }
-
     /* --- Estilo de Pedidos dentro de la tarjeta --- */
     ul {
       list-style: none;
       padding: 0;
       margin: 0;
     }
-
     .pedido-item {
       background: #fafafa;
       border: 1px solid #eee;
@@ -199,14 +181,12 @@
       transition: all 0.3s;
       position: relative;
     }
-
     .pedido-item.enfocado {
       background: #fff;
       border: 2px solid var(--primary-light);
       box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
       z-index: 10;
     }
-
     .pedido-line {
       font-size: 0.95em;
       margin-bottom: 0.8em;
@@ -217,7 +197,6 @@
     .pedido-line strong {
       color: var(--primary);
     }
-
     /* --- Items del pedido --- */
     .item {
       display: flex;
@@ -230,12 +209,11 @@
     .item:last-child {
       border-bottom: none;
     }
-
     .item-controls {
       display: flex;
       gap: 4px;
     }
-    
+   
     .item-controls button {
       padding: 2px 8px;
       border-radius: 4px;
@@ -247,9 +225,7 @@
     .item-controls button.increase { background: #dcedc8; color: #33691e; }
     .item-controls button.decrease { background: #fff9c4; color: #f57f17; }
     .item-controls button.delete { background: #ffcdd2; color: #c62828; }
-
     .item-controls button:hover { opacity: 0.8; }
-
     /* --- Botonera de Acciones --- */
     .pedido-actions {
       display: flex;
@@ -259,7 +235,6 @@
       padding-top: 1em;
       border-top: 1px solid #eee;
     }
-
     .pedido-actions button {
       flex: 1 1 auto;
       padding: 8px 12px;
@@ -272,25 +247,18 @@
       font-weight: 600;
       transition: all 0.2s;
     }
-
     .pedido-actions button:hover { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-
     .pedido-actions button.guardar-btn { border-color: var(--primary-light); color: var(--primary); }
     .pedido-actions button.guardar-btn:hover { background: var(--primary); color: white; }
-
     .pedido-actions button.confirmar { background: var(--primary); color: white; border: none; }
     .pedido-actions button.confirmar:hover { background: #1b5e20; }
-
     .pedido-actions button.add-product { color: #0277bd; border-color: #b3e5fc; }
     .pedido-actions button.add-product:hover { background: #e1f5fe; }
-
     .pedido-actions button.actualizar-precios { color: #ef6c00; border-color: #ffe0b2; }
     .pedido-actions button.actualizar-precios:hover { background: #fff3e0; }
-
-    .pedido-actions button.delete-peticion, 
+    .pedido-actions button.delete-peticion,
     .pedido-actions button[onclick*="eliminarPedido"] { color: #c62828; border-color: #ffcdd2; }
     .pedido-actions button[onclick*="eliminarPedido"]:hover { background: #ffebee; }
-
     .status-container {
       margin-top: 1em;
       display: flex;
@@ -307,7 +275,6 @@
       align-items: center;
       gap: 4px;
     }
-
     .peticion-details {
       background: white;
       border-left: 4px solid #ff9800;
@@ -316,7 +283,6 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.05);
       margin-bottom: 1em;
     }
-
     dialog {
       border: none;
       border-radius: 12px;
@@ -331,7 +297,7 @@
     }
     dialog form { display: flex; flex-direction: column; gap: 1em; }
     dialog button { padding: 10px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; }
-    
+   
     #mensajeError {
       text-align: center;
       color: #d32f2f;
@@ -339,10 +305,9 @@
       padding: 10px;
       border-radius: 8px;
       margin-bottom: 1em;
-      display: none; 
+      display: none;
     }
     #mensajeError:not(:empty) { display: block; }
-
     button.load-more {
       width: 100%;
       margin-top: 10px;
@@ -353,14 +318,12 @@
       border-radius: 6px;
     }
     button.load-more:hover { background: #ddd; }
-
     footer {
       text-align: center;
       color: #888;
       font-size: 0.9em;
       margin-top: 4em;
     }
-
     @media (max-width: 600px) {
       #listaUsuarios {
         grid-template-columns: 1fr;
@@ -376,34 +339,29 @@
 </head>
 <body>
   <header>Panel de administración</header>
-  
+ 
   <main>
     <div class="top-controls">
       <button class="btn-volver" onclick="location.href='index.html'">← Volver a tienda</button>
-      
+     
       <div class="search-box">
         <input type="text" id="buscadorCliente" placeholder="Buscar cliente..." onkeyup="filtrarClientes()">
       </div>
     </div>
-
     <div id="mensajeError"></div>
-
     <details open>
       <summary>Usuarios y pedidos</summary>
       <div id="listaUsuarios">
         </div>
     </details>
-
     <details>
       <summary>Peticiones</summary>
       <div id="listaPeticiones"></div>
     </details>
   </main>
-
   <footer>
     Distribuidora Funaz © 2025
   </footer>
-
   <dialog id="addProductModal">
     <form>
       <label for="productsInput" style="font-weight:600; color:var(--primary)">Productos (IDxCantidad):</label>
@@ -417,28 +375,24 @@
       </div>
     </form>
   </dialog>
-
   <script>
   const apiBase = 'https://distribuidorafunaz-a2o6.onrender.com/api';
-  
+ 
   // Security check
   const user = localStorage.getItem('loggedUser');
   if (user !== 'admin') {
     window.location.href = 'index.html';
   }
-
   let originalPedidosCache = JSON.parse(localStorage.getItem('originalPedidosCache') || '{}');
   let estadosPedidos = JSON.parse(localStorage.getItem('estadosPedidos') || '{}');
   const usedButtons = JSON.parse(localStorage.getItem('usedButtons') || '{}');
   let currentPedidoId = null;
   window.usersPedidos = {};
-
   function filtrarClientes() {
     const input = document.getElementById('buscadorCliente');
     const filter = input.value.toLowerCase();
     const lista = document.getElementById('listaUsuarios');
     const tarjetas = lista.getElementsByClassName('user-details');
-
     for (let i = 0; i < tarjetas.length; i++) {
       const summary = tarjetas[i].getElementsByTagName("summary")[0];
       if (summary) {
@@ -448,39 +402,34 @@
         } else {
           tarjetas[i].style.display = "none";
         }
-      }       
+      }
     }
   }
-
   function guardarEstados() {
     localStorage.setItem('estadosPedidos', JSON.stringify(estadosPedidos));
   }
   function guardarOriginalCache() {
     localStorage.setItem('originalPedidosCache', JSON.stringify(originalPedidosCache));
   }
-
   function mostrarError(msg) {
     const el = document.getElementById('mensajeError');
     if (el) el.textContent = msg;
     else console.warn('mensajeError no encontrado:', msg);
   }
-
   // ==================== FUNCIÓN ENFOCAR ====================
   function enfocarPedido(pedidoId) {
     const selectedPedido = document.getElementById(`pedido-${pedidoId}`);
     if (!selectedPedido) return;
     const btn = selectedPedido.querySelector('.enfocar');
     const estaEnfocado = selectedPedido.classList.contains('enfocado');
-    
+   
     document.querySelectorAll('.pedido-item').forEach(p => {
       p.style.display = '';
       p.classList.remove('enfocado');
-      const b = p.querySelector('.enfocar');
-      if (b) b.textContent = 'Enfocar';
     });
     const peticionesSection = document.querySelector('main details:nth-of-type(2)');
     if (peticionesSection) peticionesSection.style.display = '';
-    
+   
     if (!estaEnfocado) {
       document.querySelectorAll('.pedido-item').forEach(p => {
         if (p.id !== `pedido-${pedidoId}`) {
@@ -505,30 +454,27 @@
         document.querySelectorAll('.user-details').forEach(ud => {
              ud.style.display = '';
         });
-        filtrarClientes(); 
+        filtrarClientes();
     }
   }
-
   function toggleGuardado(usuario, idx, el) {
     const key = `${usuario}-${idx}`;
     const nuevo = !!el.checked;
-    if (!confirm(nuevo ? '¿Marcar pedido como guardado?' : '¿Desmarcar?')) { 
-        el.checked = !nuevo; return; 
+    if (!confirm(nuevo ? '¿Marcar pedido como guardado?' : '¿Desmarcar?')) {
+        el.checked = !nuevo; return;
     }
     estadosPedidos[key] = { ...estadosPedidos[key], guardado: nuevo };
     guardarEstados();
   }
-
   function toggleRecibido(usuario, idx, el) {
     const key = `${usuario}-${idx}`;
     const nuevo = !!el.checked;
-    if (!confirm(nuevo ? '¿Marcar pedido como recibido?' : '¿Desmarcar?')) { 
-        el.checked = !nuevo; return; 
+    if (!confirm(nuevo ? '¿Marcar pedido como recibido?' : '¿Desmarcar?')) {
+        el.checked = !nuevo; return;
     }
     estadosPedidos[key] = { ...estadosPedidos[key], recibido: nuevo };
     guardarEstados();
   }
-
   function formatDateTime(fecha) {
     const date = new Date(fecha);
     const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -537,7 +483,6 @@
     const formattedTime = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
     return { formattedDate, formattedTime };
   }
-
   function renderItemsHTML(pedidoId, items, editable = true) {
     return items.map((item, itemIndex) => `
       <div class="item" ${editable ? `data-item-index="${itemIndex}"` : ''}>
@@ -552,7 +497,6 @@
       </div>
     `).join('');
   }
-
   function updatePedidoItems(pedidoId, items, editable = true) {
     const container = document.getElementById(`items-${pedidoId}`);
     if (!container) return;
@@ -561,27 +505,22 @@
     const totalSpan = document.getElementById(`total-${pedidoId}`);
     if (totalSpan) totalSpan.textContent = formatMoney(total);
   }
-
   async function actualizarPreciosPedido(pedidoId, applyDiscount = false) {
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
     if (!pedidoDiv || pedidoDiv.classList.contains('viewing-original')) {
       alert('Salí de la vista original antes de actualizar precios.');
       return;
     }
-
     const descuentoTexto = applyDiscount ? ' con -3% (cliente con descuento)' : '';
     if (!confirm(`¿Actualizar todos los precios del pedido según lista actual${descuentoTexto}?`)) return;
-
     try {
       const res = await fetch(`${apiBase}/productos`, { cache: 'no-store' });
       if (!res.ok) throw new Error('Error al cargar productos');
       const currentProductos = await res.json();
       const precioMap = new Map(currentProductos.map(p => [p.id, p.precio]));
-
       let items = JSON.parse(pedidoDiv.dataset.items || '[]');
       let changed = false;
       const multiplier = applyDiscount ? 1.10 * 0.97 : 1.10;
-
       const updatedItems = items.map(item => {
         const basePrecio = precioMap.get(item.id);
         if (basePrecio !== undefined) {
@@ -595,12 +534,10 @@
         }
         return item;
       });
-
       if (!changed) {
         alert('Todos los precios ya están actualizados con este criterio.');
         return;
       }
-
       pedidoDiv.dataset.items = JSON.stringify(updatedItems);
       updatePedidoItems(pedidoId, updatedItems);
       alert(`Precios actualizados correctamente.`);
@@ -608,32 +545,26 @@
       mostrarError('Error al actualizar precios: ' + e.message);
     }
   }
-
   function toggleViewOriginal(pedidoId) {
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
     const isViewingOriginal = pedidoDiv.classList.toggle('viewing-original');
-    const itemsToShow = isViewingOriginal 
+    const itemsToShow = isViewingOriginal
       ? JSON.parse(pedidoDiv.dataset.veryOriginalItems)
       : JSON.parse(pedidoDiv.dataset.items);
-
     updatePedidoItems(pedidoId, itemsToShow, !isViewingOriginal);
-
     const btn = pedidoDiv.querySelector('.ver-original');
     btn.textContent = isViewingOriginal ? 'Volver a versión modificada' : 'Ver original';
     btn.classList.toggle('viewing', isViewingOriginal);
-
     pedidoDiv.querySelectorAll('button').forEach(b => {
       if (!b.classList.contains('ver-original')) {
         b.disabled = isViewingOriginal;
       }
     });
   }
-
   function setupDetails(det) {
     if (!det) return;
     // Lógica simple para detalles si es necesario
   }
-
   function buildPedidoHTML(pedido, index, userName) {
     const items = pedido.items;
     const pedidoId = pedido.id ?? `${userName}-${index}`;
@@ -641,12 +572,10 @@
     const estado = estadosPedidos[key] || {};
     const total = items.reduce((sum, p) => sum + p.subtotal, 0);
     const { formattedDate, formattedTime } = formatDateTime(pedido.fecha);
-
     if (pedido.id && !originalPedidosCache[pedidoId]) {
       originalPedidosCache[pedidoId] = structuredClone(items);
       guardarOriginalCache();
     }
-
     return `
       <li>
         <div class="pedido-item" id="pedido-${pedidoId}" data-items='${JSON.stringify(items)}' data-veryOriginalItems='${JSON.stringify(originalPedidosCache[pedidoId] || items)}'>
@@ -680,7 +609,6 @@
         </div>
       </li>`;
   }
-
   function addGuardarBtnListener(btn) {
   btn.addEventListener('click', async () => {
     const pedidoId = btn.dataset.pedidoid;
@@ -688,62 +616,57 @@
     const idx = Number(btn.dataset.index);
     const statusSpan = document.getElementById(`guardar-status-${pedidoId}`);
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-    
+   
     if (statusSpan) statusSpan.textContent = '⏳ Guardando...'; // Muestra "Cargando"
-
     try {
       if (!pedidoDiv) throw new Error("Elemento de pedido no encontrado.");
-      
+     
       const items = JSON.parse(pedidoDiv.dataset.items || '[]');
-      
+     
       if (items.length === 0) {
          throw new Error("El pedido está vacío. No se puede guardar.");
       }
-
       // *** ESTO ES LO QUE SOLUCIONA EL ERROR "PEDIDO INVÁLIDO" ***
       // Se envía el array de items directamente bajo la clave 'pedido'.
       const payload = {
-        pedido: items, 
+        pedido: items,
         user: username,
       };
-
       const res = await fetch(`${apiBase}/guardar-pedidos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-
       if (!res.ok) {
         const errorText = await res.text();
-        throw new Error(errorText); 
+        throw new Error(errorText);
       }
-      
+     
       const data = await res.json();
-      
+     
       if (statusSpan) statusSpan.textContent = '✅ Guardado'; // Muestra "Éxito"
-      
+     
       // Actualizar estado local
       const key = `${username}-${idx}`;
       estadosPedidos[key] = estadosPedidos[key] || {};
       estadosPedidos[key].guardado = true;
       guardarEstados();
 
-      // Abrir PDF
+      // Abrir PDF (si el backend lo devuelve usamos ese, sino usamos el método que funciona)
       if (data.endpoint_pdf) {
-          // Construir la URL completa usando la base de la API
-          const pdfUrl = data.endpoint_pdf.startsWith('/api') 
-            ? apiBase.replace('/api', '') + data.endpoint_pdf 
-            : data.endpoint_pdf;
-          window.open(pdfUrl, '_blank'); 
+          let pdfUrl = data.endpoint_pdf;
+          if (pdfUrl.startsWith('/api')) {
+            pdfUrl = apiBase.replace('/api', '') + pdfUrl;
+          }
+          window.open(pdfUrl, '_blank');
       } else {
-           alert('Pedido guardado, pero no se recibió URL del PDF.');
+          // Fallback: usar el mismo endpoint que el botón "PDF" (con +10%)
+          previewPDFPedido(pedidoId);
       }
-
     } catch (err) {
       if (statusSpan) statusSpan.textContent = '❌ Error'; // Muestra "Error"
       console.error('Error al guardar pedido:', err);
-      
-      // Intenta mostrar el mensaje de error exacto del servidor (e.g., {"error":"..."})
+     
       let errorMsg = err.message;
       try {
           const serverErrorMatch = errorMsg.match(/{"error":"(.*?)"}/);
@@ -757,16 +680,13 @@
     }
   });
 }
-
   // --- PDF PREVIEW (CON AUMENTO) ---
   async function previewPDFPedido(pedidoId) {
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
     if (!pedidoDiv) return;
-
     const items = JSON.parse(pedidoDiv.dataset.items || '[]');
     const total = items.reduce((sum, p) => sum + p.subtotal, 0);
     const username = pedidoDiv.closest('.user-details').querySelector('summary').innerText.replace('+','').replace('−','').trim();
-
     try {
         const res = await fetch(`${apiBase}/generar-pdf-peticion`, {
             method: 'POST',
@@ -778,10 +698,9 @@
                 fecha: new Date().toISOString()
             })
         });
-
         if (!res.ok) throw new Error(await res.text());
         const data = await res.json();
-        
+       
         if (data.pdf) {
             window.open(data.pdf, '_blank');
         } else {
@@ -791,7 +710,6 @@
         alert('Error al generar PDF preview: ' + e.message);
     }
   }
-
   async function cargarUsuarios() {
     try {
       const listaPedidos = document.getElementById('listaUsuarios');
@@ -803,7 +721,7 @@
       }
       const pedidosRaw = await res.json();
       const pedidosPorUsuario = {};
-      
+     
       pedidosRaw.forEach(p => {
         const user = p.user || 'Invitado';
         if (!pedidosPorUsuario[user]) pedidosPorUsuario[user] = [];
@@ -841,7 +759,6 @@
         userDiv.innerHTML = `<summary>${userName}</summary>
           <div class='usuario-item'>${pedidosHTML}</div>`;
         listaPedidos.appendChild(userDiv);
-
         pedidosToShow.forEach((pedido, index) => {
           const pedidoId = pedido.id ?? `${userName}-${index}`;
           if (pedido.id && !originalPedidosCache[pedidoId]) {
@@ -853,7 +770,6 @@
             pedidoDiv.dataset.veryOriginalItems = JSON.stringify(originalPedidosCache[pedidoId] || pedido.items);
           }
         });
-
         userDiv.querySelectorAll('.guardar-btn').forEach(addGuardarBtnListener);
       });
     } catch (err) {
@@ -861,7 +777,6 @@
       document.getElementById('listaUsuarios').innerHTML = '<p>Error al cargar pedidos.</p>';
     }
   }
-
   function loadMorePedidos(btn) {
     const userName = btn.dataset.username;
     const loaded = parseInt(btn.dataset.loaded);
@@ -891,7 +806,6 @@
       btn.remove();
     }
   }
-
   function modificarCantidadPedido(pedidoId, itemIndex, change) {
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
     if (pedidoDiv.classList.contains('viewing-original')) return;
@@ -901,7 +815,6 @@
     pedidoDiv.dataset.items = JSON.stringify(items);
     updatePedidoItems(pedidoId, items);
   }
-
   function eliminarItemPedido(pedidoId, itemIndex) {
     if (!confirm('¿Eliminar este item del pedido?')) return;
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
@@ -911,7 +824,6 @@
     pedidoDiv.dataset.items = JSON.stringify(items);
     updatePedidoItems(pedidoId, items);
   }
-
   // --- CONFIRMAR CAMBIOS (UPDATE) ---
   async function guardarCambiosPedido(pedidoId) {
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
@@ -919,29 +831,28 @@
       alert('Estás viendo la versión original.');
       return;
     }
-
     if (!confirm('¿Guardar los cambios en este pedido?')) return;
     try {
       const items = JSON.parse(pedidoDiv.dataset.items || '[]');
-      const originalItems = JSON.parse(pedidoDiv.dataset.veryOriginalItems || '[]'); 
+      const originalItems = JSON.parse(pedidoDiv.dataset.veryOriginalItems || '[]');
       if (!items || items.length === 0) return alert('No hay items');
-      
+     
       const modoDevolucion = document.getElementById(`modo-devolucion-${pedidoId}`)?.checked || false;
-      
+     
       const deltaMap = new Map();
       originalItems.forEach(oi => deltaMap.set(oi.id, -Number(oi.cantidad || 0)));
       items.forEach(item => {
         const curr = deltaMap.get(item.id) || 0;
         deltaMap.set(item.id, curr + Number(item.cantidad || 0));
       });
-      
+     
       const stockUpdates = [];
       for (const [id, delta] of deltaMap.entries()) {
         if (delta !== 0 && (delta > 0 || modoDevolucion)) {
           stockUpdates.push({id, cantidad: delta});
         }
       }
-      
+     
       const payload = {
         items: items.map(item => ({
           id: item.id,
@@ -952,48 +863,43 @@
         })),
         stockUpdates
       };
-
       const res = await fetch(`${apiBase}/actualizar-pedido/${pedidoId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      
+     
       if (!res.ok) throw new Error(await res.text());
-      
+     
       alert('Cambios guardados correctamente.');
       pedidoDiv.dataset.veryOriginalItems = JSON.stringify(items);
       originalPedidosCache[pedidoId] = items;
       guardarOriginalCache();
-
     } catch (e) {
       mostrarError(`Error al guardar cambios: ${e.message}`);
     }
   }
-
   // --- ELIMINAR PEDIDO ---
   async function eliminarPedido(pedidoId, userName, index) {
     if (!confirm('¿Seguro que quieres eliminar este pedido permanentemente?')) return;
-    
+   
     const chkRecibido = document.querySelector(`#pedido-${pedidoId} input[onchange*='toggleRecibido']`);
     const esRecibido = chkRecibido ? chkRecibido.checked : false;
-
     try {
-      const res = await fetch(`${apiBase}/eliminar-pedido/${pedidoId}`, { 
+      const res = await fetch(`${apiBase}/eliminar-pedido/${pedidoId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recibido: esRecibido }) 
+        body: JSON.stringify({ recibido: esRecibido })
       });
-      
+     
       if (!res.ok) throw new Error(await res.text());
-      
+     
       alert('Pedido eliminado');
       location.reload();
     } catch (e) {
       mostrarError(`Error al eliminar pedido: ${e.message}`);
     }
   }
-
   // --- ADD PRODUCT MODAL ---
   function openAddModal(pedidoId) {
     currentPedidoId = pedidoId;
@@ -1009,7 +915,6 @@
     const input = document.getElementById('productsInput').value;
     const apply3 = document.getElementById('apply3percent').checked;
     if (!input || !currentPedidoId) return;
-
     try {
       const prodsToAdd = [];
       const parts = input.split(',').map(s => s.trim());
@@ -1019,24 +924,22 @@
         const cant = parseInt(cantStr) || 1;
         prodsToAdd.push({ id, cant });
       }
-      
+     
       const res = await fetch(`${apiBase}/productos`, { cache: 'no-store' });
       if (!res.ok) throw new Error('Error al cargar productos');
       const allProds = await res.json();
       const prodMap = new Map(allProds.map(p => [String(p.id), p]));
-
       const pedidoDiv = document.getElementById(`pedido-${currentPedidoId}`);
-      
+     
       // *** CORRECCIÓN: Chequeo de nulidad más robusto antes de classList ***
       if (!pedidoDiv || pedidoDiv.classList.contains('viewing-original')) {
         alert('Salí de la vista original para añadir productos.');
         closeAddModal();
         return;
       }
-      
+     
       let items = JSON.parse(pedidoDiv.dataset.items || '[]');
       const multiplier = apply3 ? 1.10 * 0.97 : 1.10;
-
       prodsToAdd.forEach(({id, cant}) => {
         const pInfo = prodMap.get(id);
         if (pInfo) {
@@ -1058,7 +961,7 @@
           alert(`Producto ID ${id} no encontrado.`);
         }
       });
-      
+     
       pedidoDiv.dataset.items = JSON.stringify(items);
       updatePedidoItems(currentPedidoId, items);
       closeAddModal();
@@ -1066,17 +969,12 @@
       alert(e.message);
     }
   }
-
   function formatMoney(amount) {
     return '$' + Number(amount).toLocaleString('es-AR', { minimumFractionDigits: 2 });
   }
-
   window.addEventListener('DOMContentLoaded', () => {
     cargarUsuarios();
   });
 </script>
 </body>
 </html>
-
-
-
