@@ -610,76 +610,44 @@
       </li>`;
   }
   function addGuardarBtnListener(btn) {
-  btn.addEventListener('click', async () => {
-    const pedidoId = btn.dataset.pedidoid;
-    const username = btn.dataset.username;
-    const idx = Number(btn.dataset.index);
-    const statusSpan = document.getElementById(`guardar-status-${pedidoId}`);
-    const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-   
-    if (statusSpan) statusSpan.textContent = '⏳ Guardando...'; // Muestra "Cargando"
-    try {
-      if (!pedidoDiv) throw new Error("Elemento de pedido no encontrado.");
-     
-      const items = JSON.parse(pedidoDiv.dataset.items || '[]');
-     
-      if (items.length === 0) {
-         throw new Error("El pedido está vacío. No se puede guardar.");
-      }
-      // *** ESTO ES LO QUE SOLUCIONA EL ERROR "PEDIDO INVÁLIDO" ***
-      // Se envía el array de items directamente bajo la clave 'pedido'.
-      const payload = {
-        pedido: items,
-        user: username,
-      };
-      const res = await fetch(`${apiBase}/guardar-pedidos`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText);
-      }
-     
-      const data = await res.json();
-     
-      if (statusSpan) statusSpan.textContent = '✅ Guardado'; // Muestra "Éxito"
-     
-      // Actualizar estado local
-      const key = `${username}-${idx}`;
-      estadosPedidos[key] = estadosPedidos[key] || {};
-      estadosPedidos[key].guardado = true;
-      guardarEstados();
-
-      // Abrir PDF (si el backend lo devuelve usamos ese, sino usamos el método que funciona)
-      if (data.endpoint_pdf) {
-          let pdfUrl = data.endpoint_pdf;
-          if (pdfUrl.startsWith('/api')) {
-            pdfUrl = apiBase.replace('/api', '') + pdfUrl;
-          }
-          window.open(pdfUrl, '_blank');
-      } else {
-          // Fallback: usar el mismo endpoint que el botón "PDF" (con +10%)
-          previewPDFPedido(pedidoId);
-      }
-    } catch (err) {
-      if (statusSpan) statusSpan.textContent = '❌ Error'; // Muestra "Error"
-      console.error('Error al guardar pedido:', err);
-     
-      let errorMsg = err.message;
+    btn.addEventListener('click', async () => {
+      const pedidoId = btn.dataset.pedidoid;
+      const username = btn.dataset.username;
+      const idx = Number(btn.dataset.index);
+      const statusSpan = document.getElementById(`guardar-status-${pedidoId}`);
+      
+      if (statusSpan) statusSpan.textContent = '⏳ Guardando...';
+      
       try {
-          const serverErrorMatch = errorMsg.match(/{"error":"(.*?)"}/);
-          if (serverErrorMatch && serverErrorMatch[1]) {
-              errorMsg = serverErrorMatch[1];
-          }
-      } catch (e) {
-          // Ignorar si el parseo falla
+        const res = await fetch(`${apiBase}/pedidos/${pedidoId}/pdf`, { cache: 'no-store' });
+        
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(errorText || 'Error del servidor');
+        }
+        
+        const data = await res.json();
+        
+        if (data.pdf) {
+          window.open(data.pdf, '_blank');
+        } else {
+          throw new Error('No se recibió la URL del PDF');
+        }
+        
+        // Marcar como guardado localmente
+        if (statusSpan) statusSpan.textContent = '✅ Guardado';
+        const key = `${username}-${idx}`;
+        estadosPedidos[key] = estadosPedidos[key] || {};
+        estadosPedidos[key].guardado = true;
+        guardarEstados();
+        
+      } catch (err) {
+        if (statusSpan) statusSpan.textContent = '❌ Error';
+        console.error('Error al generar PDF:', err);
+        mostrarError(`Error al generar PDF: ${err.message}`);
       }
-      mostrarError(`Error al guardar: ${errorMsg}`);
-    }
-  });
-}
+    });
+  }
   // --- PDF PREVIEW (CON AUMENTO) ---
   async function previewPDFPedido(pedidoId) {
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
@@ -978,3 +946,4 @@
 </script>
 </body>
 </html>
+
