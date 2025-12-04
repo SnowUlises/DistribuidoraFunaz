@@ -2,60 +2,232 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Carrito de Compras — Distribuidora Funaz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Carrito - Distribuidora Funaz</title>
   <style>
-    main { max-width: 900px; margin: auto; padding: 2em; display:flex; flex-direction:column; gap:1em; }
-    h2 { text-align:center; margin-bottom:1em; color:#4a90e2; }
-    .producto-carrito { display:flex; align-items:center; gap:1em; background:#fff; padding:1em; margin-bottom:1em; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.05); justify-content:space-between; }
-    .producto-carrito img { width:100px; height:100px; object-fit:cover; border-radius:6px; }
-    .producto-info { flex:1; }
-    .producto-info p { margin:4px 0; }
-    .controles-cantidad { display:flex; flex-direction:column; align-items:center; gap:0.3em; min-width:110px; }
-    .controles-cantidad button { padding:4px 8px; border:none; background:#4a90e2; color:white; border-radius:6px; cursor:pointer; font-weight:bold; width:100%; }
-    .controles-cantidad button:hover { background:#357abd; }
-    #formOverlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.4); display:none; justify-content:center; align-items:center; z-index:10000; }
-    #formDatos { background:#f4f4f4; padding:2em; border-radius:10px; max-width:400px; width:90%; box-shadow:0 2px 12px rgba(0,0,0,0.3); position:relative; }
-    #formDatos h3 { text-align:center; margin-bottom:1em; color:#4a90e2; }
-    button.enviar { background:#4a90e2; border:none; color:white; padding:12px 20px; border-radius:6px; font-weight:bold; cursor:pointer; display:block; margin:0 auto; min-width:140px; }
-    button.enviar:hover { background:#357ABD; }
-    #btnCerrarFormulario { position:absolute; top:8px; right:8px; background:#d9534f; border:none; color:white; border-radius:50%; width:28px; height:28px; font-weight:bold; cursor:pointer; font-size:18px; line-height:22px; text-align:center; padding:0; }
-    #btnCerrarFormulario:hover { background:#c9302c; }
-    footer { text-align:center; color:#777; margin-top:2em }
-    .mode-banner { text-align:center; padding:8px; border-radius:6px; font-weight:700; color:#fff; margin-bottom:0.6em; }
-    .api-mode { background:#28a745; }
-    .static-mode { background:#f39c12; }
-    .download-link { display:block; margin-top:10px; text-align:center; }
+    :root {
+      --primary-green: #2E7D32;
+      --light-green: #4CAF50;
+      --bg-color: #fcfdfc;
+      --white: #ffffff;
+      --danger: #e57373;
+      --text-dark: #333;
+      --text-grey: #666;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body { 
+      font-family: 'Segoe UI', 'Roboto', Helvetica, sans-serif; 
+      margin: 0; 
+      background: var(--bg-color); 
+      color: var(--text-dark); 
+      padding-bottom: 160px; /* Espacio para el footer flotante */
+    }
+
+    /* HEADER */
+    header {
+      background: var(--primary-green);
+      color: var(--white);
+      padding: 1em;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .btn-volver {
+      background: rgba(255,255,255,0.2); color: white; border: none;
+      padding: 8px 12px; border-radius: 8px; font-weight: 600; cursor: pointer;
+      text-decoration: none; font-size: 0.9em; display: flex; align-items: center; gap: 5px;
+    }
+    h1 { margin: 0; font-size: 1.2em; font-weight: 600; }
+
+    main { max-width: 800px; margin: auto; padding: 1.5em; }
+
+    /* LISTA PRODUCTOS */
+    #listaCarrito { display: flex; flex-direction: column; gap: 1em; margin-bottom: 2em; }
+
+    .producto-card {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 1em;
+      display: flex;
+      gap: 1em;
+      align-items: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+      border: 1px solid #f0f0f0;
+    }
+    
+    .producto-card img {
+      width: 70px; height: 70px;
+      object-fit: cover;
+      border-radius: 10px;
+      background: #f9f9f9;
+      flex-shrink: 0;
+    }
+
+    .producto-info { flex: 1; }
+    .producto-info h3 { margin: 0 0 5px 0; font-size: 1em; color: var(--text-dark); }
+    .producto-info p { margin: 2px 0; font-size: 0.85em; color: var(--text-grey); }
+    .producto-info .subtotal { font-weight: bold; color: var(--primary-green); margin-top: 4px; font-size: 0.95em; }
+
+    /* CONTROLES CANTIDAD */
+    .controles-cantidad {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .stepper {
+      display: flex;
+      align-items: center;
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 3px;
+    }
+    .stepper button {
+      width: 30px; height: 30px;
+      background: var(--white); border: none;
+      border-radius: 6px;
+      font-weight: bold; color: var(--primary-green);
+      cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .stepper span {
+      width: 30px; text-align: center;
+      font-weight: 600; font-size: 0.9em;
+    }
+
+    .btn-eliminar-item {
+      background: #ffebee; color: var(--danger);
+      border: none; border-radius: 6px;
+      width: 100%; padding: 4px; font-size: 0.8em; font-weight: bold; cursor: pointer;
+    }
+
+    /* SECCION OPCIONES (CLIENTE) */
+    .opciones-container {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 1.5em;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+      border: 1px solid #f0f0f0;
+      margin-bottom: 2em;
+    }
+
+    .input-group { margin-bottom: 1em; }
+    
+    input[type="text"] {
+      width: 100%; padding: 12px;
+      border: 1px solid #ddd; border-radius: 10px;
+      outline: none; font-size: 1em; transition: border 0.2s;
+      background: #fafafa;
+    }
+    input[type="text"]:focus { border-color: var(--light-green); background: white; }
+
+    .checkbox-wrapper {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px; background: #f9f9f9; border-radius: 10px;
+      cursor: pointer; user-select: none;
+    }
+    input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary-green); }
+
+    /* FOOTER FLOTANTE ACCIONES */
+    .acciones-fixed {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--white);
+      padding: 1.5em;
+      border-top: 1px solid #eee;
+      box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+      z-index: 90;
+      display: flex; flex-direction: column; gap: 10px;
+      max-width: 800px; margin: 0 auto;
+    }
+
+    .btn-primary {
+      background: var(--primary-green); color: white;
+      border: none; padding: 14px; border-radius: 12px;
+      font-size: 1.1em; font-weight: bold; cursor: pointer;
+      width: 100%; box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
+      transition: background 0.2s;
+    }
+    .btn-primary:hover { background: #1b5e20; }
+
+    .btn-secondary {
+      background: white; color: var(--primary-green);
+      border: 2px solid var(--primary-green);
+      padding: 12px; border-radius: 12px;
+      font-size: 1em; font-weight: bold; cursor: pointer;
+      width: 100%;
+    }
+
+    /* MODAL CONFIRMACION */
+    #formOverlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5); backdrop-filter: blur(2px);
+      display: none; justify-content: center; align-items: center;
+      z-index: 10000;
+    }
+    #formDatos {
+      background: var(--white); padding: 2em; border-radius: 20px;
+      max-width: 350px; width: 90%; text-align: center; position: relative;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    #formDatos h3 { margin-top: 0; color: var(--primary-green); }
+    
+    #btnCerrarFormulario {
+      position: absolute; top: 10px; right: 10px;
+      background: #f5f5f5; border: none; color: #666;
+      width: 30px; height: 30px; border-radius: 50%;
+      font-weight: bold; cursor: pointer; font-size: 1.2em;
+    }
+
+    footer { text-align: center; color: #999; font-size: 0.9em; margin-top: 2em; display: none; } /* Oculto footer en movil por la barra fija */
+    @media (min-width: 800px) {
+      .acciones-fixed { position: static; border: 1px solid #eee; border-radius: 16px; padding: 2em; margin-top: 2em; }
+      body { padding-bottom: 0; }
+      footer { display: block; }
+    }
   </style>
 </head>
 <body>
-  <main>
-    <h2>Tu Carrito</h2>
-    <div id="modeBanner" style="display:none" class="mode-banner"></div>
+  
+  <header>
+    <button onclick="location.href='index.html'" class="btn-volver">⬅ Volver</button>
+    <h1>Mi Carrito</h1>
+    <div style="width:60px"></div>
+  </header>
 
+  <main>
+    <div id="modeBanner" style="display:none" class="mode-banner"></div>
+    
     <div id="listaCarrito"></div>
-    <div style="margin: 10px 0; text-align:center;">
-  <label>
-    <input type="checkbox" id="clienteRegular">
-    Cliente regular (3% descuento)
-  </label>
-</div>
-<div style="margin: 10px 0; text-align:center;">
-  <input type="text" id="nombreCliente" placeholder="Nombre del cliente" style="padding:6px; width:80%; max-width:300px;">
-</div>
-    <div style="display:flex; justify-content:center; gap:1em;">
-      <button id="btnMostrarFormulario" class="enviar">Enviar pedido</button>
-      <button id="btnGenerarTicket" class="enviar" style="position:absolute; right:0;">Generar Ticket</button>
+
+    <div class="opciones-container" id="opcionesContainer">
+        <h3 style="margin-top:0; font-size:1em; color:var(--text-grey);">Datos del Cliente</h3>
+        <div class="input-group">
+            <input type="text" id="nombreCliente" placeholder="Nombre del cliente" />
+        </div>
+        <label class="checkbox-wrapper">
+            <input type="checkbox" id="clienteRegular">
+            <span>Cliente regular (3% OFF)</span>
+        </label>
+    </div>
+
+    <div class="acciones-fixed">
+        <button id="btnMostrarFormulario" class="btn-primary">Enviar Pedido</button>
+        <button id="btnGenerarTicket" class="btn-secondary">📄 Generar Ticket PDF</button>
     </div>
 
     <div id="formOverlay">
       <div id="formDatos">
-        <button type="button" id="btnCerrarFormulario" title="Cerrar">&times;</button>
-        <h3>¿Estás seguro de enviar el pedido?</h3>
-        <p id="totalPedido" style="text-align:center; font-weight:bold;"></p>
-        <div id="sinStockAviso" style="color:#d9534f; margin-bottom:8px; text-align:center;"></div>
-        <button class="enviar" id="confirmarEnvio">Sí, enviar</button>
-
-        <div id="postActions" style="margin-top:12px; text-align:center;"></div>
+        <button type="button" id="btnCerrarFormulario">&times;</button>
+        <h3>Confirmar Pedido</h3>
+        <p style="color:#666;">¿Estás seguro de enviar este pedido?</p>
+        
+        <div id="totalPedido" style="font-size:1.5em; font-weight:bold; color:var(--text-dark); margin: 15px 0;"></div>
+        <div id="sinStockAviso" style="color:var(--danger); font-size:0.9em; margin-bottom:15px; font-weight:bold;"></div>
+        
+        <button class="btn-primary" id="confirmarEnvio">Sí, enviar</button>
+        <div id="postActions" style="margin-top:10px;"></div>
       </div>
     </div>
   </main>
@@ -65,7 +237,7 @@
   </footer>
 
 <script>
-/* Carrito corregido */
+/* Lógica original intacta */
 let productos = [];
 let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
 const usuario = { user: localStorage.getItem('loggedUser') || 'invitado' };
@@ -79,8 +251,15 @@ const btnConfirmar = document.getElementById('confirmarEnvio');
 const postActions = document.getElementById('postActions');
 const sinStockAviso = document.getElementById('sinStockAviso');
 const btnGenerarTicket = document.getElementById('btnGenerarTicket');
+const opcionesContainer = document.getElementById('opcionesContainer');
 
 const apiBase = 'https://distribuidorafunaz-a2o6.onrender.com/api';
+
+// Función helper para formato moneda
+function formatMoney(n) {
+  try { return new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS'}).format(n); }
+  catch(e){ return '$' + Number(n).toFixed(2); }
+}
 
 async function cargarProductos() {
   try {
@@ -89,7 +268,7 @@ async function cargarProductos() {
     productos = await r.json();
     renderizarCarrito();
   } catch (err) {
-    lista.innerHTML = '<p>Error cargando productos.</p>';
+    lista.innerHTML = '<p style="text-align:center">Error cargando productos.</p>';
     console.error(err);
   }
 }
@@ -104,36 +283,40 @@ function renderizarCarrito() {
   sinStockAviso.textContent = '';
 
   if (carrito.length === 0) {
-    lista.innerHTML = '<p>El carrito está vacío.</p>';
+    lista.innerHTML = '<div style="text-align:center; padding:3em; color:#999;">🛒<br><br>Tu carrito está vacío.</div>';
     btnMostrarFormulario.style.display = 'none';
     btnGenerarTicket.style.display = 'none';
+    opcionesContainer.style.display = 'none'; // Ocultar opciones si no hay items
     ocultarFormulario();
     return;
   }
   btnMostrarFormulario.style.display = 'block';
   btnGenerarTicket.style.display = 'block';
+  opcionesContainer.style.display = 'block';
 
   carrito.forEach((item, i) => {
-    // comparación tolerante a tipo (string/number)
     const p = productos.find(prod => prod.id == item.id);
     if (!p) return;
 
     const div = document.createElement('div');
-    div.className = 'producto-carrito';
+    div.className = 'producto-card'; // Clase CSS nueva
     const precioPublico = (Number(p.precio || 0) * 1.10);
 
+    // HTML Estructurado al nuevo diseño
     div.innerHTML = `
       <img src="/imagenes/${p.id}.png" alt="${(p.nombre||'').replace(/"/g,'')}" onerror="this.onerror=null; this.src='/imagenes/placeholder.png'"/>
       <div class="producto-info">
-        <p><strong>${p.nombre}</strong></p>
-        <p>Precio unitario: ${formatMoney(precioPublico)}</p>
-        <p>Subtotal: ${formatMoney(precioPublico * item.cantidad)}</p>
+        <h3>${p.nombre}</h3>
+        <p>Unitario: ${formatMoney(precioPublico)}</p>
+        <p class="subtotal">Subtotal: ${formatMoney(precioPublico * item.cantidad)}</p>
       </div>
       <div class="controles-cantidad">
-        <button class="btn-aumentar" title="Aumentar cantidad">+</button>
-        <span class="cantidad-display">${item.cantidad}</span>
-        <button class="btn-reducir" title="Reducir cantidad">-</button>
-        <button class="btn-eliminar" title="Eliminar producto" style="background:#d9534f;">X</button>
+        <div class="stepper">
+            <button class="btn-aumentar">+</button>
+            <span class="cantidad-display">${item.cantidad}</span>
+            <button class="btn-reducir">-</button>
+        </div>
+        <button class="btn-eliminar-item btn-eliminar">Eliminar</button>
       </div>
     `;
 
@@ -182,13 +365,10 @@ function mostrarFormulario() {
   const esRegular = document.getElementById('clienteRegular').checked;
   if (esRegular) total *= 0.97;
 
-  totalPedido.textContent = 'Total: ' + formatMoney(total);
-
-  // 🔹 Esta línea es la clave:
+  totalPedido.textContent = formatMoney(total);
   formOverlay.style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
-
 
 function ocultarFormulario() {
   formOverlay.style.display = 'none';
@@ -205,29 +385,25 @@ btnConfirmar.addEventListener('click', async () => {
 
   const nuevosCarrito = [];
   const sinStock = [];
-
   const productosClon = productos.map(p => ({...p}));
 
   for (const item of carrito) {
     const producto = productosClon.find(p => p.id == item.id);
     if (!producto) continue;
 
- if (typeof producto.stock === 'number') {
-  // restamos la cantidad aunque quede negativa
-  producto.stock = producto.stock - item.cantidad;
+    if (typeof producto.stock === 'number') {
+      producto.stock = producto.stock - item.cantidad;
+    }
 
-}
+    let precioConRecargo = Number(producto.precio) * 1.10;
+    const esRegular = document.getElementById('clienteRegular').checked;
+    if (esRegular) precioConRecargo *= 0.97;
 
-  let precioConRecargo = Number(producto.precio) * 1.10;
-  const esRegular = document.getElementById('clienteRegular').checked;
-  if (esRegular) precioConRecargo *= 0.97;
-
-  nuevosCarrito.push({
-    ...item,
-    precio: precioConRecargo
-  });
-}
-
+    nuevosCarrito.push({
+      ...item,
+      precio: precioConRecargo
+    });
+  }
 
   if (nuevosCarrito.length === 0) {
     alert('No hay productos disponibles para pedir.');
@@ -235,19 +411,19 @@ btnConfirmar.addEventListener('click', async () => {
     btnConfirmar.textContent = 'Sí, enviar';
     return;
   }
-const nombreInput = document.getElementById('nombreCliente');
-const nombreCliente = nombreInput.value.trim() || 'cliente';
-  // enviar al servidor: endpoint que existe en tu server.js
+  
+  const nombreInput = document.getElementById('nombreCliente');
+  const nombreCliente = nombreInput.value.trim() || 'cliente';
+  
   try {
     const res = await fetch(`${apiBase}/guardar-pedidos`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    pedido: nuevosCarrito,
-    user: nombreCliente
-  })
-});
-
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pedido: nuevosCarrito,
+        user: nombreCliente
+      })
+    });
 
     if (!res.ok) {
       const txt = await res.text().catch(()=>null);
@@ -282,8 +458,8 @@ async function generarTicket() {
 
     const factorDescuento = esRegular ? 0.97 : 1;
     const precioUnitarioEnviado = Number(p.precio) * factorDescuento;
-    const precioFinal = precioUnitarioEnviado * 1.1; // El endpoint aplicará *1.1, pero calculamos para subtotal y total
-    const subtotal = item.cantidad * precioFinal;
+    // const precioFinal = precioUnitarioEnviado * 1.1; // Logica original comentada
+    const subtotal = item.cantidad * (precioUnitarioEnviado * 1.1);
     total += subtotal;
 
     items.push({
@@ -291,7 +467,7 @@ async function generarTicket() {
       nombre: p.nombre,
       cantidad: item.cantidad,
       precio_unitario: precioUnitarioEnviado,
-      subtotal: item.cantidad * precioUnitarioEnviado // Enviado no final, pero PDF recalculará con *1.1
+      subtotal: subtotal 
     });
   }
 
@@ -303,7 +479,7 @@ async function generarTicket() {
   const payload = {
     user: nombreCliente,
     items,
-    total, // Total final
+    total,
     fecha: new Date().toISOString()
   };
 
@@ -333,24 +509,10 @@ async function generarTicket() {
 
 btnGenerarTicket.addEventListener('click', generarTicket);
 
-// helper
-function formatMoney(n) {
-  try { return new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS'}).format(n); }
-  catch(e){ return '$' + Number(n).toFixed(2); }
-}
-
 // iniciar
 (async function init(){
   await cargarProductos();
-  // actualizar contador del header si existe botón
-  const btnCarrito = document.getElementById('btnCarrito');
-  if (btnCarrito) {
-    const total = carrito.reduce((s,i) => s + i.cantidad, 0);
-    btnCarrito.textContent = `Carrito (${total})`;
-  }
 })();
 </script>
-
 </body>
 </html>
-
