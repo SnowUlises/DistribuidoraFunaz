@@ -1,3 +1,15 @@
+Aquí tienes el archivo completo con las modificaciones solicitadas.
+
+**Cambios realizados:**
+
+1.  **Función `renderPeticionItemsHTML`**: Se creó una función auxiliar para generar el HTML de los items de la petición. Esto permite reutilizar el código tanto al cargar la página como al borrar un item sin recargar.
+2.  **Modificación de `cargarPeticiones`**: Se agregó el botón **"Enfocar"** dentro del grupo de botones de cada petición.
+3.  **Nueva función `enfocarPeticion`**: Se implementó la lógica para ocultar los otros elementos y centrar la atención solo en la petición seleccionada (similar a la lógica de Pedidos).
+4.  **Optimización de `eliminarItemPeticion`**: Se eliminó la recarga de página (`cargarPeticiones()`). Ahora, al borrar un item, se actualiza el HTML de la lista y el total calculado directamente en el DOM.
+
+<!-- end list -->
+
+```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,9 +18,12 @@
   <title>Panel de Administración - Distribuidora Funaz</title>
   <style>
     :root {
-      --primary: #2e7d32; /* Verde oscuro elegante */
-      --primary-light: #4caf50; /* Verde standard */
-      --accent: #e8f5e9; /* Verde muy claro para fondos */
+      --primary: #2e7d32;
+      /* Verde oscuro elegante */
+      --primary-light: #4caf50;
+      /* Verde standard */
+      --accent: #e8f5e9;
+      /* Verde muy claro para fondos */
       --bg: #f8f9fa;
       --text: #2c3e50;
       --card-bg: #ffffff;
@@ -81,7 +96,8 @@
       border: 1px solid #ffcdd2;
       display: none;
     }
-    #mensajeError:not(:empty) { display: block; }
+    #mensajeError:not(:empty) { display: block;
+    }
 
     /* --- Secciones (Details) --- */
     details > summary {
@@ -101,7 +117,8 @@
     details > summary:hover {
       background: rgba(0,0,0,0.03);
     }
-    details > summary::-webkit-details-marker { display: none; }
+    details > summary::-webkit-details-marker { display: none;
+    }
     details > summary::before {
       content: "›";
       font-size: 1.2em;
@@ -152,7 +169,8 @@
       color: var(--text);
     }
     .user-details > summary::before, .peticion-details > summary::before {
-      content: none; /* Quitar la flecha grande global */
+      content: none;
+      /* Quitar la flecha grande global */
     }
 
     .user-details[open] > summary, .peticion-details[open] > summary {
@@ -167,7 +185,8 @@
     }
 
     /* --- Listas de Items --- */
-    ul { list-style: none; padding: 0; margin: 0; }
+    ul { list-style: none; padding: 0;
+      margin: 0; }
     
     .pedido-item, .peticion-info {
       background: #fafafa;
@@ -178,7 +197,7 @@
       transition: all 0.3s;
     }
     
-    .pedido-item.enfocado {
+    .pedido-item.enfocado, .peticion-item.enfocado {
       background: #fff;
       border: 2px solid var(--primary-light);
       box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
@@ -191,7 +210,8 @@
       padding-bottom: 0.5em;
       border-bottom: 1px dotted #ccc;
     }
-    .pedido-line strong, .peticion-header-info strong { color: var(--primary); }
+    .pedido-line strong, .peticion-header-info strong { color: var(--primary);
+    }
 
     /* --- Items individuales --- */
     .item {
@@ -204,7 +224,8 @@
     }
     .item:last-child { border-bottom: none; }
     
-    .item-controls { display: flex; gap: 4px; }
+    .item-controls { display: flex;
+      gap: 4px; }
     .item-controls button {
       padding: 2px 8px;
       border-radius: 4px;
@@ -213,9 +234,11 @@
       font-size: 0.85em;
       font-weight: bold;
     }
-    .item-controls button.increase { background: #dcedc8; color: #33691e; }
+    .item-controls button.increase { background: #dcedc8; color: #33691e;
+    }
     .item-controls button.decrease { background: #fff9c4; color: #f57f17; }
-    .item-controls button.delete { background: #ffcdd2; color: #c62828; }
+    .item-controls button.delete { background: #ffcdd2;
+      color: #c62828; }
 
     /* --- Botoneras --- */
     .pedido-actions, .button-group {
@@ -239,22 +262,30 @@
       font-weight: 600;
       transition: all 0.2s;
     }
-    button:hover { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    button:hover { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
 
     /* Botones específicos */
-    .guardar-btn, .confirmar { border-color: var(--primary-light); color: var(--primary); }
-    .guardar-btn:hover, .confirmar:hover { background: var(--primary); color: white; }
+    .guardar-btn, .confirmar { border-color: var(--primary-light); color: var(--primary);
+    }
+    .guardar-btn:hover, .confirmar:hover { background: var(--primary); color: white;
+    }
     
-    .confirmar-plus { color: #00838f; border-color: #b2ebf2; }
+    .confirmar-plus { color: #00838f; border-color: #b2ebf2;
+    }
     .confirmar-plus:hover { background: #e0f7fa; }
 
-    .add-product, .copy-faltantes { color: var(--info); border-color: #b3e5fc; }
+    .add-product, .copy-faltantes { color: var(--info); border-color: #b3e5fc;
+    }
     .add-product:hover, .copy-faltantes:hover { background: #e1f5fe; }
     
-    .actualizar-precios, .preview-pdf { color: var(--warning); border-color: #ffe0b2; }
-    .actualizar-precios:hover, .preview-pdf:hover { background: #fff3e0; }
+    .actualizar-precios, .preview-pdf { color: var(--warning);
+      border-color: #ffe0b2; }
+    .actualizar-precios:hover, .preview-pdf:hover { background: #fff3e0;
+    }
 
-    .delete-peticion, .delete, button[onclick*="eliminarPedido"] { color: var(--danger); border-color: #ffcdd2; }
+    .delete-peticion, .delete, button[onclick*="eliminarPedido"] { color: var(--danger); border-color: #ffcdd2;
+    }
     .delete-peticion:hover, button[onclick*="eliminarPedido"]:hover { background: #ffebee; }
 
     /* --- Status Bar --- */
@@ -268,7 +299,8 @@
       border-radius: 6px;
       justify-content: space-around;
     }
-    .status-container label { cursor: pointer; display: flex; align-items: center; gap: 4px; }
+    .status-container label { cursor: pointer; display: flex; align-items: center; gap: 4px;
+    }
 
     /* --- Modal --- */
     dialog {
@@ -280,15 +312,20 @@
       max-width: 450px;
     }
     dialog::backdrop { background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); }
-    dialog form { display: flex; flex-direction: column; gap: 1em; }
-    dialog input { padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
+    dialog form { display: flex;
+      flex-direction: column; gap: 1em; }
+    dialog input { padding: 10px; border: 1px solid #ddd; border-radius: 6px;
+    }
 
-    footer { text-align: center; color: #888; font-size: 0.9em; margin-top: 4em; }
+    footer { text-align: center; color: #888; font-size: 0.9em; margin-top: 4em;
+    }
 
     /* Responsive */
     @media (max-width: 600px) {
-      #listaUsuarios, #listaPeticiones { grid-template-columns: 1fr; }
-      .top-controls { flex-direction: column-reverse; }
+      #listaUsuarios, #listaPeticiones { grid-template-columns: 1fr;
+      }
+      .top-controls { flex-direction: column-reverse;
+      }
     }
   </style>
 </head>
@@ -310,7 +347,8 @@
     <details open>
       <summary>Peticiones Pendientes</summary>
       <div id="listaPeticiones">
-        </div>
+        
+      </div>
     </details>
   </main>
 
@@ -325,9 +363,12 @@
       <label>
         <input type="checkbox" id="apply3percent"> Aplicar -3%
       </label>
-      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:1em;">
-        <button type="button" onclick="closeAddModal()" style="background:#eee; color:#333; border:none;">Cancelar</button>
-        <button type="button" onclick="addProductsToPedido()" style="background:var(--primary); color:white; border:none;">Añadir</button>
+      <div style="display:flex; gap:10px;
+      justify-content:flex-end; margin-top:1em;">
+        <button type="button" onclick="closeAddModal()" style="background:#eee; color:#333;
+        border:none;">Cancelar</button>
+        <button type="button" onclick="addProductsToPedido()" style="background:var(--primary); color:white;
+        border:none;">Añadir</button>
       </div>
     </form>
   </dialog>
@@ -351,6 +392,7 @@
 
   // --- Funciones de Persistencia ---
   function guardarEstados() {
+    
     localStorage.setItem('estadosPedidos', JSON.stringify(estadosPedidos));
   }
   function saveUsedButtons() {
@@ -391,7 +433,6 @@
     if (!selectedPedido) return;
     const btn = selectedPedido.querySelector('.enfocar');
     const estaEnfocado = selectedPedido.classList.contains('enfocado');
-
     // Resetear visualización
     document.querySelectorAll('.pedido-item').forEach(p => {
       p.style.display = '';
@@ -399,10 +440,8 @@
       const b = p.querySelector('.enfocar');
       if (b) b.textContent = 'Enfocar';
     });
-
     const peticionesSection = document.querySelector('main details:nth-of-type(2)');
     if (peticionesSection) peticionesSection.style.display = '';
-
     if (!estaEnfocado) {
       // Ocultar otros pedidos
       document.querySelectorAll('.pedido-item').forEach(p => {
@@ -412,7 +451,6 @@
 
       selectedPedido.classList.add('enfocado');
       btn.textContent = 'Mostrar todos';
-
       // Abrir solo este usuario
       const userDetails = selectedPedido.closest('.user-details');
       if (userDetails) {
@@ -439,6 +477,7 @@
         ${editable ? `
         <div class="item-controls">
           <button class="increase" onclick="modificarCantidadPedido('${pedidoId}', ${itemIndex}, 1)">+</button>
+ 
           <button class="decrease" onclick="modificarCantidadPedido('${pedidoId}', ${itemIndex}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
           <button class="delete" onclick="eliminarItemPedido('${pedidoId}', ${itemIndex})">×</button>
         </div>
@@ -481,7 +520,8 @@
           return { ...item, precio_unitario: nuevoPrecio, subtotal: nuevoPrecio * item.cantidad };
         }
         return item;
-      });
+     
+       });
       if (!changed) return alert('Todos los precios ya están actualizados.');
 
       pedidoDiv.dataset.items = JSON.stringify(updatedItems);
@@ -528,6 +568,7 @@
           </div>
           <div class="peticion-items" id="items-${pedidoId}">
             ${renderItemsHTML(pedidoId, items)}
+    
           </div>
           <div class="pedido-actions">
             <button onclick="eliminarPedido('${pedidoId}', '${userName}', ${index})">Eliminar</button>
@@ -535,18 +576,21 @@
             <button class="preview-pdf" onclick="previewPDFPedido('${pedidoId}')">PDF</button>
             <button class="add-product" onclick="openAddModal('${pedidoId}')">+ Prod</button>
             <button class="actualizar-precios" onclick="actualizarPreciosPedido('${pedidoId}', false)">$ Act</button>
+      
             <button class="actualizar-precios" onclick="actualizarPreciosPedido('${pedidoId}', true)">$ -3%</button>
             <button class="ver-original" onclick="toggleViewOriginal('${pedidoId}')">Original</button>
             <button class="confirmar" onclick="guardarCambiosPedido('${pedidoId}')">Confirmar</button>
             <button class="enfocar" onclick="enfocarPedido('${pedidoId}')">Enfocar</button>
-            <span class="guardar-status" id="guardar-status-${pedidoId}" aria-hidden="true" style="align-self:center; margin-left:auto;">
+            <span class="guardar-status" id="guardar-status-${pedidoId}" aria-hidden="true" style="align-self:center;
+            margin-left:auto;">
               ${estado.guardado ? '✅' : ''}
             </span>
           </div>
           <div class='status-container'>
             <label><input type='checkbox' ${estado.guardado ? 'checked' : ''} onchange="toggleGuardado('${userName}',${index}, this)"> Guardado</label>
             <label><input type='checkbox' ${estado.recibido ? 'checked' : ''} onchange="toggleRecibido('${userName}',${index}, this)"> Recibido</label>
-            <label><input type="checkbox" id="modo-devolucion-${pedidoId}"> Devolución</label>
+       
+             <label><input type="checkbox" id="modo-devolucion-${pedidoId}"> Devolución</label>
           </div>
         </div>
       </li>`;
@@ -560,6 +604,7 @@
       const statusSpan = document.getElementById(`guardar-status-${pedidoId}`);
       if (statusSpan) statusSpan.textContent = '⏳';
       try {
+ 
         await guardarPedido(pedidoId); // Llama a la funcion guardarPedido
         if (statusSpan) statusSpan.textContent = '✅';
         const key = `${username}-${idx}`;
@@ -586,7 +631,6 @@
       }
       const pedidosRaw = await res.json();
       const pedidosPorUsuario = {};
-      
       pedidosRaw.forEach(p => {
         const user = p.user || 'Invitado';
         if (!pedidosPorUsuario[user]) pedidosPorUsuario[user] = [];
@@ -595,12 +639,12 @@
           id: item.id || 'unknown',
           nombre: String(item.nombre || 'Sin nombre'),
           cantidad: Number(item.cantidad) || 1,
+    
           precio_unitario: Number(item.precio_unitario || item.precio) || 0,
           subtotal: Number(item.subtotal) || (Number(item.cantidad) * Number(item.precio_unitario || item.precio)) || 0
         }));
         pedidosPorUsuario[user].push({ ...p, items });
       });
-
       listaPedidos.innerHTML = '';
       if (Object.keys(pedidosPorUsuario).length === 0) {
         listaPedidos.innerHTML = '<p style="text-align:center">No hay pedidos registrados.</p>';
@@ -615,6 +659,7 @@
         const pedidosToShow = userPedidos.slice(0, initialCount);
         let pedidosHTML = '<ul>';
         pedidosToShow.forEach((pedido, index) => {
+        
           pedidosHTML += buildPedidoHTML(pedido, index, userName);
         });
         pedidosHTML += '</ul>';
@@ -625,6 +670,7 @@
 
         const userDiv = document.createElement('details');
         userDiv.className = 'user-details';
+        
         userDiv.innerHTML = `<summary>${userName}</summary><div class='usuario-item'>${pedidosHTML}</div>`;
         listaPedidos.appendChild(userDiv);
 
@@ -635,10 +681,10 @@
                originalPedidosCache[pedidoId] = structuredClone(pedido.items);
                guardarOriginalCache();
            }
+       
            const div = document.getElementById(`pedido-${pedidoId}`);
            if(div) div.dataset.veryOriginalItems = JSON.stringify(originalPedidosCache[pedidoId] || pedido.items);
         });
-
         userDiv.querySelectorAll('.guardar-btn').forEach(addGuardarBtnListener);
       });
     } catch (err) {
@@ -664,6 +710,7 @@
         div.dataset.items = JSON.stringify(pedido.items);
         if(!originalPedidosCache[pedidoId]) {
             originalPedidosCache[pedidoId] = structuredClone(pedido.items);
+           
             guardarOriginalCache();
         }
         div.dataset.veryOriginalItems = JSON.stringify(originalPedidosCache[pedidoId] || pedido.items);
@@ -700,7 +747,6 @@
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
     if (pedidoDiv.classList.contains('viewing-original')) return alert('Estás viendo la versión original.');
     if (!confirm('¿Guardar cambios?')) return;
-    
     try {
       const items = JSON.parse(pedidoDiv.dataset.items || '[]');
       const originalItems = JSON.parse(pedidoDiv.dataset.veryOriginalItems || '[]');
@@ -712,7 +758,6 @@
         const curr = deltaMap.get(item.id) || 0;
         deltaMap.set(item.id, curr + Number(item.cantidad || 0));
       });
-
       const stockUpdates = [];
       for (const [id, delta] of deltaMap.entries()) {
         if (delta !== 0 && (delta > 0 || modoDevolucion)) {
@@ -727,7 +772,6 @@
         })),
         stockUpdates
       };
-
       const res = await fetch(`${apiBase}/actualizar-pedido/${pedidoId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -739,7 +783,8 @@
       originalPedidosCache[pedidoId] = items;
       guardarOriginalCache();
       alert('Cambios guardados.');
-      toggleViewOriginal(pedidoId); // Refrescar botones
+      toggleViewOriginal(pedidoId);
+      // Refrescar botones
     } catch (e) {
       mostrarError(`Error al guardar: ${e.message}`);
     }
@@ -795,14 +840,12 @@
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const peticiones = await res.json();
       lista.innerHTML = '';
-      
       if (peticiones.length === 0) {
         lista.innerHTML = '<p style="text-align:center">No hay peticiones.</p>';
         return;
       }
       
       peticiones.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-      
       peticiones.forEach(peticion => {
         const peticionDiv = document.createElement('details');
         // USAMOS LAS CLASES DEL DISEÑO VERDE
@@ -812,7 +855,8 @@
         const isUsed = usedButtons[peticion.id];
         peticionDiv.dataset.items = JSON.stringify(peticion.items);
         peticionDiv.dataset.nombre = peticion.nombre;
-        const { formattedDate, formattedTime } = formatDateTime(peticion.fecha);
+        const { formattedDate, formattedTime } 
+        = formatDateTime(peticion.fecha);
         
         peticionDiv.innerHTML = `
           <summary>${peticion.nombre} <span style="font-weight:400; font-size:0.8em; color:#777;">ID: ${peticion.id} - ${formattedDate} ${formattedTime}</span></summary>
@@ -820,49 +864,99 @@
             <div class="peticion-info">
               <div class="peticion-header-info">
                   <strong>Teléfono:</strong> ${peticion.telefono} <br>
+    
                   <strong>Total Estimado:</strong> <span id="total-${peticion.id}">${formatMoney(peticion.total)}</span>
               </div>
               <div class="peticion-items" id="items-${peticion.id}">
-                ${peticion.items.map((item, index) => {
-                  let stockWarning = '';
-                  const product = productos.find(p => p.id === item.id);
-                  if (product && item.cantidad > (product.stock || 0)) {
-                    stockWarning = '<span style="color: #d32f2f; font-weight:bold; font-size:0.8em; margin-left:5px;">⚠️ Falta stock</span>';
-                  }
-                  return `
-                  <div class="item" data-item-index="${index}">
-                    <span id="item-text-${peticion.id}-${index}" style="flex:1;">
-                        ${item.nombre}: <b><span id="cantidad-${peticion.id}-${index}">${item.cantidad}</span></b> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}${stockWarning}
-                    </span>
-                    <div class="item-controls">
-                      <button class="increase" onclick="modificarCantidad('${peticion.id}', ${index}, 1)">+</button>
-                      <button class="decrease" onclick="modificarCantidad('${peticion.id}', ${index}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
-                      <button class="delete" onclick="eliminarItemPeticion('${peticion.id}', ${index})">×</button>
-                    </div>
-                  </div>
-                `;
-                }).join('')}
+                ${renderPeticionItemsHTML(peticion.items, peticion.id)}
               </div>
               ${isUsed ?
                 `<div style="margin-top:10px; padding:10px; background:#e8f5e9; color:#2e7d32; border-radius:6px; text-align:center; font-weight:bold;">
-                    Estado: ${isUsed === 'plus7' ? '✅ Confirmado -3%' : '✅ Confirmado'}
+                    Estado: ${isUsed === 'plus7' ?
+                    '✅ Confirmado -3%' : '✅ Confirmado'}
                  </div>` : `
                 <div class="button-group">
                   <button class="confirmar" onclick="confirmarPeticion(${peticion.id}, false)">Confirmar</button>
                   <button class="confirmar-plus" onclick="confirmarPeticion(${peticion.id}, true)">Confirmar -3%</button>
+                
                   <button class="preview-pdf" onclick="previewPDF(${peticion.id})">PDF Preview</button>
                   <button class="copy-faltantes" onclick="copiarFaltantes(${peticion.id})">Copiar faltantes</button>
                   <button class="delete-peticion" onclick="eliminarPeticion(${peticion.id})">Eliminar</button>
+                  <button class="enfocar-peticion" onclick="enfocarPeticion('${peticion.id}')">Enfocar</button>
                 </div>
               `}
             </div>
           </div>
+  
         `;
         lista.appendChild(peticionDiv);
       });
     } catch (err) {
       console.error(err);
       mostrarError('Error al cargar peticiones.');
+    }
+  }
+
+  // --- Helper para generar items de peticiones (Reutilizable para no recargar página) ---
+  function renderPeticionItemsHTML(items, peticionId) {
+    return items.map((item, index) => {
+        let stockWarning = '';
+        const product = productos.find(p => p.id === item.id);
+        if (product && item.cantidad > (product.stock || 0)) {
+        stockWarning = '<span style="color: #d32f2f; font-weight:bold; font-size:0.8em; margin-left:5px;">⚠️ Falta stock</span>';
+        }
+        return `
+        <div class="item" data-item-index="${index}">
+        <span id="item-text-${peticionId}-${index}" style="flex:1;">
+            ${item.nombre}: <b><span id="cantidad-${peticionId}-${index}">${item.cantidad}</span></b> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}${stockWarning}
+        </span>
+        <div class="item-controls">
+            <button class="increase" onclick="modificarCantidad('${peticionId}', ${index}, 1)">+</button>
+            <button class="decrease" onclick="modificarCantidad('${peticionId}', ${index}, -1)" ${item.cantidad <= 1 ?
+            'disabled' : ''}>-</button>
+            <button class="delete" onclick="eliminarItemPeticion('${peticionId}', ${index})">×</button>
+        </div>
+        </div>
+        `;
+    }).join('');
+  }
+
+  // --- Nueva Función Enfocar Petición ---
+  function enfocarPeticion(peticionId) {
+    const selectedPeticion = document.getElementById(`peticion-${peticionId}`);
+    if (!selectedPeticion) return;
+    
+    const btn = selectedPeticion.querySelector('.enfocar-peticion');
+    const peticionItemInner = selectedPeticion.querySelector('.peticion-item');
+    const estaEnfocado = peticionItemInner.classList.contains('enfocado');
+
+    // Resetear visualización global de peticiones
+    document.querySelectorAll('.peticion-item').forEach(p => {
+        p.classList.remove('enfocado');
+    });
+    document.querySelectorAll('.peticion-details').forEach(d => {
+        d.style.display = '';
+        const b = d.querySelector('.enfocar-peticion');
+        if(b) b.textContent = 'Enfocar';
+    });
+
+    // Controlar visibilidad de la sección de Usuarios
+    const usuariosSection = document.querySelector('main details:nth-of-type(1)');
+    if (usuariosSection) usuariosSection.style.display = '';
+
+    if (!estaEnfocado) {
+        // Ocultar otras peticiones
+        document.querySelectorAll('.peticion-details').forEach(d => {
+            if (d.id !== `peticion-${peticionId}`) d.style.display = 'none';
+        });
+        
+        // Ocultar sección de usuarios
+        if (usuariosSection) usuariosSection.style.display = 'none';
+
+        peticionItemInner.classList.add('enfocado');
+        selectedPeticion.open = true; // Asegurar que esté desplegado
+        if(btn) btn.textContent = 'Mostrar todos';
+        selectedPeticion.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }
 
@@ -896,8 +990,17 @@
     let items = JSON.parse(peticionDiv.dataset.items || '[]');
     items = items.filter((_, idx) => idx !== itemIndex);
     peticionDiv.dataset.items = JSON.stringify(items);
-    // Recargar lista completa de items para resetear indices
-    cargarPeticiones(); 
+    
+    // NO RECARGAR LA PÁGINA: Actualizar solo el DOM localmente
+    const container = document.getElementById(`items-${peticionId}`);
+    if(container) {
+        container.innerHTML = renderPeticionItemsHTML(items, peticionId);
+    }
+
+    // Actualizar total visualmente
+    const total = items.reduce((sum, it) => sum + it.subtotal, 0);
+    const totalLabel = document.getElementById(`total-${peticionId}`);
+    if(totalLabel) totalLabel.textContent = formatMoney(total);
   }
 
   async function confirmarPeticion(peticionId, subtractThreePercent) {
@@ -913,7 +1016,6 @@
         id: item.id, cantidad: item.cantidad,
         precio: subtractThreePercent ? item.precio_unitario * 0.97 : item.precio_unitario
       }));
-      
       const res = await fetch(`${apiBase}/guardar-pedidos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -925,7 +1027,6 @@
       
       usedButtons[peticionId] = subtractThreePercent ? 'plus7' : 'normal';
       saveUsedButtons();
-      
       alert('Petición confirmada.');
       location.reload(); 
     } catch (err) {
@@ -938,7 +1039,8 @@
     try {
         await fetch(`${apiBase}/peticiones/${id}`, { method: 'DELETE' });
         cargarPeticiones();
-    } catch(e) { mostrarError(e.message); }
+    } catch(e) { mostrarError(e.message);
+    }
   }
 
   function copiarFaltantes(peticionId) {
@@ -951,7 +1053,8 @@
       const missing = Math.max(0, item.cantidad - stock);
       if (missing > 0) faltantes.push(`${missing} ${item.nombre}`);
     }
-    const text = faltantes.join('\n') || 'No faltan productos en stock para esta petición.';
+    const text = faltantes.join('\n') ||
+    'No faltan productos en stock para esta petición.';
     navigator.clipboard.writeText(text).then(() => alert('Copiado:\n' + text));
   }
 
@@ -965,6 +1068,7 @@
           items: items.map(i => ({
               id: i.id, nombre: i.nombre, cantidad: i.cantidad,
               precio_unitario: i.precio_unitario * 0.97 * 1.10, // Simulación de precio final
+            
               subtotal: i.cantidad * (i.precio_unitario * 0.97 * 1.10)
           })),
           total: 0, // El backend lo recalcula o lo mandamos
@@ -972,7 +1076,6 @@
       };
       // Recalcular total localmente para enviar
       payload.total = payload.items.reduce((s, i) => s + i.subtotal, 0);
-
       const res = await fetch(`${apiBase}/generar-pdf-peticion`, {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
@@ -989,7 +1092,8 @@
     document.getElementById('apply3percent').checked = false;
     document.getElementById('addProductModal').showModal();
   }
-  function closeAddModal() { document.getElementById('addProductModal').close(); }
+  function closeAddModal() { document.getElementById('addProductModal').close();
+  }
   
   async function addProductsToPedido() {
     const input = document.getElementById('productsInput').value.trim();
@@ -1004,12 +1108,12 @@
     }
     
     const apply3 = document.getElementById('apply3percent').checked;
-    
     for(let part of parts) {
         const [idStr, qtyStr] = part.split('x');
         const p = productos.find(x => x.id == idStr);
         if(p) {
-            let precio = p.precio * 1.10; // Base markup
+            let precio = p.precio * 1.10;
+            // Base markup
             if(apply3) precio *= 0.97;
             newItems.push({
                 id: p.id, nombre: p.nombre, cantidad: parseInt(qtyStr)||1,
@@ -1019,10 +1123,8 @@
     }
     
     if(newItems.length === 0) return alert('No se encontraron productos.');
-    
     const div = document.getElementById(`pedido-${currentPedidoId}`);
     let items = JSON.parse(div.dataset.items || '[]');
-    
     newItems.forEach(ni => {
         const idx = items.findIndex(i => i.id === ni.id);
         if(idx >= 0) {
@@ -1030,7 +1132,6 @@
             items[idx].subtotal = items[idx].cantidad * items[idx].precio_unitario;
         } else items.push(ni);
     });
-    
     div.dataset.items = JSON.stringify(items);
     updatePedidoItems(currentPedidoId, items);
     closeAddModal();
@@ -1069,3 +1170,4 @@
   </script>
 </body>
 </html>
+```
