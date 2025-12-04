@@ -141,7 +141,7 @@
     .con-stock { color: var(--light-green); }
     .sin-stock { color: #e57373; }
 
-    /* BOTONES ACCION */
+    /* BOTONES ACCION (MEJORADOS) */
     .btn-carrito {
       margin-top: auto;
       background: var(--light-green);
@@ -152,9 +152,28 @@
       cursor: pointer;
       font-weight: 600;
       width: 100%;
-      transition: background 0.2s;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1); /* Transición más rápida */
+      position: relative;
+      overflow: hidden;
     }
-    .btn-carrito:hover { background: var(--primary-green); }
+    .btn-carrito:hover { background: var(--primary-green); transform: translateY(-1px); }
+    .btn-carrito:active { transform: scale(0.95); } /* Efecto de click inmediato */
+
+    /* Estilo para cuando ya hay items en el carrito */
+    .btn-carrito.en-carrito {
+        background-color: var(--primary-green);
+        border: 1px solid var(--primary-green);
+    }
+    
+    /* Animación de "Pop" al agregar */
+    @keyframes btnPop {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); background-color: #43A047; }
+        100% { transform: scale(1); }
+    }
+    .btn-animating {
+        animation: btnPop 0.3s ease-out;
+    }
 
     /* PAGINACION */
     .paginacion button {
@@ -393,7 +412,7 @@ function renderProductos() {
   const cont = document.querySelector('.productos');
   cont.innerHTML = '';
   let filtrados = productos;
-  
+   
   if (categoriaSeleccionada !== 'Todos') {
     filtrados = productos.filter(p => p.categoria === categoriaSeleccionada);
   }
@@ -417,7 +436,7 @@ function renderProductos() {
 
   const totalPaginas = Math.ceil(filtrados.length / cantidadPorPagina);
   if(paginaActual > totalPaginas) paginaActual = totalPaginas || 1;
-  
+   
   const inicio = (paginaActual -1) * cantidadPorPagina;
   const fin = inicio + cantidadPorPagina;
   const productosPagina = filtrados.slice(inicio, fin);
@@ -438,6 +457,12 @@ function renderProductos() {
         realImg.onerror = () => { img.src = getImageUrl('placeholder.png'); };
       }
     }
+
+    // CHECK CARRITO CANTIDAD PARA MOSTRAR EN BOTON
+    const itemCarrito = carrito.find(i => i.id === p.id);
+    const cantidadEnCarrito = itemCarrito ? itemCarrito.cantidad : 0;
+    const btnText = cantidadEnCarrito > 0 ? `En carrito (${cantidadEnCarrito}) +` : 'Añadir';
+    const extraClass = cantidadEnCarrito > 0 ? 'en-carrito' : '';
     
     div.innerHTML = `
       <h3>${p.nombre}</h3>
@@ -445,13 +470,22 @@ function renderProductos() {
       <div class="stock ${p.stock > 0 ? 'con-stock' : 'sin-stock'}">
         ${p.stock > 0 ? 'Disponible: ' + p.stock : 'Sin Stock'}
       </div>
-      <button class="btn-carrito" onclick="agregarAlCarrito(${p.id})">Añadir</button>
+      <button id="btn-add-${p.id}" class="btn-carrito ${extraClass}" onclick="agregarAlCarrito(${p.id})">${btnText}</button>
     `;
     div.insertBefore(img, div.firstChild);
     
-    div.onclick = () => { window.location.href = `producto.html?id=${p.id}`; };
+    div.onclick = (e) => { 
+        // Prevenir navegación si clickea el botón
+        if(e.target.tagName !== 'BUTTON') {
+            window.location.href = `producto.html?id=${p.id}`; 
+        }
+    };
     
-    div.querySelector('button.btn-carrito').onclick = (event) => {
+    // El evento onclick del botón ya está definido inline arriba, que pasa al padre por propagación
+    // pero el div.onclick maneja la redirección. 
+    // Para asegurar que el botón funcione bien sin redireccionar:
+    const btn = div.querySelector('button.btn-carrito');
+    btn.onclick = (event) => {
       event.stopPropagation();
       agregarAlCarrito(p.id);
     };
@@ -486,20 +520,33 @@ function agregarAlCarrito(id, cantidad = 1, silent = false) {
   }
   const producto = productos.find(p => p.id === id);
   if (!producto) return;
-  
+   
   const item = carrito.find(i => i.id === id);
-  if (item) item.cantidad += cantidad;
-  else carrito.push({ id, cantidad });
-  
+  let nuevaCantidad = cantidad;
+
+  if (item) {
+      item.cantidad += cantidad;
+      nuevaCantidad = item.cantidad;
+  } else {
+      carrito.push({ id, cantidad });
+  }
+   
   localStorage.setItem('carrito', JSON.stringify(carrito));
-  
-  const total = carrito.reduce((acc, i) => acc + i.cantidad, 0);
-  const cantidadProducto = carrito.find(i => i.id === id).cantidad;
-  
+   
   actualizarContadorCarrito();
-  
+   
   if (!silent) {
-    mostrarMensaje(`Agregado: ${producto.nombre}`);
+    mostrarMensaje(`Agregado: ${producto.nombre}. Tienes ${nuevaCantidad} en total.`);
+    
+    // Feedback visual inmediato en el botón
+    const btn = document.getElementById(`btn-add-${id}`);
+    if (btn) {
+        btn.textContent = `En carrito (${nuevaCantidad}) +`;
+        btn.classList.add('en-carrito');
+        btn.classList.remove('btn-animating'); // Reset por si acaso
+        void btn.offsetWidth; // Trigger reflow
+        btn.classList.add('btn-animating');
+    }
   }
   renderCarrito();
 }
@@ -513,7 +560,7 @@ function renderCarrito() {
   const cont = document.getElementById('itemsCarrito');
   cont.innerHTML = '';
   let total = 0;
-  
+   
   if(carrito.length === 0){
     cont.innerHTML = '<p style="text-align:center; color:#999;">El carrito está vacío.</p>';
   } else {
@@ -521,7 +568,7 @@ function renderCarrito() {
       const prod = productos.find(p => p.id === item.id);
       if (!prod) return;
       total += (prod.precio * 1.10) * item.cantidad;
-      
+       
       const div = document.createElement('div');
       div.className = 'item-carrito';
       div.innerHTML = `
@@ -539,6 +586,7 @@ function eliminarDelCarrito(id) {
   localStorage.setItem('carrito', JSON.stringify(carrito));
   actualizarContadorCarrito();
   renderCarrito();
+  renderProductos(); // Re-renderizar para actualizar los botones de "En carrito"
 }
 
 function vaciarCarrito() {
@@ -547,6 +595,7 @@ function vaciarCarrito() {
     localStorage.setItem('carrito', JSON.stringify(carrito));
     actualizarContadorCarrito();
     renderCarrito();
+    renderProductos(); // Re-renderizar para limpiar botones
   }
 }
 
@@ -588,11 +637,11 @@ function renderUsuarioMenu() {
     `;
     const btnUsuario = document.getElementById('btnUsuario');
     const dropdown = document.getElementById('usuarioDropdown');
-    
+     
     btnUsuario.onclick = () => {
       dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
     };
-    
+     
     document.body.onclick = (e) => {
       if (!document.getElementById('usuarioMenuWrapper').contains(e.target)) {
         dropdown.style.display = 'none';
@@ -628,8 +677,6 @@ if (buscadorInput) {
   });
 }
 
-// FUNCIONES DE PEDIDO ELIMINADAS (procesarPedido, renderReview, etc.)
-
 async function checkNotificaciones() {
   try {
     const res = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/peticiones');
@@ -638,14 +685,14 @@ async function checkNotificaciones() {
     const currentCount = peticiones.length;
     let seenCount = parseInt(localStorage.getItem('seenPetitionsCount') || '0');
     let newCount;
-    
+     
     if (currentCount < seenCount) {
       localStorage.setItem('seenPetitionsCount', currentCount);
       newCount = 0;
     } else {
       newCount = currentCount - seenCount;
     }
-    
+     
     const badge = document.getElementById('notifBadge');
     if (newCount > 0) {
       badge.textContent = newCount;
