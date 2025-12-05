@@ -5,14 +5,74 @@ import path from 'path';
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import { createClient } from '@supabase/supabase-js';
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+
 app.use(cors({ origin: "*" }));
 app.use(bodyParser.json());
 app.use(express.static('public'));
+
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 const PDF_PATH = path.join(process.cwd(), 'public', 'pedidos-pdf');
 if (!fs.existsSync(PDF_PATH)) fs.mkdirSync(PDF_PATH, { recursive: true });
+
+/* ---------------------------------------------------------
+   NUEVO: FUNCIÓN AUXILIAR PARA REGISTRAR HISTORIAL
+--------------------------------------------------------- */
+async function registrarMovimiento(prodId, nombre, cambio, stockAnt, stockNue, tipo, ref) {
+  try {
+    await supabase.from('historial_stock').insert([{
+      producto_id: prodId,
+      producto_nombre: nombre,
+      cantidad_cambio: cambio,
+      stock_anterior: stockAnt,
+      stock_nuevo: stockNue,
+      tipo_movimiento: tipo,
+      referencia_id: ref,
+      fecha: new Date().toISOString()
+    }]);
+  } catch (e) {
+    console.error("Error registrando historial:", e);
+  }
+}
+
+/* ---------------------------------------------------------
+   NUEVO: ENDPOINTS PARA LEER Y GESTIONAR HISTORIAL
+--------------------------------------------------------- */
+app.get('/api/historial', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('historial_stock')
+      .select('*')
+      .order('fecha', { ascending: false })
+      .limit(500);
+
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/historial-check/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { error } = await supabase
+      .from('historial_stock')
+      .update({ revisado: true })
+      .eq('id', id);
+    
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/* ---------------------------------------------------------
+   ENDPOINTS EXISTENTES (MODIFICADOS SOLO PARA REGISTRAR)
+--------------------------------------------------------- */
 
 app.put('/api/actualizar-pedido/:id', async (req, res) => {
   try {
@@ -29,12 +89,20 @@ app.put('/api/actualizar-pedido/:id', async (req, res) => {
         .eq('id', update.id)
         .single();
       if (prod) {
-        const newStock = Number(prod.stock ?? 0) - Number(update.cantidad ?? 0);
+        const stockAnterior = Number(prod.stock ?? 0); // Capturamos stock antes
+        const cantidadRestada = Number(update.cantidad ?? 0);
+        const newStock = stockAnterior - cantidadRestada;
+        
         const { error: updErr } = await supabase
           .from('productos')
           .update({ stock: newStock })
           .eq('id', update.id);
+          
         if (updErr) console.error('❌ Error actualizando stock:', updErr);
+        else {
+            // REGISTRO HISTORIAL: Modificacion Pedido (Resta)
+            await registrarMovimiento(update.id, prod.nombre, -cantidadRestada, stockAnterior, newStock, 'MODIF_PEDIDO', pedidoId);
+        }
       }
     }
     // Actualizar el pedido en la base de datos
@@ -125,7 +193,7 @@ app.delete('/api/peticiones/:id', async (req, res) => {
   }
 });
 /* -----------------------------
- 📦 LISTAR PRODUCTOS
+  📦 LISTAR PRODUCTOS
 ----------------------------- */
 app.get('/api/productos', async (req, res) => {
   try {
@@ -155,7 +223,7 @@ app.get('/api/productos', async (req, res) => {
   }
 });
 /* -----------------------------
- 📦 LISTAR PEDIDOS
+  📦 LISTAR PEDIDOS
 ----------------------------- */
 app.get('/api/pedidos', async (req, res) => {
   try {
@@ -217,7 +285,7 @@ app.get('/api/pedidos/:id/pdf', async (req, res) => {
   }
 });
 /* -----------------------------
- 📦 GUARDAR PEDIDOS
+  📦 GUARDAR PEDIDOS
 ----------------------------- */
 app.post('/api/guardar-pedidos', async (req, res) => {
   try {
@@ -228,6 +296,8 @@ app.post('/api/guardar-pedidos', async (req, res) => {
     }
     let total = 0;
     const items = [];
+    const id = Date.now().toString(); // Generamos ID aquí para usarlo en historial
+
     // Start a transaction
     for (const it of pedidoItems) {
       const prodId = it.id;
@@ -244,7 +314,7 @@ app.post('/api/guardar-pedidos', async (req, res) => {
         return res.status(400).json({ error: `Cantidad inválida para producto ${prodId}` });
       }
       // Validate stock
-      const currentStock = Number(prod.stock) || 0;
+      const stockAnterior = Number(prod.stock) || 0; // Capturamos stock antes
       const precioUnitario = Number(it.precio ?? it.precio_unitario ?? prod.precio) || 0;
       const subtotal = cantidadFinal * precioUnitario;
       total += subtotal;
@@ -256,19 +326,22 @@ app.post('/api/guardar-pedidos', async (req, res) => {
         subtotal
       });
       // Update stock
-      const newStock = currentStock - cantidadFinal;
+      const newStock = stockAnterior - cantidadFinal;
       const { error: updErr } = await supabase
         .from('productos')
         .update({ stock: newStock })
         .eq('id', prodId);
       if (updErr) {
         return res.status(500).json({ error: `Error actualizando stock para producto ${prodId}: ${updErr.message}` });
+      } else {
+        // REGISTRO HISTORIAL: Venta
+        await registrarMovimiento(prodId, prod.nombre, -cantidadFinal, stockAnterior, newStock, 'VENTA', id);
       }
     }
     if (items.length === 0) {
       return res.status(400).json({ error: 'No hay items válidos para el pedido' });
     }
-    const id = Date.now().toString();
+    
     const fechaLocal = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
     const payload = { id, user: usuarioPedido, fecha: fechaLocal, items, total };
     console.log('💾 Guardando pedido:', payload);
@@ -311,25 +384,10 @@ app.post('/api/Enviar-Peticion', async (req, res) => {
         // Process each item
         for (const it of pedidoItems) {
             const prodId = it.id;
-            if (!prodId) {
-                console.warn(`⚠️ Item sin ID: ${JSON.stringify(it)}`);
-                continue;
-            }
-            // Fetch product
-            const { data: prod, error: prodError } = await supabase
-                .from('productos')
-                .select('*')
-                .eq('id', prodId)
-                .single();
-            if (prodError || !prod) {
-                console.warn(`⚠️ Producto no encontrado para ID ${prodId}:`, prodError?.message || 'No product');
-                continue;
-            }
+            const { data: prod, error: prodError } = await supabase.from('productos').select('*').eq('id', prodId).single();
+            if (prodError || !prod) continue;
             const cantidadFinal = Number(it.cantidad) || 0;
-            if (cantidadFinal <= 0) {
-                console.warn(`⚠️ Cantidad inválida para producto ${prodId}: ${it.cantidad}`);
-                continue;
-            }
+            if (cantidadFinal <= 0) continue;
             const precioUnitario = Number(it.precio ?? prod.precio) || 0;
             const subtotal = cantidadFinal * precioUnitario;
             total += subtotal;
@@ -436,7 +494,7 @@ async function generarPDF(pedido) {
   });
 }
 /* -----------------------------
- ❌ ELIMINAR PEDIDO
+  ❌ ELIMINAR PEDIDO
 ----------------------------- */
 app.delete('/api/eliminar-pedido/:id', async (req, res) => {
   try {
@@ -466,8 +524,16 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
           .single();
 
         if (prod) {
-          const newStock = (Number(prod.stock) || 0) + (Number(it.cantidad) || 0);
-          await supabase.from('productos').update({ stock: newStock }).eq('id', prodId);
+          const stockAnterior = Number(prod.stock) || 0; // Capturamos stock antes
+          const cantidadRestaurar = Number(it.cantidad) || 0;
+          const newStock = stockAnterior + cantidadRestaurar;
+          
+          const { error: updErr } = await supabase.from('productos').update({ stock: newStock }).eq('id', prodId);
+          
+          if (!updErr) {
+             // REGISTRO HISTORIAL: Eliminar Pedido (Restaurar)
+             await registrarMovimiento(prodId, prod.nombre, cantidadRestaurar, stockAnterior, newStock, 'ELIMINAR_PEDIDO', id);
+          }
         }
       }
     }
