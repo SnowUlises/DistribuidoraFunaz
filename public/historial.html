@@ -13,9 +13,9 @@
       --white: #ffffff;
       --text-dark: #333;
       --text-grey: #666;
-      --orange: #ff9800; /* Naranja principal */
-      --orange-bg: #fff3e0; /* Fondo naranja suave */
-      --orange-border: #ffb74d;
+      --orange: #ff9800;
+      --orange-bg: #fff3e0; 
+      --orange-border: #ffe0b2;
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -35,32 +35,29 @@
     .controles-superiores {
       padding: 10px 1em;
       background: var(--white);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
+      display: flex; flex-direction: column; gap: 10px;
       border-bottom: 1px solid #f0f0f0;
     }
+    .fila-controles { display: flex; gap: 10px; align-items: center; justify-content: space-between; width: 100%; }
 
     .buscador-container { flex-grow: 1; }
     .input-buscador {
-      width: 100%;
-      padding: 8px 12px;
-      border-radius: 20px;
-      border: 1px solid #ddd;
-      outline: none;
-      font-size: 0.95em;
+      width: 100%; padding: 8px 12px; border-radius: 20px;
+      border: 1px solid #ddd; outline: none; font-size: 0.95em;
     }
     .input-buscador:focus { border-color: var(--primary-green); }
 
+    /* BOTON FORZAR CHECK */
+    .btn-force-check {
+        background: var(--text-dark); color: white; border: none;
+        padding: 8px 12px; border-radius: 20px; cursor: pointer;
+        font-size: 0.85em; white-space: nowrap; display: flex; align-items: center; gap: 5px;
+    }
+    .btn-force-check:active { transform: scale(0.95); }
+
     .toggle-orange {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 0.85em;
-      color: #e65100;
-      font-weight: bold;
-      cursor: pointer;
+      display: flex; align-items: center; gap: 5px;
+      font-size: 0.85em; color: #e65100; font-weight: bold; cursor: pointer;
     }
     .toggle-orange input { accent-color: var(--orange); transform: scale(1.2); }
 
@@ -104,8 +101,8 @@
     /* ESTADO OK (Verde - Movimiento Normal) */
     .card.normal { border-left: 4px solid var(--light-green); }
 
-    /* ESTADO AJUSTE MANUAL (Naranja - Creado por el sistema) */
-    .card.manual {
+    /* ESTADO AJUSTE DB (Naranja - Calculado) */
+    .card.ajuste-db {
       border: 1px solid var(--orange-border);
       background: var(--orange-bg);
       border-left: 4px solid var(--orange);
@@ -132,11 +129,6 @@
 
     .tipo-mov { font-size: 0.75em; padding: 3px 6px; border-radius: 4px; background: #eee; color: #666; }
 
-    .info-manual { 
-        font-size: 0.85em; color: #e65100; margin-top: 5px; 
-        font-weight: bold; display: flex; align-items: center; gap: 5px; 
-    }
-
     .btn-cargar-mas {
       display: block; width: 100%; max-width: 300px; margin: 20px auto;
       padding: 12px; background: var(--white); border: 1px solid var(--primary-green);
@@ -156,13 +148,20 @@
   </header>
 
   <div class="controles-superiores">
-    <div class="buscador-container">
-      <input type="text" id="buscador" class="input-buscador" placeholder="🔍 Buscar producto..." onkeyup="resetYRenderizar()">
+    <div class="fila-controles">
+        <div class="buscador-container">
+            <input type="text" id="buscador" class="input-buscador" placeholder="🔍 Buscar producto..." onkeyup="resetYRenderizar()">
+        </div>
+        <button class="btn-force-check" onclick="forzarVerificacion()">
+            ↻ Verificar Ahora
+        </button>
     </div>
-    <label class="toggle-orange">
-      <input type="checkbox" id="checkManual" onchange="resetYRenderizar()">
-      Ver solo Ajustes DB
-    </label>
+    <div class="fila-controles">
+        <label class="toggle-orange">
+        <input type="checkbox" id="checkManual" onchange="resetYRenderizar()">
+        Solo Ajustes DB
+        </label>
+    </div>
   </div>
 
   <div class="filtros">
@@ -177,17 +176,22 @@
   </main>
   
 <script>
-let historialRaw = [];       // Datos crudos de la API de historial
-let stockRealMap = {};       // Datos crudos de la API de productos (Stock actual)
-let historialUnificado = []; // Lista FINAL mezclada (Historial + Ajustes Virtuales)
+let historialRaw = [];       
+let stockRealMap = {};       
+let historialUnificado = []; 
 
 let filtroActual = 'dia';
 let limiteCarga = 50;
 
 // --- INICIO ---
 async function iniciarSistema() {
+    await obtenerDatosCompletos();
+    // Monitor cada 4 min (240000 ms)
+    setInterval(monitorCambiosStock, 240000); 
+}
+
+async function obtenerDatosCompletos() {
     try {
-        // 1. Cargamos ambas APIs en paralelo para tener todo el contexto
         const [resHist, resProd] = await Promise.all([
             fetch('https://distribuidorafunaz-a2o6.onrender.com/api/historial'),
             fetch('https://distribuidorafunaz-a2o6.onrender.com/api/productos')
@@ -198,14 +202,10 @@ async function iniciarSistema() {
         historialRaw = await resHist.json();
         const productos = await resProd.json();
         
-        // Mapeamos productos para acceso rapido: { id: stock_actual }
         productos.forEach(p => stockRealMap[p.id] = p.stock);
 
-        procesarHistorialInteligente();
+        recalcularHistorialCronologico();
         renderizar();
-
-        // Iniciamos el monitor de 4 minutos
-        setInterval(monitorCambiosStock, 240000); // 4 minutos
 
     } catch (err) {
         document.getElementById('contenedorHistorial').innerHTML = '<p style="text-align:center; color:red">Error de conexión.</p>';
@@ -213,40 +213,66 @@ async function iniciarSistema() {
     }
 }
 
-// --- MONITOR (Cada 4 min) ---
+// --- BOTON DE FORZAR VERIFICACION ---
+async function forzarVerificacion() {
+    const btn = document.querySelector('.btn-force-check');
+    const textoOriginal = btn.innerHTML;
+    btn.innerHTML = "⏳ Verificando...";
+    btn.disabled = true;
+
+    await monitorCambiosStock(); // Reutilizamos la logica del monitor
+
+    btn.innerHTML = "✅ Listo";
+    setTimeout(() => { 
+        btn.innerHTML = textoOriginal; 
+        btn.disabled = false; 
+    }, 2000);
+}
+
+// --- MONITOR (Checkeo de diferencias) ---
 async function monitorCambiosStock() {
-    console.log("⏳ Checkeo rutinario de stock (4 min)...");
+    console.log("Checkeando API...");
     try {
         const res = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/productos');
         if(!res.ok) return;
         
         const productos = await res.json();
-        let huboCambiosReales = false;
+        let huboCambios = false;
 
         productos.forEach(p => {
-            // Si el stock de la API cambió respecto a lo que teniamos guardado en memoria
-            if (stockRealMap[p.id] !== undefined && stockRealMap[p.id] !== p.stock) {
-                huboCambiosReales = true;
-                console.log(`Variación detectada en ${p.nombre}: ${stockRealMap[p.id]} -> ${p.stock}`);
+            const stockGuardado = stockRealMap[p.id];
+            // Si hay diferencia, actualizamos el mapa y marcamos bandera
+            if (stockGuardado !== undefined && stockGuardado !== p.stock) {
+                console.log(`Diferencia encontrada en ${p.nombre}: ${stockGuardado} -> ${p.stock}`);
+                stockRealMap[p.id] = p.stock;
+                huboCambios = true;
             }
-            stockRealMap[p.id] = p.stock;
         });
 
-        if (huboCambiosReales) {
-            // Si detectamos cambio, recalculamos todo. Esto generará la tarjeta naranja nueva.
-            procesarHistorialInteligente();
+        // Si la API tiene datos nuevos que no cuadran con lo que teniamos, recalculamos todo
+        if (huboCambios) {
+            recalcularHistorialCronologico();
             renderizar();
+        } else {
+            // Si no hay cambios en API de productos, igual recargamos historial por si hubo ventas normales nuevas
+            // (Opcional, pero recomendado para mantener la vista fresca)
+            const resH = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/historial');
+            if(resH.ok) {
+                historialRaw = await resH.json();
+                recalcularHistorialCronologico();
+                renderizar();
+            }
         }
-    } catch (e) { console.log("Monitor offline"); }
+
+    } catch (e) { console.log("Error en monitor", e); }
 }
 
-// --- EL CEREBRO: CREACIÓN DE MOVIMIENTOS VIRTUALES ---
-function procesarHistorialInteligente() {
-    // 1. Agrupar por producto y ordenar Cronológicamente (Antiguo a Nuevo)
-    //    para poder recorrer y encontrar los saltos.
+// --- LOGICA CENTRAL: UNIFICAR MOVIMIENTOS Y RELLENAR HUECOS ---
+function recalcularHistorialCronologico() {
     const movimientosPorProducto = {};
-    
-    // Ordenamos historialRaw ASC por fecha
+    const listaFinal = [];
+
+    // 1. Ordenar historial puro por FECHA ASCENDENTE (Del pasado al presente)
     const rawOrdenado = [...historialRaw].sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
 
     rawOrdenado.forEach(mov => {
@@ -254,88 +280,68 @@ function procesarHistorialInteligente() {
         movimientosPorProducto[mov.producto_id].push(mov);
     });
 
-    const listaFinal = [];
-
-    // 2. Iterar cada producto y rellenar huecos
+    // 2. Recorrer producto por producto buscando huecos en su linea de tiempo
     Object.keys(movimientosPorProducto).forEach(prodId => {
         const movs = movimientosPorProducto[prodId];
         
         for (let i = 0; i < movs.length; i++) {
             const actual = movs[i];
             
-            // A. CHECK DE HUECO INTERMEDIO (Entre movimientos pasados)
-            // Si hay un anterior, comparamos su final con el inicio del actual
+            // A. Hueco entre el movimiento anterior y el actual
             if (i > 0) {
                 const anterior = movs[i-1];
-                const stockDeberiaSer = anterior.stock_nuevo;
-                const stockEsRealmente = actual.stock_nuevo - actual.cantidad_cambio; // Stock inicial de este mov
+                const stockDeberia = anterior.stock_nuevo;
+                const stockRealInicioActual = actual.stock_nuevo - actual.cantidad_cambio;
 
-                if (stockDeberiaSer !== stockEsRealmente) {
-                    // ¡HUECO DETECTADO! Creamos movimiento virtual
-                    const diferencia = stockEsRealmente - stockDeberiaSer;
-                    listaFinal.push(crearMovimientoVirtual(
-                        actual, 
-                        stockDeberiaSer, 
-                        stockEsRealmente, 
-                        diferencia, 
-                        "Ajuste Manual (Previo)"
-                    ));
+                if (stockDeberia !== stockRealInicioActual) {
+                    // Hay un hueco. Creamos un movimiento "Ajuste DB"
+                    // FECHA: Justo 1 milisegundo antes del movimiento actual.
+                    // Esto asegura que al ordenar, quede pegado ANTES del actual.
+                    const fechaAjuste = new Date(new Date(actual.fecha).getTime() - 1);
+                    
+                    listaFinal.push({
+                        id: `ajuste-intermedio-${actual.id}`,
+                        producto_id: actual.producto_id,
+                        producto_nombre: actual.producto_nombre,
+                        fecha: fechaAjuste.toISOString(),
+                        stock_anterior: stockDeberia,
+                        stock_nuevo: stockRealInicioActual,
+                        cantidad_cambio: stockRealInicioActual - stockDeberia,
+                        tipo_movimiento: 'ajuste_db', // Tipo especial
+                        esAjuste: true
+                    });
                 }
-            } else {
-                // Si es el primer movimiento de la historia y no arranca de la nada lógicamente
-                // (Opcional: aquí podrías detectar si arranca mágicamente en 100)
             }
 
             // Agregamos el movimiento real
-            listaFinal.push({ ...actual, esVirtual: false });
+            listaFinal.push({ ...actual, esAjuste: false });
         }
 
-        // B. CHECK DE HUECO FINAL (Entre último movimiento y Stock Actual API)
+        // B. Hueco final (Entre el último movimiento registrado y el Stock Actual de la API)
         const ultimoMov = movs[movs.length - 1];
         const stockActualAPI = stockRealMap[ultimoMov.producto_id];
 
         if (stockActualAPI !== undefined && ultimoMov.stock_nuevo !== stockActualAPI) {
-            // ¡HUECO ACTUAL DETECTADO! (El caso de los 4 minutos)
-            const diferencia = stockActualAPI - ultimoMov.stock_nuevo;
-            // Usamos la fecha actual para este movimiento
-            const movVirtual = {
-                id: `virt-final-${ultimoMov.id}`,
+            // Hay diferencia entre el historial y la realidad actual.
+            // Creamos un movimiento con FECHA ACTUAL (Ahora mismo)
+            listaFinal.push({
+                id: `ajuste-final-${ultimoMov.id}-${Date.now()}`,
                 producto_id: ultimoMov.producto_id,
                 producto_nombre: ultimoMov.producto_nombre,
-                fecha: new Date().toISOString(), // AHORA MISMO
+                fecha: new Date().toISOString(),
                 stock_anterior: ultimoMov.stock_nuevo,
                 stock_nuevo: stockActualAPI,
-                cantidad_cambio: diferencia,
+                cantidad_cambio: stockActualAPI - ultimoMov.stock_nuevo,
                 tipo_movimiento: 'ajuste_db',
-                esVirtual: true,
-                msgVirtual: "Detectado cambio externo reciente"
-            };
-            listaFinal.push(movVirtual);
+                esAjuste: true
+            });
         }
     });
 
-    // 3. Ordenamos todo DESC (Más nuevo arriba) para mostrar
+    // 3. Ordenar la lista final unificada por FECHA DESCENDENTE (Lo más nuevo arriba)
     historialUnificado = listaFinal.sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
 }
 
-function crearMovimientoVirtual(movReferencia, stockAnt, stockNue, diferencia, mensaje) {
-    // Truco: Ponemos la fecha 1 milisegundo antes del movimiento real
-    // para que aparezca justo "antes" en la lista visual (que está ordenada DESC)
-    const fechaVirtual = new Date(new Date(movReferencia.fecha).getTime() - 1000).toISOString();
-    
-    return {
-        id: `virt-${movReferencia.id}`,
-        producto_id: movReferencia.producto_id,
-        producto_nombre: movReferencia.producto_nombre,
-        fecha: fechaVirtual,
-        stock_anterior: stockAnt,
-        stock_nuevo: stockNue,
-        cantidad_cambio: diferencia,
-        tipo_movimiento: 'ajuste_db',
-        esVirtual: true,
-        msgVirtual: mensaje
-    };
-}
 
 // --- RENDERIZADO Y FILTROS ---
 
@@ -371,18 +377,18 @@ function formatearFecha(fechaStr) {
 function renderizar() {
   const container = document.getElementById('contenedorHistorial');
   const busqueda = document.getElementById('buscador').value.toLowerCase();
-  const soloManuales = document.getElementById('checkManual').checked;
+  const soloAjustes = document.getElementById('checkManual').checked;
 
   container.innerHTML = '';
 
   let lista = historialUnificado.filter(item => {
     const matchNombre = item.producto_nombre.toLowerCase().includes(busqueda);
-    const matchTipo = soloManuales ? item.esVirtual : true;
+    const matchTipo = soloAjustes ? item.esAjuste : true;
     return matchNombre && matchTipo;
   });
 
   if (lista.length === 0) {
-    container.innerHTML = '<p style="text-align:center; color:#999">No hay registros coincidentes.</p>';
+    container.innerHTML = '<p style="text-align:center; color:#999">No hay registros.</p>';
     return;
   }
 
@@ -404,16 +410,12 @@ function renderizar() {
       const cambioTexto = item.cantidad_cambio > 0 ? `+${item.cantidad_cambio}` : `${item.cantidad_cambio}`;
       const hora = new Date(item.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-      // ESTILOS SEGUN TIPO
-      let claseCard = 'normal';
+      // ESTILOS: Si es ajuste (naranja) o normal (verde)
+      let claseCard = item.esAjuste ? 'ajuste-db' : 'normal';
       let claseBadge = item.cantidad_cambio > 0 ? 'positivo' : 'negativo';
-      let infoExtra = '';
+      if(item.esAjuste) claseBadge = 'neutro'; // Badge naranja
 
-      if (item.esVirtual) {
-          claseCard = 'manual'; // Naranja
-          claseBadge = 'neutro';
-          infoExtra = `<div class="info-manual">🔧 ${item.msgVirtual}</div>`;
-      }
+      const tipoLegible = item.esAjuste ? 'Ajuste de DB' : item.tipo_movimiento.replace('_', ' ');
 
       const card = document.createElement('div');
       card.className = `card ${claseCard}`;
@@ -431,8 +433,9 @@ function renderizar() {
           </div>
           <div class="cambio-badge ${claseBadge}">${cambioTexto}</div>
         </div>
-        ${infoExtra}
-        ${!item.esVirtual ? `<div style="margin-top:5px;"><span class="tipo-mov">${item.tipo_movimiento.replace('_', ' ')}</span></div>` : ''}
+        <div style="margin-top:5px;">
+           <span class="tipo-mov">${tipoLegible}</span>
+        </div>
       `;
       divGrupo.appendChild(card);
     });
