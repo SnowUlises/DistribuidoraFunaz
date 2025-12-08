@@ -31,16 +31,49 @@
     header h1 { margin: 0; font-size: 1.2em; font-weight: 600; }
     .btn-volver { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 0.9em; display:flex; gap:5px; align-items:center; }
 
-    /* FILTROS */
+    /* CONTROLES (BUSCADOR Y CHECKBOX) */
+    .controles-superiores {
+      padding: 10px 1em;
+      background: var(--white);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .buscador-container { flex-grow: 1; }
+    .input-buscador {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 20px;
+      border: 1px solid #ddd;
+      outline: none;
+      font-size: 0.95em;
+    }
+    .input-buscador:focus { border-color: var(--primary-green); }
+
+    .toggle-rojo {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.85em;
+      color: var(--danger);
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .toggle-rojo input { accent-color: var(--danger); transform: scale(1.2); }
+
+    /* FILTROS FECHA */
     .filtros {
-      display: flex; gap: 10px; padding: 1em; 
+      display: flex; gap: 10px; padding: 10px 1em; 
       overflow-x: auto; white-space: nowrap;
       background: var(--white); border-bottom: 1px solid #eee;
     }
     .filtros button {
-      padding: 8px 16px; border: 1px solid #ddd; background: var(--white);
+      padding: 6px 14px; border: 1px solid #ddd; background: var(--white);
       border-radius: 20px; color: var(--text-grey); font-weight: 500; cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s; font-size: 0.9em;
     }
     .filtros button.active {
       background: var(--soft-green); border-color: var(--primary-green); color: var(--primary-green); font-weight: bold;
@@ -107,7 +140,17 @@
     }
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.85; } 100% { opacity: 1; } }
 
-    .alert-msg { font-size: 0.85em; color: #c62828; margin-top: 5px; font-style: italic; }
+    .alert-msg { font-size: 0.85em; color: #c62828; margin-top: 5px; font-style: italic; font-weight: bold;}
+
+    /* BOTON CARGAR MAS */
+    .btn-cargar-mas {
+      display: block; width: 100%; max-width: 300px; margin: 20px auto;
+      padding: 12px; background: var(--white); border: 1px solid var(--primary-green);
+      color: var(--primary-green); font-weight: bold; border-radius: 25px;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-cargar-mas:hover { background: var(--soft-green); }
+    .hidden { display: none; }
 
   </style>
 </head>
@@ -119,6 +162,16 @@
     <div style="width: 30px;"></div>
   </header>
 
+  <div class="controles-superiores">
+    <div class="buscador-container">
+      <input type="text" id="buscador" class="input-buscador" placeholder="🔍 Buscar producto..." onkeyup="resetYRenderizar()">
+    </div>
+    <label class="toggle-rojo">
+      <input type="checkbox" id="checkRojo" onchange="resetYRenderizar()">
+      Solo Alertas
+    </label>
+  </div>
+
   <div class="filtros">
     <button class="active" onclick="filtrar('dia', this)">Por Día</button>
     <button onclick="filtrar('semana', this)">Semana</button>
@@ -129,16 +182,19 @@
   <main id="contenedorHistorial">
     <p style="text-align:center; color:#999; margin-top:2em;">Cargando movimientos...</p>
   </main>
-
-<script>
+  
+  <script>
 let historialCompleto = [];
+let historialProcesado = []; // Lista con datos de errores ya calculados
 let filtroActual = 'dia';
+let limiteCarga = 50; // Req 3: Cargar de a poco
 
 async function cargarHistorial() {
   try {
     const res = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/historial');
     if (!res.ok) throw new Error('Error al cargar');
     historialCompleto = await res.json();
+    procesarErroresGlobales(); // Analizamos todo una vez al inicio
     renderizar();
   } catch (err) {
     document.getElementById('contenedorHistorial').innerHTML = '<p style="text-align:center; color:red">Error cargando datos.</p>';
@@ -146,10 +202,60 @@ async function cargarHistorial() {
   }
 }
 
+// Req 2: Detectar y guardar QUÉ pasó en el salto (antes de filtrar)
+function procesarErroresGlobales() {
+  const movimientosPorProducto = {};
+  // Ordenamos cronológicamente para calcular
+  const historialOrdenado = [...historialCompleto].sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
+  
+  // Mapa temporal para inyectar info de error
+  const mapaInfoError = {}; 
+
+  historialOrdenado.forEach(mov => {
+    if (!movimientosPorProducto[mov.producto_id]) {
+      movimientosPorProducto[mov.producto_id] = mov; 
+    } else {
+      const anterior = movimientosPorProducto[mov.producto_id];
+      const stockInicialActual = mov.stock_nuevo - mov.cantidad_cambio;
+      
+      if (anterior.stock_nuevo !== stockInicialActual) {
+        if (!mov.revisado) {
+          // Guardamos la info del salto exacto
+          mapaInfoError[mov.id] = {
+            esError: true,
+            msgSalto: `${anterior.stock_nuevo} ➝ ${stockInicialActual}`
+          };
+        }
+      }
+      movimientosPorProducto[mov.producto_id] = mov;
+    }
+  });
+
+  // Fusionamos info de errores en el historial principal
+  historialProcesado = historialCompleto.map(item => {
+    const info = mapaInfoError[item.id];
+    return { 
+      ...item, 
+      esError: info ? true : false,
+      msgSalto: info ? info.msgSalto : null 
+    };
+  });
+}
+
 function filtrar(tipo, btn) {
   filtroActual = tipo;
   document.querySelectorAll('.filtros button').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  resetYRenderizar();
+}
+
+function resetYRenderizar() {
+  limiteCarga = 50; // Reseteamos paginación al cambiar filtros
+  renderizar();
+}
+
+function cargarMas() {
+  limiteCarga += 50;
   renderizar();
 }
 
@@ -167,71 +273,54 @@ function formatearFecha(fechaStr) {
 
 function renderizar() {
   const container = document.getElementById('contenedorHistorial');
+  const busqueda = document.getElementById('buscador').value.toLowerCase();
+  const soloRojos = document.getElementById('checkRojo').checked;
+
   container.innerHTML = '';
 
-  if (historialCompleto.length === 0) {
-    container.innerHTML = '<p style="text-align:center; color:#999">No hay movimientos registrados.</p>';
+  // 1. Filtrar lista (Buscador + Checkbox)
+  let listaAVisualizar = historialProcesado.filter(item => {
+    const coincideNombre = item.producto_nombre.toLowerCase().includes(busqueda);
+    const coincideRojo = soloRojos ? item.esError : true;
+    return coincideNombre && coincideRojo;
+  });
+
+  if (listaAVisualizar.length === 0) {
+    container.innerHTML = '<p style="text-align:center; color:#999">No se encontraron movimientos.</p>';
     return;
   }
 
-  // 1. Agrupar por fecha segun filtro
+  // 2. Cortar lista (Paginación) Req 3
+  const totalItems = listaAVisualizar.length;
+  const listaPaginada = listaAVisualizar.slice(0, limiteCarga);
+
+  // 3. Agrupar por fecha
   const grupos = {};
-  historialCompleto.forEach(item => {
+  listaPaginada.forEach(item => {
     const key = formatearFecha(item.fecha);
     if (!grupos[key]) grupos[key] = [];
     grupos[key].push(item);
   });
 
-  // 2. Analisis de "Saltos Mágicos" (Red Flags)
-  // Necesitamos agrupar por PRODUCTO y ordenar cronológicamente para detectar saltos
-  const movimientosPorProducto = {};
-  // Ordenamos cronológicamente ASCENDENTE para el cálculo matemático
-  const historialOrdenado = [...historialCompleto].sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
-  
-  const mapaDeErrores = {}; // ID_HISTORIAL -> true/false
-
-  historialOrdenado.forEach(mov => {
-    if (!movimientosPorProducto[mov.producto_id]) {
-      movimientosPorProducto[mov.producto_id] = mov; // Primer movimiento, no podemos comparar
-    } else {
-      const anterior = movimientosPorProducto[mov.producto_id];
-      // Logica Clave: El stock final del anterior DEBE ser igual al stock inicial del actual.
-      // Stock Inicial Actual = Stock Nuevo - Cambio
-      // Ejemplo: Vendi 1, quedo en 7. Stock inicial era 8.
-      // Anterior quedo en 9. 9 != 8 -> ERROR.
-      
-      const stockInicialActual = mov.stock_nuevo - mov.cantidad_cambio;
-      
-      // Margen de error 0.
-      if (anterior.stock_nuevo !== stockInicialActual) {
-        if (!mov.revisado) { // Si ya le diste "Arreglar", ignoramos
-             mapaDeErrores[mov.id] = true;
-        }
-      }
-      movimientosPorProducto[mov.producto_id] = mov;
-    }
-  });
-
-
-  // 3. Renderizar Grupos
+  // 4. Renderizar Grupos
   Object.keys(grupos).forEach(fechaHeader => {
     const divGrupo = document.createElement('div');
     divGrupo.className = 'fecha-grupo';
     divGrupo.innerHTML = `<div class="fecha-header">${fechaHeader}</div>`;
 
     grupos[fechaHeader].forEach(item => {
-      const esError = mapaDeErrores[item.id];
       const cambioTexto = item.cantidad_cambio > 0 ? `+${item.cantidad_cambio}` : `${item.cantidad_cambio}`;
       const claseColor = item.cantidad_cambio > 0 ? 'positivo' : 'negativo';
       const hora = new Date(item.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
       const card = document.createElement('div');
-      card.className = `card ${esError ? 'alert' : 'ok'}`;
+      card.className = `card ${item.esError ? 'alert' : 'ok'}`;
       
       let htmlBotones = '';
-      if (esError) {
+      if (item.esError) {
+        // Req 2: Mostrar el detalle del salto
         htmlBotones = `
-            <div class="alert-msg">⚠ Salto de stock detectado (DB editada manualmente)</div>
+            <div class="alert-msg">⚠ Salto en DB: ${item.msgSalto}</div>
             <button class="btn-fix" onclick="arreglar(${item.id})">✅ Ya lo vi (Arreglar)</button>
         `;
       }
@@ -259,17 +348,30 @@ function renderizar() {
 
     container.appendChild(divGrupo);
   });
+
+  // Botón Cargar Más
+  if (limiteCarga < totalItems) {
+    const btnMas = document.createElement('button');
+    btnMas.className = 'btn-cargar-mas';
+    btnMas.innerText = `Cargar más movimientos (${totalItems - limiteCarga} restantes)`;
+    btnMas.onclick = cargarMas;
+    container.appendChild(btnMas);
+  }
 }
 
 async function arreglar(id) {
-  if(!confirm("¿Marcar este salto como revisado? Desaparecerá la alerta roja.")) return;
+  if(!confirm("¿Marcar este salto como revisado?")) return;
   
   try {
     const res = await fetch(`https://distribuidorafunaz-a2o6.onrender.com/api/historial-check/${id}`, { method: 'PUT' });
     if (res.ok) {
-        // Actualizamos localmente para no recargar toda la pagina y que sea rapido
-        const item = historialCompleto.find(i => i.id == id);
-        if(item) item.revisado = true;
+        // Actualizamos localmente en historialCompleto y historialProcesado
+        const indexC = historialCompleto.findIndex(i => i.id == id);
+        if(indexC !== -1) historialCompleto[indexC].revisado = true;
+
+        const indexP = historialProcesado.findIndex(i => i.id == id);
+        if(indexP !== -1) historialProcesado[indexP].esError = false;
+
         renderizar();
     }
   } catch (err) {
