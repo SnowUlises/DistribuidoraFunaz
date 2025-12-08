@@ -13,9 +13,9 @@
       --white: #ffffff;
       --text-dark: #333;
       --text-grey: #666;
+      --orange: #ff9800;
+      --orange-bg: #fff3e0;
       --danger: #e57373;
-      --danger-bg: #ffebee;
-      --warning: #fbc02d;
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -31,7 +31,7 @@
     header h1 { margin: 0; font-size: 1.2em; font-weight: 600; }
     .btn-volver { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 0.9em; display:flex; gap:5px; align-items:center; }
 
-    /* CONTROLES (BUSCADOR Y CHECKBOX) */
+    /* CONTROLES */
     .controles-superiores {
       padding: 10px 1em;
       background: var(--white);
@@ -53,16 +53,16 @@
     }
     .input-buscador:focus { border-color: var(--primary-green); }
 
-    .toggle-rojo {
+    .toggle-orange {
       display: flex;
       align-items: center;
       gap: 5px;
       font-size: 0.85em;
-      color: var(--danger);
+      color: #e65100; /* Naranja oscuro */
       font-weight: bold;
       cursor: pointer;
     }
-    .toggle-rojo input { accent-color: var(--danger); transform: scale(1.2); }
+    .toggle-orange input { accent-color: var(--orange); transform: scale(1.2); }
 
     /* FILTROS FECHA */
     .filtros {
@@ -103,12 +103,12 @@
       transition: transform 0.2s;
     }
     
-    /* ESTADO ALERTA (Gap detectado) */
-    .card.alert {
-      border: 1px solid var(--danger);
-      background: var(--danger-bg);
+    /* ESTADO NARANJA (Cambio DB detectado) */
+    .card.manual-change {
+      border: 1px solid var(--orange);
+      background: var(--orange-bg);
     }
-    /* ESTADO OK */
+    /* ESTADO OK (Verde) */
     .card.ok { border-left: 4px solid var(--light-green); }
 
     .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
@@ -130,17 +130,7 @@
 
     .tipo-mov { font-size: 0.75em; padding: 3px 6px; border-radius: 4px; background: #eee; color: #666; }
 
-    /* BOTON ARREGLAR */
-    .btn-fix {
-      margin-top: 10px; width: 100%;
-      background: var(--danger); color: white; border: none;
-      padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer;
-      display: flex; align-items: center; justify-content: center; gap: 5px;
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.85; } 100% { opacity: 1; } }
-
-    .alert-msg { font-size: 0.85em; color: #c62828; margin-top: 5px; font-style: italic; font-weight: bold;}
+    .info-manual { font-size: 0.85em; color: #ef6c00; margin-top: 5px; font-weight: bold; display: flex; align-items: center; gap: 5px; }
 
     /* BOTON CARGAR MAS */
     .btn-cargar-mas {
@@ -150,7 +140,6 @@
       cursor: pointer; transition: all 0.2s;
     }
     .btn-cargar-mas:hover { background: var(--soft-green); }
-    .hidden { display: none; }
 
   </style>
 </head>
@@ -166,9 +155,9 @@
     <div class="buscador-container">
       <input type="text" id="buscador" class="input-buscador" placeholder="🔍 Buscar producto..." onkeyup="resetYRenderizar()">
     </div>
-    <label class="toggle-rojo">
-      <input type="checkbox" id="checkRojo" onchange="resetYRenderizar()">
-      Solo Alertas
+    <label class="toggle-orange">
+      <input type="checkbox" id="checkManual" onchange="resetYRenderizar()">
+      Solo Cambios DB
     </label>
   </div>
 
@@ -183,18 +172,19 @@
     <p style="text-align:center; color:#999; margin-top:2em;">Cargando movimientos...</p>
   </main>
   
-  <script>
+<script>
 let historialCompleto = [];
-let historialProcesado = []; // Lista con datos de errores ya calculados
+let historialProcesado = [];
 let filtroActual = 'dia';
-let limiteCarga = 50; // Req 3: Cargar de a poco
+let limiteCarga = 50;
+let stockCache = {}; // Para el monitor de 4 minutos
 
 async function cargarHistorial() {
   try {
     const res = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/historial');
     if (!res.ok) throw new Error('Error al cargar');
     historialCompleto = await res.json();
-    procesarErroresGlobales(); // Analizamos todo una vez al inicio
+    procesarSaltosStock(); // Detectamos los saltos
     renderizar();
   } catch (err) {
     document.getElementById('contenedorHistorial').innerHTML = '<p style="text-align:center; color:red">Error cargando datos.</p>';
@@ -202,44 +192,71 @@ async function cargarHistorial() {
   }
 }
 
-// Req 2: Detectar y guardar QUÉ pasó en el salto (antes de filtrar)
-function procesarErroresGlobales() {
+// Analisis de Saltos (Ahora "Cambios DB" Naranjas)
+function procesarSaltosStock() {
   const movimientosPorProducto = {};
-  // Ordenamos cronológicamente para calcular
   const historialOrdenado = [...historialCompleto].sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
-  
-  // Mapa temporal para inyectar info de error
-  const mapaInfoError = {}; 
+  const mapaSaltos = {}; 
 
   historialOrdenado.forEach(mov => {
     if (!movimientosPorProducto[mov.producto_id]) {
       movimientosPorProducto[mov.producto_id] = mov; 
     } else {
       const anterior = movimientosPorProducto[mov.producto_id];
-      const stockInicialActual = mov.stock_nuevo - mov.cantidad_cambio;
+      const stockEsperado = anterior.stock_nuevo;
+      const stockRealInicial = mov.stock_nuevo - mov.cantidad_cambio;
       
-      if (anterior.stock_nuevo !== stockInicialActual) {
-        if (!mov.revisado) {
-          // Guardamos la info del salto exacto
-          mapaInfoError[mov.id] = {
-            esError: true,
-            msgSalto: `${anterior.stock_nuevo} ➝ ${stockInicialActual}`
-          };
-        }
+      // Si el stock con el que arranca este mov NO es igual al que dejó el anterior
+      if (stockEsperado !== stockRealInicial) {
+         const diferencia = stockRealInicial - stockEsperado;
+         const signo = diferencia > 0 ? '+' : '';
+         mapaSaltos[mov.id] = {
+           esManual: true,
+           texto: `Ajuste en Base de Datos: ${stockEsperado} ➝ ${stockRealInicial} (${signo}${diferencia})`
+         };
       }
       movimientosPorProducto[mov.producto_id] = mov;
     }
   });
 
-  // Fusionamos info de errores en el historial principal
   historialProcesado = historialCompleto.map(item => {
-    const info = mapaInfoError[item.id];
+    const info = mapaSaltos[item.id];
     return { 
       ...item, 
-      esError: info ? true : false,
-      msgSalto: info ? info.msgSalto : null 
+      esManual: info ? true : false,
+      msgManual: info ? info.texto : null 
     };
   });
+}
+
+// --- MONITOR DE STOCK (Cada 4 Minutos) ---
+async function iniciarMonitor() {
+  await chequearAPI(true); // Primera carga memoria
+  setInterval(() => chequearAPI(false), 240000); // 4 minutos
+}
+
+async function chequearAPI(silencioso) {
+  try {
+    const res = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/productos');
+    if(!res.ok) return;
+    const productos = await res.json();
+    
+    let huboCambios = false;
+    productos.forEach(p => {
+      const guardado = stockCache[p.id];
+      // Si ya teniamos dato y es distinto al nuevo
+      if(!silencioso && guardado !== undefined && guardado !== p.stock) {
+        huboCambios = true;
+      }
+      stockCache[p.id] = p.stock;
+    });
+
+    if(huboCambios) {
+      console.log("Cambio detectado en API, recargando historial...");
+      cargarHistorial(); // Esto traerá el historial nuevo y procesará el salto naranja
+    }
+
+  } catch(e) { console.log("Monitor offline temporaly"); }
 }
 
 function filtrar(tipo, btn) {
@@ -250,7 +267,7 @@ function filtrar(tipo, btn) {
 }
 
 function resetYRenderizar() {
-  limiteCarga = 50; // Reseteamos paginación al cambiar filtros
+  limiteCarga = 50;
   renderizar();
 }
 
@@ -274,27 +291,23 @@ function formatearFecha(fechaStr) {
 function renderizar() {
   const container = document.getElementById('contenedorHistorial');
   const busqueda = document.getElementById('buscador').value.toLowerCase();
-  const soloRojos = document.getElementById('checkRojo').checked;
+  const soloManuales = document.getElementById('checkManual').checked;
 
   container.innerHTML = '';
 
-  // 1. Filtrar lista (Buscador + Checkbox)
-  let listaAVisualizar = historialProcesado.filter(item => {
-    const coincideNombre = item.producto_nombre.toLowerCase().includes(busqueda);
-    const coincideRojo = soloRojos ? item.esError : true;
-    return coincideNombre && coincideRojo;
+  let lista = historialProcesado.filter(item => {
+    const matchNombre = item.producto_nombre.toLowerCase().includes(busqueda);
+    const matchTipo = soloManuales ? item.esManual : true;
+    return matchNombre && matchTipo;
   });
 
-  if (listaAVisualizar.length === 0) {
-    container.innerHTML = '<p style="text-align:center; color:#999">No se encontraron movimientos.</p>';
+  if (lista.length === 0) {
+    container.innerHTML = '<p style="text-align:center; color:#999">No hay registros coincidentes.</p>';
     return;
   }
 
-  // 2. Cortar lista (Paginación) Req 3
-  const totalItems = listaAVisualizar.length;
-  const listaPaginada = listaAVisualizar.slice(0, limiteCarga);
+  const listaPaginada = lista.slice(0, limiteCarga);
 
-  // 3. Agrupar por fecha
   const grupos = {};
   listaPaginada.forEach(item => {
     const key = formatearFecha(item.fecha);
@@ -302,7 +315,6 @@ function renderizar() {
     grupos[key].push(item);
   });
 
-  // 4. Renderizar Grupos
   Object.keys(grupos).forEach(fechaHeader => {
     const divGrupo = document.createElement('div');
     divGrupo.className = 'fecha-grupo';
@@ -313,18 +325,17 @@ function renderizar() {
       const claseColor = item.cantidad_cambio > 0 ? 'positivo' : 'negativo';
       const hora = new Date(item.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-      const card = document.createElement('div');
-      card.className = `card ${item.esError ? 'alert' : 'ok'}`;
+      // Naranja si es DB manual, Verde (ok) si es normal
+      const claseCard = item.esManual ? 'manual-change' : 'ok';
       
-      let htmlBotones = '';
-      if (item.esError) {
-        // Req 2: Mostrar el detalle del salto
-        htmlBotones = `
-            <div class="alert-msg">⚠ Salto en DB: ${item.msgSalto}</div>
-            <button class="btn-fix" onclick="arreglar(${item.id})">✅ Ya lo vi (Arreglar)</button>
-        `;
+      let htmlExtra = '';
+      if (item.esManual) {
+        htmlExtra = `<div class="info-manual">⚡ ${item.msgManual}</div>`;
       }
 
+      const card = document.createElement('div');
+      card.className = `card ${claseCard}`;
+      
       card.innerHTML = `
         <div class="card-header">
           <div class="prod-nombre">${item.producto_nombre}</div>
@@ -338,10 +349,10 @@ function renderizar() {
           </div>
           <div class="cambio-badge ${claseColor}">${cambioTexto}</div>
         </div>
-        <div style="margin-top:5px; display:flex; justify-content:space-between;">
+        <div style="margin-top:5px;">
            <span class="tipo-mov">${item.tipo_movimiento.replace('_', ' ')}</span>
         </div>
-        ${htmlBotones}
+        ${htmlExtra}
       `;
       divGrupo.appendChild(card);
     });
@@ -349,38 +360,19 @@ function renderizar() {
     container.appendChild(divGrupo);
   });
 
-  // Botón Cargar Más
-  if (limiteCarga < totalItems) {
+  if (limiteCarga < lista.length) {
     const btnMas = document.createElement('button');
     btnMas.className = 'btn-cargar-mas';
-    btnMas.innerText = `Cargar más movimientos (${totalItems - limiteCarga} restantes)`;
+    btnMas.innerText = `Cargar más (${lista.length - limiteCarga} restantes)`;
     btnMas.onclick = cargarMas;
     container.appendChild(btnMas);
   }
 }
 
-async function arreglar(id) {
-  if(!confirm("¿Marcar este salto como revisado?")) return;
-  
-  try {
-    const res = await fetch(`https://distribuidorafunaz-a2o6.onrender.com/api/historial-check/${id}`, { method: 'PUT' });
-    if (res.ok) {
-        // Actualizamos localmente en historialCompleto y historialProcesado
-        const indexC = historialCompleto.findIndex(i => i.id == id);
-        if(indexC !== -1) historialCompleto[indexC].revisado = true;
-
-        const indexP = historialProcesado.findIndex(i => i.id == id);
-        if(indexP !== -1) historialProcesado[indexP].esError = false;
-
-        renderizar();
-    }
-  } catch (err) {
-    alert("Error al conectar con servidor");
-  }
-}
-
-// Iniciar
+// Iniciar todo
 cargarHistorial();
+iniciarMonitor();
+
 </script>
 
 </body>
