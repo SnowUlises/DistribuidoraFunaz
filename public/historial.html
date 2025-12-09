@@ -14,8 +14,8 @@
       --text-dark: #333;
       --text-grey: #666;
       --orange: #ff9800;
-      --orange-bg: #fff3e0; 
-      --orange-border: #ffe0b2;
+      --orange-bg: #fff3e0;
+      --orange-border: #ffcc80;
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -50,8 +50,9 @@
     /* BOTON FORZAR CHECK */
     .btn-force-check {
         background: var(--text-dark); color: white; border: none;
-        padding: 8px 12px; border-radius: 20px; cursor: pointer;
+        padding: 8px 16px; border-radius: 20px; cursor: pointer;
         font-size: 0.85em; white-space: nowrap; display: flex; align-items: center; gap: 5px;
+        font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
     .btn-force-check:active { transform: scale(0.95); }
 
@@ -61,7 +62,7 @@
     }
     .toggle-orange input { accent-color: var(--orange); transform: scale(1.2); }
 
-    /* FILTROS FECHA */
+    /* FILTROS */
     .filtros {
       display: flex; gap: 10px; padding: 10px 1em; 
       overflow-x: auto; white-space: nowrap;
@@ -86,7 +87,7 @@
       border-bottom: 2px solid #eee; padding-bottom: 5px;
     }
 
-    /* TARJETA DE MOVIMIENTO */
+    /* CARDS */
     .card {
       background: var(--white);
       border-radius: 12px;
@@ -98,10 +99,9 @@
       position: relative;
     }
     
-    /* ESTADO OK (Verde - Movimiento Normal) */
     .card.normal { border-left: 4px solid var(--light-green); }
-
-    /* ESTADO AJUSTE DB (Naranja - Calculado) */
+    
+    /* CARD NARANJA (Ajuste) */
     .card.ajuste-db {
       border: 1px solid var(--orange-border);
       background: var(--orange-bg);
@@ -124,7 +124,6 @@
     }
     .negativo { background: #ffebee; color: #d32f2f; }
     .positivo { background: #e8f5e9; color: #2e7d32; }
-    /* Estilo especial para badge naranja */
     .neutro { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
 
     .tipo-mov { font-size: 0.75em; padding: 3px 6px; border-radius: 4px; background: #eee; color: #666; }
@@ -153,7 +152,7 @@
             <input type="text" id="buscador" class="input-buscador" placeholder="🔍 Buscar producto..." onkeyup="resetYRenderizar()">
         </div>
         <button class="btn-force-check" onclick="forzarVerificacion()">
-            ↻ Verificar Ahora
+            ↻ Analizar Stock
         </button>
     </div>
     <div class="fila-controles">
@@ -183,10 +182,10 @@ let historialUnificado = [];
 let filtroActual = 'dia';
 let limiteCarga = 50;
 
-// --- INICIO ---
+// --- 1. INICIO Y CARGA DE DATOS ---
 async function iniciarSistema() {
     await obtenerDatosCompletos();
-    // Monitor cada 4 min (240000 ms)
+    // Monitor automatico cada 4 min (240.000 ms)
     setInterval(monitorCambiosStock, 240000); 
 }
 
@@ -213,26 +212,27 @@ async function obtenerDatosCompletos() {
     }
 }
 
-// --- BOTON DE FORZAR VERIFICACION ---
+// --- 2. BOTON DE FORZAR VERIFICACION ---
 async function forzarVerificacion() {
     const btn = document.querySelector('.btn-force-check');
     const textoOriginal = btn.innerHTML;
-    btn.innerHTML = "⏳ Verificando...";
+    btn.innerHTML = "⏳ Analizando...";
     btn.disabled = true;
 
-    await monitorCambiosStock(); // Reutilizamos la logica del monitor
+    await monitorCambiosStock(); // Reutiliza el monitor
 
-    btn.innerHTML = "✅ Listo";
+    btn.innerHTML = "✅ Actualizado";
     setTimeout(() => { 
         btn.innerHTML = textoOriginal; 
         btn.disabled = false; 
-    }, 2000);
+    }, 1500);
 }
 
-// --- MONITOR (Checkeo de diferencias) ---
+// --- 3. MONITOR DE CAMBIOS ---
 async function monitorCambiosStock() {
-    console.log("Checkeando API...");
+    console.log("Checkeando consistencia de stock...");
     try {
+        // Obtenemos solo productos para ver el "Ahora"
         const res = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/productos');
         if(!res.ok) return;
         
@@ -241,110 +241,121 @@ async function monitorCambiosStock() {
 
         productos.forEach(p => {
             const stockGuardado = stockRealMap[p.id];
-            // Si hay diferencia, actualizamos el mapa y marcamos bandera
+            // Si el stock actual es diferente al que teniamos en memoria
             if (stockGuardado !== undefined && stockGuardado !== p.stock) {
-                console.log(`Diferencia encontrada en ${p.nombre}: ${stockGuardado} -> ${p.stock}`);
+                console.log(`Diferencia encontrada en ${p.nombre}`);
                 stockRealMap[p.id] = p.stock;
                 huboCambios = true;
             }
         });
 
-        // Si la API tiene datos nuevos que no cuadran con lo que teniamos, recalculamos todo
+        // Si la realidad cambió, traemos el historial fresco también para evitar desfasajes
         if (huboCambios) {
-            recalcularHistorialCronologico();
-            renderizar();
-        } else {
-            // Si no hay cambios en API de productos, igual recargamos historial por si hubo ventas normales nuevas
-            // (Opcional, pero recomendado para mantener la vista fresca)
-            const resH = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/historial');
-            if(resH.ok) {
-                historialRaw = await resH.json();
-                recalcularHistorialCronologico();
-                renderizar();
-            }
+             const resH = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/historial');
+             if(resH.ok) {
+                 historialRaw = await resH.json();
+                 recalcularHistorialCronologico();
+                 renderizar();
+             }
         }
-
-    } catch (e) { console.log("Error en monitor", e); }
+    } catch (e) { console.log("Error monitor", e); }
 }
 
-// --- LOGICA CENTRAL: UNIFICAR MOVIMIENTOS Y RELLENAR HUECOS ---
+// --- 4. LOGICA CENTRAL: ANALISIS CRONOLOGICO ---
 function recalcularHistorialCronologico() {
     const movimientosPorProducto = {};
     const listaFinal = [];
 
-    // 1. Ordenar historial puro por FECHA ASCENDENTE (Del pasado al presente)
-    const rawOrdenado = [...historialRaw].sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
+    // Helper para parsear fecha segura a timestamp numérico
+    const getTs = (fechaStr) => {
+        const d = new Date(fechaStr);
+        return isNaN(d.getTime()) ? 0 : d.getTime();
+    };
+
+    // A. Ordenar historial puro por FECHA ASCENDENTE (Del más viejo al más nuevo)
+    const rawOrdenado = [...historialRaw].sort((a,b) => getTs(a.fecha) - getTs(b.fecha));
 
     rawOrdenado.forEach(mov => {
         if(!movimientosPorProducto[mov.producto_id]) movimientosPorProducto[mov.producto_id] = [];
         movimientosPorProducto[mov.producto_id].push(mov);
     });
 
-    // 2. Recorrer producto por producto buscando huecos en su linea de tiempo
+    // B. Recorrer cada producto buscando huecos
     Object.keys(movimientosPorProducto).forEach(prodId => {
         const movs = movimientosPorProducto[prodId];
         
         for (let i = 0; i < movs.length; i++) {
             const actual = movs[i];
-            
-            // A. Hueco entre el movimiento anterior y el actual
+            const tsActual = getTs(actual.fecha);
+
+            // --- HUECO INTERMEDIO (Entre el anterior y el actual) ---
             if (i > 0) {
                 const anterior = movs[i-1];
                 const stockDeberia = anterior.stock_nuevo;
                 const stockRealInicioActual = actual.stock_nuevo - actual.cantidad_cambio;
 
                 if (stockDeberia !== stockRealInicioActual) {
-                    // Hay un hueco. Creamos un movimiento "Ajuste DB"
-                    // FECHA: Justo 1 milisegundo antes del movimiento actual.
-                    // Esto asegura que al ordenar, quede pegado ANTES del actual.
-                    const fechaAjuste = new Date(new Date(actual.fecha).getTime() - 1);
+                    // Detectado ajuste manual. 
+                    // FECHA CLAVE: 1 segundo ANTES del movimiento actual.
+                    // Esto garantiza que al ordenar por fecha, quede debajo del movimiento actual.
+                    const tsAjuste = tsActual - 1000; 
                     
                     listaFinal.push({
-                        id: `ajuste-intermedio-${actual.id}`,
+                        id: `ajuste-${actual.id}`,
                         producto_id: actual.producto_id,
                         producto_nombre: actual.producto_nombre,
-                        fecha: fechaAjuste.toISOString(),
+                        fecha: new Date(tsAjuste).toISOString(),
+                        timestampSort: tsAjuste, // Clave de ordenamiento explicita
                         stock_anterior: stockDeberia,
                         stock_nuevo: stockRealInicioActual,
                         cantidad_cambio: stockRealInicioActual - stockDeberia,
-                        tipo_movimiento: 'ajuste_db', // Tipo especial
+                        tipo_movimiento: 'Ajuste_DB',
                         esAjuste: true
                     });
                 }
             }
-
-            // Agregamos el movimiento real
-            listaFinal.push({ ...actual, esAjuste: false });
+            
+            // Agregamos el movimiento real con su timestamp explícito
+            listaFinal.push({ 
+                ...actual, 
+                timestampSort: tsActual,
+                esAjuste: false 
+            });
         }
 
-        // B. Hueco final (Entre el último movimiento registrado y el Stock Actual de la API)
+        // --- HUECO FINAL (Entre el último historial y la API actual) ---
         const ultimoMov = movs[movs.length - 1];
         const stockActualAPI = stockRealMap[ultimoMov.producto_id];
+        const tsUltimo = getTs(ultimoMov.fecha);
 
         if (stockActualAPI !== undefined && ultimoMov.stock_nuevo !== stockActualAPI) {
-            // Hay diferencia entre el historial y la realidad actual.
-            // Creamos un movimiento con FECHA ACTUAL (Ahora mismo)
+            // Este es un ajuste que no tiene venta posterior aún.
+            // Debe ir al TOPE de la lista (es lo más reciente).
+            // Usamos Date.now() o (Ultimo + 1 seg) si el reloj está mal.
+            const tsFinal = Math.max(Date.now(), tsUltimo + 1000);
+
             listaFinal.push({
-                id: `ajuste-final-${ultimoMov.id}-${Date.now()}`,
+                id: `ajuste-final-${ultimoMov.id}`,
                 producto_id: ultimoMov.producto_id,
                 producto_nombre: ultimoMov.producto_nombre,
-                fecha: new Date().toISOString(),
+                fecha: new Date(tsFinal).toISOString(),
+                timestampSort: tsFinal,
                 stock_anterior: ultimoMov.stock_nuevo,
                 stock_nuevo: stockActualAPI,
                 cantidad_cambio: stockActualAPI - ultimoMov.stock_nuevo,
-                tipo_movimiento: 'ajuste_db',
+                tipo_movimiento: 'Detectado_Ahora',
                 esAjuste: true
             });
         }
     });
 
-    // 3. Ordenar la lista final unificada por FECHA DESCENDENTE (Lo más nuevo arriba)
-    historialUnificado = listaFinal.sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+    // C. Ordenar lista final por timestamp DESCENDENTE (Lo más nuevo arriba)
+    // Esto es crucial para que los ajustes (-1000ms) queden debajo de las ventas.
+    historialUnificado = listaFinal.sort((a,b) => b.timestampSort - a.timestampSort);
 }
 
 
-// --- RENDERIZADO Y FILTROS ---
-
+// --- 5. RENDERIZADO ---
 function filtrar(tipo, btn) {
   filtroActual = tipo;
   document.querySelectorAll('.filtros button').forEach(b => b.classList.remove('active'));
@@ -364,12 +375,10 @@ function cargarMas() {
 
 function formatearFecha(fechaStr) {
   const d = new Date(fechaStr);
+  if(isNaN(d.getTime())) return "Fecha desconocida";
+  
   if (filtroActual === 'dia') return d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
-  if (filtroActual === 'semana') {
-    const startOfWeek = new Date(d);
-    startOfWeek.setDate(d.getDate() - d.getDay());
-    return `Semana del ${startOfWeek.toLocaleDateString()}`;
-  }
+  if (filtroActual === 'semana') return `Semana del ${d.toLocaleDateString()}`;
   if (filtroActual === 'mes') return d.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
   return d.getFullYear();
 }
@@ -410,7 +419,7 @@ function renderizar() {
       const cambioTexto = item.cantidad_cambio > 0 ? `+${item.cantidad_cambio}` : `${item.cantidad_cambio}`;
       const hora = new Date(item.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-      // ESTILOS: Si es ajuste (naranja) o normal (verde)
+      // ESTILOS: Naranja para ajustes, Verde para normal
       let claseCard = item.esAjuste ? 'ajuste-db' : 'normal';
       let claseBadge = item.cantidad_cambio > 0 ? 'positivo' : 'negativo';
       if(item.esAjuste) claseBadge = 'neutro'; // Badge naranja
