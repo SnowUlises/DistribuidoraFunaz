@@ -15,7 +15,7 @@
       --text-grey: #666;
       --orange: #ff9800;
       --orange-bg: #fff3e0;
-      --orange-border: #ffcc80;
+      --orange-border: #ffb74d;
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -47,14 +47,13 @@
     }
     .input-buscador:focus { border-color: var(--primary-green); }
 
-    /* BOTON FORZAR CHECK */
-    .btn-force-check {
+    /* BOTON CHECK */
+    .btn-check {
         background: var(--text-dark); color: white; border: none;
-        padding: 8px 16px; border-radius: 20px; cursor: pointer;
+        padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold;
         font-size: 0.85em; white-space: nowrap; display: flex; align-items: center; gap: 5px;
-        font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
-    .btn-force-check:active { transform: scale(0.95); }
+    .btn-check:active { transform: scale(0.95); }
 
     .toggle-orange {
       display: flex; align-items: center; gap: 5px;
@@ -90,23 +89,13 @@
     /* CARDS */
     .card {
       background: var(--white);
-      border-radius: 12px;
-      padding: 1em;
-      margin-bottom: 10px;
-      border: 1px solid #f0f0f0;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      border-radius: 12px; padding: 1em; margin-bottom: 10px;
+      border: 1px solid #f0f0f0; box-shadow: 0 2px 8px rgba(0,0,0,0.03);
       display: flex; flex-direction: column; gap: 8px;
-      position: relative;
     }
     
     .card.normal { border-left: 4px solid var(--light-green); }
-    
-    /* CARD NARANJA (Ajuste) */
-    .card.ajuste-db {
-      border: 1px solid var(--orange-border);
-      background: var(--orange-bg);
-      border-left: 4px solid var(--orange);
-    }
+    .card.ajuste { border-left: 4px solid var(--orange); background: var(--orange-bg); border-color: var(--orange-border); }
 
     .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
     .prod-nombre { font-weight: bold; font-size: 1.1em; color: var(--text-dark); }
@@ -119,9 +108,7 @@
       font-family: monospace; font-size: 1.1em; color: #555;
     }
     .arrow { color: #999; }
-    .cambio-badge {
-      padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;
-    }
+    .cambio-badge { padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em; }
     .negativo { background: #ffebee; color: #d32f2f; }
     .positivo { background: #e8f5e9; color: #2e7d32; }
     .neutro { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
@@ -151,14 +138,12 @@
         <div class="buscador-container">
             <input type="text" id="buscador" class="input-buscador" placeholder="🔍 Buscar producto..." onkeyup="resetYRenderizar()">
         </div>
-        <button class="btn-force-check" onclick="forzarVerificacion()">
-            ↻ Analizar Stock
-        </button>
+        <button class="btn-check" onclick="forzarCheck()">↻ Check Ahora</button>
     </div>
     <div class="fila-controles">
         <label class="toggle-orange">
-        <input type="checkbox" id="checkManual" onchange="resetYRenderizar()">
-        Solo Ajustes DB
+            <input type="checkbox" id="checkManual" onchange="resetYRenderizar()">
+            Solo Ajustes DB
         </label>
     </div>
   </div>
@@ -171,299 +156,259 @@
   </div>
 
   <main id="contenedorHistorial">
-    <p style="text-align:center; color:#999; margin-top:2em;">Iniciando sistema...</p>
+    <p style="text-align:center; color:#999; margin-top:2em;">Iniciando...</p>
   </main>
   
 <script>
 let historialRaw = [];       
-let stockRealMap = {};       
-let historialUnificado = []; 
+let stockActualAPI = {};       
+let listaUnificada = []; 
 
 let filtroActual = 'dia';
 let limiteCarga = 50;
 
-// --- 1. INICIO Y CARGA DE DATOS ---
-async function iniciarSistema() {
-    await obtenerDatosCompletos();
-    // Monitor automatico cada 4 min (240.000 ms)
-    setInterval(monitorCambiosStock, 240000); 
+// --- 1. INICIO Y LOOP DE 4 MINUTOS ---
+async function iniciar() {
+    await obtenerDatos();
+    // Monitor 4 minutos (240.000 ms)
+    setInterval(monitorSilencioso, 240000); 
 }
 
-async function obtenerDatosCompletos() {
+// Carga completa (Historial + Stock Actual)
+async function obtenerDatos() {
     try {
         const [resHist, resProd] = await Promise.all([
             fetch('https://distribuidorafunaz-a2o6.onrender.com/api/historial'),
             fetch('https://distribuidorafunaz-a2o6.onrender.com/api/productos')
         ]);
-
-        if(!resHist.ok || !resProd.ok) throw new Error("Error en APIs");
-
-        historialRaw = await resHist.json();
-        const productos = await resProd.json();
         
-        productos.forEach(p => stockRealMap[p.id] = p.stock);
+        if(resHist.ok) historialRaw = await resHist.json();
+        if(resProd.ok) {
+            const prods = await resProd.json();
+            prods.forEach(p => stockActualAPI[p.id] = p.stock);
+        }
 
-        recalcularHistorialCronologico();
+        procesarCadena();
         renderizar();
 
     } catch (err) {
-        document.getElementById('contenedorHistorial').innerHTML = '<p style="text-align:center; color:red">Error de conexión.</p>';
         console.error(err);
     }
 }
 
-// --- 2. BOTON DE FORZAR VERIFICACION ---
-async function forzarVerificacion() {
-    const btn = document.querySelector('.btn-force-check');
-    const textoOriginal = btn.innerHTML;
-    btn.innerHTML = "⏳ Analizando...";
+// Boton Manual
+async function forzarCheck() {
+    const btn = document.querySelector('.btn-check');
+    const txt = btn.innerText;
+    btn.innerText = "⏳...";
     btn.disabled = true;
-
-    await monitorCambiosStock(); // Reutiliza el monitor
-
-    btn.innerHTML = "✅ Actualizado";
-    setTimeout(() => { 
-        btn.innerHTML = textoOriginal; 
-        btn.disabled = false; 
-    }, 1500);
+    await obtenerDatos(); // Recarga todo para comparar fresco
+    btn.innerText = "✅";
+    setTimeout(() => { btn.innerText = txt; btn.disabled = false; }, 1000);
 }
 
-// --- 3. MONITOR DE CAMBIOS ---
-async function monitorCambiosStock() {
-    console.log("Checkeando consistencia de stock...");
+// Monitor Automatico
+async function monitorSilencioso() {
+    console.log("Monitor: Revisando cambios...");
+    // Solo recargamos productos para ver si algo cambió
     try {
-        // Obtenemos solo productos para ver el "Ahora"
         const res = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/productos');
         if(!res.ok) return;
+        const prods = await res.json();
         
-        const productos = await res.json();
         let huboCambios = false;
-
-        productos.forEach(p => {
-            const stockGuardado = stockRealMap[p.id];
-            // Si el stock actual es diferente al que teniamos en memoria
-            if (stockGuardado !== undefined && stockGuardado !== p.stock) {
-                console.log(`Diferencia encontrada en ${p.nombre}`);
-                stockRealMap[p.id] = p.stock;
+        prods.forEach(p => {
+            if(stockActualAPI[p.id] !== undefined && stockActualAPI[p.id] !== p.stock) {
                 huboCambios = true;
             }
+            stockActualAPI[p.id] = p.stock;
         });
 
-        // Si la realidad cambió, traemos el historial fresco también para evitar desfasajes
-        if (huboCambios) {
-             const resH = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/historial');
-             if(resH.ok) {
-                 historialRaw = await resH.json();
-                 recalcularHistorialCronologico();
-                 renderizar();
-             }
+        if(huboCambios) {
+            console.log("Monitor: ¡Cambio detectado! Recalculando...");
+            // Si hubo cambio, traemos historial fresco y reprocesamos
+            const resH = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/historial');
+            if(resH.ok) {
+                historialRaw = await resH.json();
+                procesarCadena();
+                renderizar();
+            }
         }
-    } catch (e) { console.log("Error monitor", e); }
+    } catch(e) {}
 }
 
-// --- 4. LOGICA CENTRAL: ANALISIS CRONOLOGICO ---
-function recalcularHistorialCronologico() {
-    const movimientosPorProducto = {};
-    const listaFinal = [];
+// --- 2. LA LÓGICA DE LA CADENA ---
+function procesarCadena() {
+    listaUnificada = [];
+    
+    // Agrupar por producto
+    const grupos = {};
+    // IMPORTANTE: Ordenamos Historial del PASADO al FUTURO (Ascendente)
+    const historialAsc = [...historialRaw].sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
 
-    // Helper para parsear fecha segura a timestamp numérico
-    const getTs = (fechaStr) => {
-        const d = new Date(fechaStr);
-        return isNaN(d.getTime()) ? 0 : d.getTime();
-    };
-
-    // A. Ordenar historial puro por FECHA ASCENDENTE (Del más viejo al más nuevo)
-    const rawOrdenado = [...historialRaw].sort((a,b) => getTs(a.fecha) - getTs(b.fecha));
-
-    rawOrdenado.forEach(mov => {
-        if(!movimientosPorProducto[mov.producto_id]) movimientosPorProducto[mov.producto_id] = [];
-        movimientosPorProducto[mov.producto_id].push(mov);
+    historialAsc.forEach(mov => {
+        if(!grupos[mov.producto_id]) grupos[mov.producto_id] = [];
+        grupos[mov.producto_id].push(mov);
     });
 
-    // B. Recorrer cada producto buscando huecos
-    Object.keys(movimientosPorProducto).forEach(prodId => {
-        const movs = movimientosPorProducto[prodId];
+    // Procesar cada producto linea por linea
+    Object.keys(grupos).forEach(id => {
+        const movs = grupos[id];
         
-        for (let i = 0; i < movs.length; i++) {
+        for(let i=0; i<movs.length; i++) {
             const actual = movs[i];
-            const tsActual = getTs(actual.fecha);
-
-            // --- HUECO INTERMEDIO (Entre el anterior y el actual) ---
-            if (i > 0) {
+            
+            // A. Detectar Hueco "Historico" (Entre el anterior y el actual)
+            if(i > 0) {
                 const anterior = movs[i-1];
-                const stockDeberia = anterior.stock_nuevo;
-                const stockRealInicioActual = actual.stock_nuevo - actual.cantidad_cambio;
+                const stockQueDeberiaHaber = anterior.stock_nuevo;
+                const stockQueRealmenteHabiaAlInicio = actual.stock_nuevo - actual.cantidad_cambio;
 
-                if (stockDeberia !== stockRealInicioActual) {
-                    // Detectado ajuste manual. 
-                    // FECHA CLAVE: 1 segundo ANTES del movimiento actual.
-                    // Esto garantiza que al ordenar por fecha, quede debajo del movimiento actual.
-                    const tsAjuste = tsActual - 1000; 
-                    
-                    listaFinal.push({
-                        id: `ajuste-${actual.id}`,
-                        producto_id: actual.producto_id,
+                if(stockQueDeberiaHaber !== stockQueRealmenteHabiaAlInicio) {
+                    // ¡ESLABON ROTO! Agregamos el ajuste naranaja
+                    // Fecha: Usamos la fecha del movimiento actual (para que quede pegado a el)
+                    const diferencia = stockQueRealmenteHabiaAlInicio - stockQueDeberiaHaber;
+                    listaUnificada.push({
+                        id: 'ajuste-hist-' + actual.id,
                         producto_nombre: actual.producto_nombre,
-                        fecha: new Date(tsAjuste).toISOString(),
-                        timestampSort: tsAjuste, // Clave de ordenamiento explicita
-                        stock_anterior: stockDeberia,
-                        stock_nuevo: stockRealInicioActual,
-                        cantidad_cambio: stockRealInicioActual - stockDeberia,
-                        tipo_movimiento: 'Ajuste_DB',
-                        esAjuste: true
+                        fecha: actual.fecha, // Misma fecha para agrupar
+                        stock_anterior: stockQueDeberiaHaber,
+                        stock_nuevo: stockQueRealmenteHabiaAlInicio,
+                        cantidad_cambio: diferencia,
+                        tipo_movimiento: 'ajuste_db',
+                        esAjuste: true,
+                        sortKey: new Date(actual.fecha).getTime() - 1 // Un ms antes para orden
                     });
                 }
             }
-            
-            // Agregamos el movimiento real con su timestamp explícito
-            listaFinal.push({ 
-                ...actual, 
-                timestampSort: tsActual,
-                esAjuste: false 
+
+            // Agregamos el movimiento normal
+            listaUnificada.push({
+                ...actual,
+                esAjuste: false,
+                sortKey: new Date(actual.fecha).getTime()
             });
         }
 
-        // --- HUECO FINAL (Entre el último historial y la API actual) ---
-        const ultimoMov = movs[movs.length - 1];
-        const stockActualAPI = stockRealMap[ultimoMov.producto_id];
-        const tsUltimo = getTs(ultimoMov.fecha);
+        // B. Detectar Hueco "En Vivo" (Entre el ultimo historial y la API ahora)
+        const ultimo = movs[movs.length - 1];
+        const stockRealAhora = stockActualAPI[ultimo.producto_id];
 
-        if (stockActualAPI !== undefined && ultimoMov.stock_nuevo !== stockActualAPI) {
-            // Este es un ajuste que no tiene venta posterior aún.
-            // Debe ir al TOPE de la lista (es lo más reciente).
-            // Usamos Date.now() o (Ultimo + 1 seg) si el reloj está mal.
-            const tsFinal = Math.max(Date.now(), tsUltimo + 1000);
-
-            listaFinal.push({
-                id: `ajuste-final-${ultimoMov.id}`,
-                producto_id: ultimoMov.producto_id,
-                producto_nombre: ultimoMov.producto_nombre,
-                fecha: new Date(tsFinal).toISOString(),
-                timestampSort: tsFinal,
-                stock_anterior: ultimoMov.stock_nuevo,
-                stock_nuevo: stockActualAPI,
-                cantidad_cambio: stockActualAPI - ultimoMov.stock_nuevo,
-                tipo_movimiento: 'Detectado_Ahora',
-                esAjuste: true
+        if(stockRealAhora !== undefined && ultimo.stock_nuevo !== stockRealAhora) {
+            // ¡CAMBIO RECIENTE!
+            const diferencia = stockRealAhora - ultimo.stock_nuevo;
+            const ahora = new Date();
+            listaUnificada.push({
+                id: 'ajuste-live-' + ultimo.producto_id,
+                producto_nombre: ultimo.producto_nombre,
+                fecha: ahora.toISOString(),
+                stock_anterior: ultimo.stock_nuevo,
+                stock_nuevo: stockRealAhora,
+                cantidad_cambio: diferencia,
+                tipo_movimiento: 'ajuste_db',
+                esAjuste: true,
+                sortKey: nowTs = ahora.getTime() // Ahora mismo
             });
         }
     });
 
-    // C. Ordenar lista final por timestamp DESCENDENTE (Lo más nuevo arriba)
-    // Esto es crucial para que los ajustes (-1000ms) queden debajo de las ventas.
-    historialUnificado = listaFinal.sort((a,b) => b.timestampSort - a.timestampSort);
+    // Finalmente ordenamos todo de Nuevo a Viejo para mostrar
+    listaUnificada.sort((a,b) => b.sortKey - a.sortKey);
 }
 
-
-// --- 5. RENDERIZADO ---
+// --- 3. RENDERIZADO ---
 function filtrar(tipo, btn) {
-  filtroActual = tipo;
-  document.querySelectorAll('.filtros button').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  resetYRenderizar();
+    filtroActual = tipo;
+    document.querySelectorAll('.filtros button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    resetYRenderizar();
 }
 
-function resetYRenderizar() {
-  limiteCarga = 50;
-  renderizar();
-}
+function resetYRenderizar() { limiteCarga = 50; renderizar(); }
+function cargarMas() { limiteCarga += 50; renderizar(); }
 
-function cargarMas() {
-  limiteCarga += 50;
-  renderizar();
-}
-
-function formatearFecha(fechaStr) {
-  const d = new Date(fechaStr);
-  if(isNaN(d.getTime())) return "Fecha desconocida";
-  
-  if (filtroActual === 'dia') return d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
-  if (filtroActual === 'semana') return `Semana del ${d.toLocaleDateString()}`;
-  if (filtroActual === 'mes') return d.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-  return d.getFullYear();
+function formatearFecha(f) {
+    const d = new Date(f);
+    if(filtroActual === 'dia') return d.toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long'});
+    if(filtroActual === 'semana') return "Semana del " + d.toLocaleDateString();
+    if(filtroActual === 'mes') return d.toLocaleDateString('es-ES', {month:'long', year:'numeric'});
+    return d.getFullYear();
 }
 
 function renderizar() {
-  const container = document.getElementById('contenedorHistorial');
-  const busqueda = document.getElementById('buscador').value.toLowerCase();
-  const soloAjustes = document.getElementById('checkManual').checked;
+    const cont = document.getElementById('contenedorHistorial');
+    const busq = document.getElementById('buscador').value.toLowerCase();
+    const soloAjuste = document.getElementById('checkManual').checked;
 
-  container.innerHTML = '';
+    cont.innerHTML = '';
 
-  let lista = historialUnificado.filter(item => {
-    const matchNombre = item.producto_nombre.toLowerCase().includes(busqueda);
-    const matchTipo = soloAjustes ? item.esAjuste : true;
-    return matchNombre && matchTipo;
-  });
-
-  if (lista.length === 0) {
-    container.innerHTML = '<p style="text-align:center; color:#999">No hay registros.</p>';
-    return;
-  }
-
-  const listaPaginada = lista.slice(0, limiteCarga);
-  const grupos = {};
-
-  listaPaginada.forEach(item => {
-    const key = formatearFecha(item.fecha);
-    if (!grupos[key]) grupos[key] = [];
-    grupos[key].push(item);
-  });
-
-  Object.keys(grupos).forEach(fechaHeader => {
-    const divGrupo = document.createElement('div');
-    divGrupo.className = 'fecha-grupo';
-    divGrupo.innerHTML = `<div class="fecha-header">${fechaHeader}</div>`;
-
-    grupos[fechaHeader].forEach(item => {
-      const cambioTexto = item.cantidad_cambio > 0 ? `+${item.cantidad_cambio}` : `${item.cantidad_cambio}`;
-      const hora = new Date(item.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      // ESTILOS: Naranja para ajustes, Verde para normal
-      let claseCard = item.esAjuste ? 'ajuste-db' : 'normal';
-      let claseBadge = item.cantidad_cambio > 0 ? 'positivo' : 'negativo';
-      if(item.esAjuste) claseBadge = 'neutro'; // Badge naranja
-
-      const tipoLegible = item.esAjuste ? 'Ajuste de DB' : item.tipo_movimiento.replace('_', ' ');
-
-      const card = document.createElement('div');
-      card.className = `card ${claseCard}`;
-      
-      card.innerHTML = `
-        <div class="card-header">
-          <div class="prod-nombre">${item.producto_nombre}</div>
-          <div class="hora">${hora}</div>
-        </div>
-        <div class="card-body">
-          <div class="stock-flow">
-            <span>${item.stock_anterior}</span>
-            <span class="arrow">➝</span>
-            <span>${item.stock_nuevo}</span>
-          </div>
-          <div class="cambio-badge ${claseBadge}">${cambioTexto}</div>
-        </div>
-        <div style="margin-top:5px;">
-           <span class="tipo-mov">${tipoLegible}</span>
-        </div>
-      `;
-      divGrupo.appendChild(card);
+    const lista = listaUnificada.filter(i => {
+        return i.producto_nombre.toLowerCase().includes(busq) && (!soloAjuste || i.esAjuste);
     });
 
-    container.appendChild(divGrupo);
-  });
+    if(lista.length === 0) {
+        cont.innerHTML = '<p style="text-align:center;color:#999">Sin movimientos</p>';
+        return;
+    }
 
-  if (limiteCarga < lista.length) {
-    const btnMas = document.createElement('button');
-    btnMas.className = 'btn-cargar-mas';
-    btnMas.innerText = `Cargar más (${lista.length - limiteCarga} restantes)`;
-    btnMas.onclick = cargarMas;
-    container.appendChild(btnMas);
-  }
+    const visible = lista.slice(0, limiteCarga);
+    const grupos = {};
+    visible.forEach(i => {
+        const k = formatearFecha(i.fecha);
+        if(!grupos[k]) grupos[k] = [];
+        grupos[k].push(i);
+    });
+
+    Object.keys(grupos).forEach(fecha => {
+        const div = document.createElement('div');
+        div.className = 'fecha-grupo';
+        div.innerHTML = `<div class="fecha-header">${fecha}</div>`;
+        
+        grupos[fecha].forEach(item => {
+            const esAjuste = item.esAjuste;
+            const signo = item.cantidad_cambio > 0 ? '+' : '';
+            const colorBadge = esAjuste ? 'neutro' : (item.cantidad_cambio > 0 ? 'positivo' : 'negativo');
+            const hora = new Date(item.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+            const card = document.createElement('div');
+            card.className = `card ${esAjuste ? 'ajuste' : 'normal'}`;
+            
+            card.innerHTML = `
+                <div class="card-header">
+                    <div class="prod-nombre">${item.producto_nombre}</div>
+                    <div class="hora">${hora}</div>
+                </div>
+                <div class="card-body">
+                    <div class="stock-flow">
+                        <span>${item.stock_anterior}</span>
+                        <span class="arrow">➝</span>
+                        <span>${item.stock_nuevo}</span>
+                    </div>
+                    <div class="cambio-badge ${colorBadge}">
+                        ${signo}${item.cantidad_cambio}
+                    </div>
+                </div>
+                <div style="margin-top:5px">
+                    <span class="tipo-mov">
+                        ${esAjuste ? 'Ajuste de DB' : item.tipo_movimiento.replace('_',' ')}
+                    </span>
+                </div>
+            `;
+            div.appendChild(card);
+        });
+        cont.appendChild(div);
+    });
+
+    if(limiteCarga < lista.length) {
+        const btn = document.createElement('button');
+        btn.className = 'btn-cargar-mas';
+        btn.innerText = 'Cargar más';
+        btn.onclick = cargarMas;
+        cont.appendChild(btn);
+    }
 }
 
-// ARRANQUE
-iniciarSistema();
-
+iniciar();
 </script>
 </body>
 </html>
