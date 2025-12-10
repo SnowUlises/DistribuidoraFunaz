@@ -27,50 +27,6 @@ let globalStockSnapshot = {};
    FUNCIONES AUXILIARES
    ========================================================= */
 
-async function ejecutarLogicaMonitor() {
-    try {
-        // Bajamos la realidad actual de la DB
-        const { data: productosDB } = await supabase.from('productos').select('*');
-        if(!productosDB) return;
-
-        let cambiosDetectados = 0;
-
-        for (const p of productosDB) {
-            const stockReal = Number(p.stock);
-            const stockMemoria = globalStockSnapshot[p.id];
-
-            // Caso A: Producto nuevo
-            if (stockMemoria === undefined) {
-                globalStockSnapshot[p.id] = stockReal;
-                continue;
-            }
-
-            // Caso B: Desajuste detectado
-            if (stockReal !== stockMemoria) {
-                const diferencia = stockReal - stockMemoria;
-                console.log(`⚠️ [Monitor] Cambio detectado en ${p.nombre}: ${stockMemoria} -> ${stockReal}`);
-                
-                await registrarMovimiento(
-                    p.id, 
-                    p.nombre, 
-                    diferencia, 
-                    stockMemoria, 
-                    stockReal, 
-                    'AJUSTE_DETECTADO_DB', 
-                    'MONITOR_AUTO'
-                );
-                
-                globalStockSnapshot[p.id] = stockReal;
-                cambiosDetectados++;
-            }
-        }
-        return cambiosDetectados;
-    } catch (e) {
-        console.error("Error en ciclo del monitor:", e);
-        return 0;
-    }
-}
-
 // 1. REGISTRAR MOVIMIENTO Y ACTUALIZAR MEMORIA
 async function registrarMovimiento(prodId, nombre, cambio, stockAnt, stockNue, tipo, ref) {
   try {
@@ -95,11 +51,59 @@ async function registrarMovimiento(prodId, nombre, cambio, stockAnt, stockNue, t
   }
 }
 
-// 2. MONITOR DE STOCK (Se ejecuta automáticamente)
+// 2. LÓGICA DEL MONITOR (EXTRAÍDA PARA REUTILIZAR)
+async function ejecutarLogicaMonitor() {
+    try {
+        // Bajamos la realidad actual de la DB
+        const { data: productosDB } = await supabase.from('productos').select('*');
+        if(!productosDB) return 0;
+
+        let cambiosDetectados = 0;
+
+        for (const p of productosDB) {
+            const stockReal = Number(p.stock);
+            const stockMemoria = globalStockSnapshot[p.id];
+
+            // Caso A: Producto nuevo que no conocíamos (Solo actualizamos foto)
+            if (stockMemoria === undefined) {
+                globalStockSnapshot[p.id] = stockReal;
+                continue;
+            }
+
+            // Caso B: El stock cambió sin pasar por nuestros endpoints de venta
+            if (stockReal !== stockMemoria) {
+                const diferencia = stockReal - stockMemoria;
+                console.log(`⚠️ [Monitor] Cambio detectado en ${p.nombre}: ${stockMemoria} -> ${stockReal}`);
+                
+                // Guardamos el historial automáticamente
+                await registrarMovimiento(
+                    p.id, 
+                    p.nombre, 
+                    diferencia, 
+                    stockMemoria, 
+                    stockReal, 
+                    'AJUSTE_DETECTADO_DB', 
+                    'MONITOR'
+                );
+                
+                // La función registrarMovimiento ya actualiza globalStockSnapshot,
+                // pero por seguridad lo hacemos aquí también si fuera necesario.
+                globalStockSnapshot[p.id] = stockReal;
+                cambiosDetectados++;
+            }
+        }
+        return cambiosDetectados;
+    } catch (e) {
+        console.error("Error en lógica del monitor:", e);
+        return 0;
+    }
+}
+
+// 3. INICIAR MONITOR AUTOMÁTICO
 async function iniciarMonitorStock() {
     console.log("🔍 [Monitor] Iniciando vigilancia de stock...");
 
-    // PASO 1: Carga inicial de la "foto"
+    // Carga inicial de la "foto"
     const { data: prods } = await supabase.from('productos').select('*');
     if(prods) {
         prods.forEach(p => {
@@ -108,48 +112,10 @@ async function iniciarMonitorStock() {
         console.log(`📸 [Monitor] Foto inicial cargada: ${prods.length} productos.`);
     }
 
-    // PASO 2: Bucle infinito (cada 60 segundos)
+    // Intervalo automático (cada 60 segundos)
     setInterval(async () => {
-        try {
-            // Bajamos la realidad actual de la DB
-            const { data: productosDB } = await supabase.from('productos').select('*');
-            if(!productosDB) return;
-
-            for (const p of productosDB) {
-                const stockReal = Number(p.stock);
-                const stockMemoria = globalStockSnapshot[p.id];
-
-                // Caso A: Producto nuevo que no conocíamos
-                if (stockMemoria === undefined) {
-                    globalStockSnapshot[p.id] = stockReal;
-                    continue;
-                }
-
-                // Caso B: El stock cambió sin pasar por nuestros endpoints de venta
-                // (Ej: Alguien editó directo en Supabase o hubo un ajuste manual)
-                if (stockReal !== stockMemoria) {
-                    const diferencia = stockReal - stockMemoria;
-                    console.log(`⚠️ [Monitor] Cambio detectado en ${p.nombre}: ${stockMemoria} -> ${stockReal}`);
-                    
-                    // Guardamos el historial automáticamente
-                    await registrarMovimiento(
-                        p.id, 
-                        p.nombre, 
-                        diferencia, 
-                        stockMemoria, 
-                        stockReal, 
-                        'AJUSTE_DETECTADO_DB', 
-                        'MONITOR_AUTO'
-                    );
-                    
-                    // Actualizamos la foto para que coincida
-                    globalStockSnapshot[p.id] = stockReal;
-                }
-            }
-        } catch (e) {
-            console.error("Error en ciclo del monitor:", e);
-        }
-    }, 60000); // 60000 ms = 1 minuto
+        await ejecutarLogicaMonitor();
+    }, 60000); 
 }
 
 // Iniciamos el monitor al arrancar el servidor
@@ -157,8 +123,19 @@ iniciarMonitorStock();
 
 
 /* =========================================================
-   ENDPOINTS (ACTUALIZADOS CON EL NUEVO REGISTRO)
+   ENDPOINTS
    ========================================================= */
+
+/* --- NUEVO: FORZAR MONITOR DESDE FRONTEND --- */
+app.post('/api/forzar-monitor', async (req, res) => {
+    try {
+        console.log("⚡ Forzando monitor desde frontend...");
+        const cambios = await ejecutarLogicaMonitor();
+        res.json({ ok: true, mensaje: 'Monitor ejecutado', cambios: cambios });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 /* --- LEER HISTORIAL --- */
 app.get('/api/historial', async (req, res) => {
@@ -304,16 +281,6 @@ app.post('/api/guardar-pedidos', async (req, res) => {
     console.error('❌ Exception en guardar-pedidos:', err);
     res.status(500).json({ error: err.message || 'Error interno del servidor' });
   }
-});
-
-app.post('/api/forzar-monitor', async (req, res) => {
-    try {
-        console.log("⚡ Forzando monitor desde frontend...");
-        const cambios = await ejecutarLogicaMonitor();
-        res.json({ ok: true, mensaje: 'Monitor ejecutado', cambios: cambios });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
 });
 
 /* --- ELIMINAR PEDIDO (RESTAURAR) --- */
@@ -613,4 +580,3 @@ async function generarPDF(pedido) {
 app.listen(PORT, () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
-
