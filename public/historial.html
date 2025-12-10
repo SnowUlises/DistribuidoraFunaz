@@ -136,13 +136,13 @@
   <div class="controles-superiores">
     <div class="fila-controles">
         <div class="buscador-container">
-            <input type="text" id="buscador" class="input-buscador" placeholder="🔍 Buscar producto..." onkeyup="resetYRenderizar()">
+            <input type="text" id="buscador" class="input-buscador" placeholder="🔍 Buscar producto..." onkeyup="renderizar()">
         </div>
         <button class="btn-check" onclick="forzarCheck()">↻ Check Ahora</button>
     </div>
     <div class="fila-controles">
         <label class="toggle-orange">
-            <input type="checkbox" id="checkManual" onchange="resetYRenderizar()">
+            <input type="checkbox" id="checkManual" onchange="renderizar()">
             Solo Ajustes DB
         </label>
     </div>
@@ -160,186 +160,116 @@
   </main>
   
 <script>
-let historialRaw = [];       
-let stockActualAPI = {};       
-let listaUnificada = []; 
+// VARIABLES GLOBALES
+let historialDB = [];           // Lo que viene de la base de datos (pasado)
+let movimientosEnVivo = [];     // Lo que detectamos mientras la pagina está abierta
+let snapshotProductos = {};     // LA COPIA DE SEGURIDAD (ID -> {stock, nombre})
 
 let filtroActual = 'dia';
 let limiteCarga = 50;
 
-// --- 1. INICIO Y LOOP DE 4 MINUTOS ---
+// --- 1. INICIO ---
 async function iniciar() {
-    await obtenerDatos();
-    // Monitor 4 minutos (240.000 ms)
+    await obtenerDatosIniciales();
+    // Monitor cada 4 minutos
     setInterval(monitorSilencioso, 240000); 
 }
 
-// Carga completa (Historial + Stock Actual)
-async function obtenerDatos() {
+// Carga Inicial: Historial DB + Primera Foto de la API
+async function obtenerDatosIniciales() {
     try {
         const [resHist, resProd] = await Promise.all([
             fetch('https://distribuidorafunaz-a2o6.onrender.com/api/historial'),
             fetch('https://distribuidorafunaz-a2o6.onrender.com/api/productos')
         ]);
         
-        if(resHist.ok) historialRaw = await resHist.json();
-        if(resProd.ok) {
-            const prods = await resProd.json();
-            prods.forEach(p => stockActualAPI[p.id] = p.stock);
+        if(resHist.ok) {
+            historialDB = await resHist.json();
+            // Formateamos para que tenga la misma estructura
+            historialDB = historialDB.map(h => ({
+                ...h, esAjuste: false, sortKey: new Date(h.fecha).getTime()
+            }));
         }
 
-        procesarCadena();
+        if(resProd.ok) {
+            const prods = await resProd.json();
+            // GUARDAMOS LA PRIMERA COPIA (SNAPSHOT)
+            snapshotProductos = {};
+            prods.forEach(p => {
+                snapshotProductos[p.id] = { stock: p.stock, nombre: p.nombre };
+            });
+        }
+
         renderizar();
 
-    } catch (err) {
-        console.error(err);
-    }
+    } catch (err) { console.error(err); }
 }
 
-// Boton Manual
+// --- 2. EL MONITOR (LA LÓGICA QUE PEDISTE) ---
+async function monitorSilencioso() {
+    console.log("Monitor: Comparando foto anterior con actual...");
+    try {
+        // 1. Bajamos la nueva data
+        const res = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/productos');
+        if(!res.ok) return;
+        const productosNuevos = await res.json();
+        
+        let huboCambios = false;
+
+        // 2. Comparamos NUEVO vs VIEJO (Snapshot)
+        productosNuevos.forEach(nuevo => {
+            const viejo = snapshotProductos[nuevo.id]; // Recuperamos la copia guardada
+
+            if (viejo) {
+                // Si ya existía, comparamos stock
+                if (nuevo.stock !== viejo.stock) {
+                    // ¡DIFERENCIA DETECTADA! -> Creamos movimiento
+                    const ahora = new Date();
+                    movimientosEnVivo.push({
+                        id: 'live-' + nuevo.id + '-' + nowTs(),
+                        producto_nombre: nuevo.nombre,
+                        fecha: ahora.toISOString(),
+                        stock_anterior: viejo.stock,
+                        stock_nuevo: nuevo.stock,
+                        cantidad_cambio: nuevo.stock - viejo.stock, // Ej: 50 - 48 = +2
+                        tipo_movimiento: 'ajuste_db',
+                        esAjuste: true,
+                        sortKey: ahora.getTime()
+                    });
+
+                    // IMPORTANTE: Actualizamos la foto para la próxima vez
+                    snapshotProductos[nuevo.id].stock = nuevo.stock;
+                    huboCambios = true;
+                }
+            } else {
+                // Producto nuevo que antes no estaba
+                snapshotProductos[nuevo.id] = { stock: nuevo.stock, nombre: nuevo.nombre };
+            }
+        });
+
+        if(huboCambios) {
+            console.log("Monitor: Cambios detectados y registrados.");
+            renderizar();
+        }
+
+    } catch(e) { console.error(e); }
+}
+
 async function forzarCheck() {
     const btn = document.querySelector('.btn-check');
     const txt = btn.innerText;
     btn.innerText = "⏳...";
     btn.disabled = true;
-    await obtenerDatos(); // Recarga todo para comparar fresco
+    await monitorSilencioso(); // Ejecuta la misma lógica de comparación
     btn.innerText = "✅";
     setTimeout(() => { btn.innerText = txt; btn.disabled = false; }, 1000);
 }
 
-// Monitor Automatico
-async function monitorSilencioso() {
-    console.log("Monitor: Revisando cambios...");
-    // Solo recargamos productos para ver si algo cambió
-    try {
-        const res = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/productos');
-        if(!res.ok) return;
-        const prods = await res.json();
-        
-        let huboCambios = false;
-        prods.forEach(p => {
-            if(stockActualAPI[p.id] !== undefined && stockActualAPI[p.id] !== p.stock) {
-                huboCambios = true;
-            }
-            stockActualAPI[p.id] = p.stock;
-        });
+// Helper para ID único
+function nowTs() { return new Date().getTime(); }
 
-        if(huboCambios) {
-            console.log("Monitor: ¡Cambio detectado! Recalculando...");
-            // Si hubo cambio, traemos historial fresco y reprocesamos
-            const resH = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/historial');
-            if(resH.ok) {
-                historialRaw = await resH.json();
-                procesarCadena();
-                renderizar();
-            }
-        }
-    } catch(e) {}
-}
 
-// --- 2. LA LÓGICA DE LA CADENA ---
-// --- 2. LA LÓGICA DE LA CADENA (CORREGIDA) ---
-function procesarCadena() {
-    listaUnificada = [];
-    
-    // Agrupar por producto
-    const grupos = {};
-    // IMPORTANTE: Ordenamos Historial del PASADO al FUTURO (Ascendente)
-    const historialAsc = [...historialRaw].sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
-
-    historialAsc.forEach(mov => {
-        if(!grupos[mov.producto_id]) grupos[mov.producto_id] = [];
-        grupos[mov.producto_id].push(mov);
-    });
-
-    // Procesar cada producto linea por linea
-    Object.keys(grupos).forEach(id => {
-        const movs = grupos[id];
-        
-        for(let i=0; i<movs.length; i++) {
-            const actual = movs[i];
-            
-            // A. Detectar Hueco "Historico" (Entre el anterior y el actual)
-            if(i > 0) {
-                const anterior = movs[i-1];
-                const stockQueDeberiaHaber = anterior.stock_nuevo;
-                const stockQueRealmenteHabiaAlInicio = actual.stock_nuevo - actual.cantidad_cambio;
-
-                if(stockQueDeberiaHaber !== stockQueRealmenteHabiaAlInicio) {
-                    const diferencia = stockQueRealmenteHabiaAlInicio - stockQueDeberiaHaber;
-                    listaUnificada.push({
-                        id: 'ajuste-hist-' + actual.id,
-                        producto_nombre: actual.producto_nombre,
-                        fecha: actual.fecha, 
-                        stock_anterior: stockQueDeberiaHaber,
-                        stock_nuevo: stockQueRealmenteHabiaAlInicio,
-                        cantidad_cambio: diferencia,
-                        tipo_movimiento: 'ajuste_db',
-                        esAjuste: true,
-                        sortKey: new Date(actual.fecha).getTime() - 1 
-                    });
-                }
-            }
-
-            // Agregamos el movimiento normal
-            listaUnificada.push({
-                ...actual,
-                esAjuste: false,
-                sortKey: new Date(actual.fecha).getTime()
-            });
-        }
-
-        // B. Detectar Hueco "En Vivo" (Entre el ultimo historial y la API ahora)
-        const ultimo = movs[movs.length - 1];
-        const stockRealAhora = stockActualAPI[ultimo.producto_id];
-
-        if(stockRealAhora !== undefined && ultimo.stock_nuevo !== stockRealAhora) {
-            // ¡CAMBIO RECIENTE!
-            const diferencia = stockRealAhora - ultimo.stock_nuevo;
-            
-            // --- CORRECCIÓN AQUÍ ---
-            // En lugar de usar "new Date()" (ahora), usamos la fecha del último movimiento + 1 segundo.
-            // Esto "ancla" el ajuste al último movimiento conocido y evita que la hora cambie sola.
-            const fechaFicticia = new Date(ultimo.fecha);
-            fechaFicticia.setSeconds(fechaFicticia.getSeconds() + 1); 
-
-            listaUnificada.push({
-                id: 'ajuste-live-' + ultimo.producto_id,
-                producto_nombre: ultimo.producto_nombre,
-                fecha: fechaFicticia.toISOString(), // Usamos la fecha anclada
-                stock_anterior: ultimo.stock_nuevo,
-                stock_nuevo: stockRealAhora,
-                cantidad_cambio: diferencia,
-                tipo_movimiento: 'ajuste_db',
-                esAjuste: true,
-                sortKey: fechaFicticia.getTime() // Usamos el timestamp anclado
-            });
-        }
-    });
-
-    // Finalmente ordenamos todo de Nuevo a Viejo para mostrar
-    listaUnificada.sort((a,b) => b.sortKey - a.sortKey);
-}
-
-// --- 3. RENDERIZADO ---
-function filtrar(tipo, btn) {
-    filtroActual = tipo;
-    document.querySelectorAll('.filtros button').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    resetYRenderizar();
-}
-
-function resetYRenderizar() { limiteCarga = 50; renderizar(); }
-function cargarMas() { limiteCarga += 50; renderizar(); }
-
-function formatearFecha(f) {
-    const d = new Date(f);
-    if(filtroActual === 'dia') return d.toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long'});
-    if(filtroActual === 'semana') return "Semana del " + d.toLocaleDateString();
-    if(filtroActual === 'mes') return d.toLocaleDateString('es-ES', {month:'long', year:'numeric'});
-    return d.getFullYear();
-}
-
+// --- 3. RENDERIZADO (Mezcla Historial + En Vivo) ---
 function renderizar() {
     const cont = document.getElementById('contenedorHistorial');
     const busq = document.getElementById('buscador').value.toLowerCase();
@@ -347,17 +277,25 @@ function renderizar() {
 
     cont.innerHTML = '';
 
-    const lista = listaUnificada.filter(i => {
+    // UNIFICAMOS LISTAS: Historial Viejo + Lo que acabamos de detectar
+    let listaCompleta = [...historialDB, ...movimientosEnVivo];
+
+    // ORDENAR: Del más reciente al más antiguo
+    listaCompleta.sort((a,b) => b.sortKey - a.sortKey);
+
+    // FILTROS
+    const listaFiltrada = listaCompleta.filter(i => {
         return i.producto_nombre.toLowerCase().includes(busq) && (!soloAjuste || i.esAjuste);
     });
 
-    if(lista.length === 0) {
+    if(listaFiltrada.length === 0) {
         cont.innerHTML = '<p style="text-align:center;color:#999">Sin movimientos</p>';
         return;
     }
 
-    const visible = lista.slice(0, limiteCarga);
+    const visible = listaFiltrada.slice(0, limiteCarga);
     const grupos = {};
+    
     visible.forEach(i => {
         const k = formatearFecha(i.fecha);
         if(!grupos[k]) grupos[k] = [];
@@ -395,7 +333,7 @@ function renderizar() {
                 </div>
                 <div style="margin-top:5px">
                     <span class="tipo-mov">
-                        ${esAjuste ? 'Ajuste de DB' : item.tipo_movimiento.replace('_',' ')}
+                        ${esAjuste ? 'Ajuste Detectado (En Vivo)' : item.tipo_movimiento.replace('_',' ')}
                     </span>
                 </div>
             `;
@@ -404,13 +342,31 @@ function renderizar() {
         cont.appendChild(div);
     });
 
-    if(limiteCarga < lista.length) {
+    if(limiteCarga < listaFiltrada.length) {
         const btn = document.createElement('button');
         btn.className = 'btn-cargar-mas';
         btn.innerText = 'Cargar más';
         btn.onclick = cargarMas;
         cont.appendChild(btn);
     }
+}
+
+// Helpers visuales
+function filtrar(tipo, btn) {
+    filtroActual = tipo;
+    document.querySelectorAll('.filtros button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    limiteCarga = 50;
+    renderizar();
+}
+function cargarMas() { limiteCarga += 50; renderizar(); }
+
+function formatearFecha(f) {
+    const d = new Date(f);
+    if(filtroActual === 'dia') return d.toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long'});
+    if(filtroActual === 'semana') return "Semana del " + d.toLocaleDateString();
+    if(filtroActual === 'mes') return d.toLocaleDateString('es-ES', {month:'long', year:'numeric'});
+    return d.getFullYear();
 }
 
 iniciar();
