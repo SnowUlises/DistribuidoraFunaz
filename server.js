@@ -53,62 +53,61 @@ async function registrarMovimiento(prodId, nombre, cambio, stockAnt, stockNue, t
 // 2. LÓGICA DEL MONITOR (CON PAGINACIÓN AUTOMÁTICA)
 async function ejecutarLogicaMonitor() {
     try {
-        // --- A. OBTENER REALIDAD (Tabla Productos) ---
-        // Leemos TODOS los productos usando un loop (por si tienes más de 1000)
+        // --- A. OBTENER REALIDAD (Tabla Productos - TODOS) ---
         let productosReales = [];
         let from = 0;
         const limit = 1000;
-        let more = true;
+        let reading = true;
 
-        while (more) {
+        // Bucle para leer de 1000 en 1000
+        while (reading) {
             const { data, error } = await supabase
                 .from('productos')
                 .select('*')
                 .range(from, from + limit - 1);
 
             if (error) {
-                console.error("Error leyendo productos reales (chunk):", error);
-                return 0; // Salimos por seguridad
+                console.error("Error leyendo productos reales:", error);
+                return 0; 
             }
 
-            if (data.length > 0) {
+            if (data && data.length > 0) {
                 productosReales = productosReales.concat(data);
-                from += limit;
-                if (data.length < limit) more = false; // Ya no hay más
+                if (data.length < limit) reading = false; // Terminamos
+                else from += limit; // Siguiente página
             } else {
-                more = false;
+                reading = false;
             }
         }
         
         if (productosReales.length === 0) return 0;
 
-        // --- B. OBTENER FOTO ANTERIOR (Tabla monitor_snapshot) ---
-        // También leemos el snapshot completo con paginación
+        // --- B. OBTENER FOTO ANTERIOR (Tabla monitor_snapshot - TODAS) ---
         let snapshotData = [];
         from = 0;
-        more = true;
+        reading = true;
 
-        while (more) {
+        while (reading) {
             const { data, error } = await supabase
                 .from('monitor_snapshot')
                 .select('*')
                 .range(from, from + limit - 1);
 
             if (error) {
-                console.error("Error leyendo snapshot (chunk):", error);
+                console.error("Error leyendo snapshot:", error);
                 return 0;
             }
 
-            if (data.length > 0) {
+            if (data && data.length > 0) {
                 snapshotData = snapshotData.concat(data);
-                from += limit;
-                if (data.length < limit) more = false;
+                if (data.length < limit) reading = false;
+                else from += limit;
             } else {
-                more = false;
+                reading = false;
             }
         }
 
-        // Convertimos snapshot a un objeto { id: stock } para buscar rápido
+        // Mapeo para búsqueda rápida
         const snapshotMap = {};
         snapshotData.forEach(item => {
             snapshotMap[item.id] = Number(item.stock);
@@ -122,13 +121,11 @@ async function ejecutarLogicaMonitor() {
             const stockReal = Number(prod.stock);
             const stockFoto = snapshotMap[prod.id]; 
 
-            // Caso A: Producto nuevo en snapshot (undefined) -> Se agregará
-            // Caso B: El stock cambió sin pasar por nuestros endpoints de venta
+            // Si hay diferencia o es un producto nuevo que no teníamos rastreado
             if (stockFoto !== undefined && stockReal !== stockFoto) {
                 const diferencia = stockReal - stockFoto;
-                console.log(`⚠️ [Monitor] Cambio externo detectado en ${prod.nombre}: ${stockFoto} -> ${stockReal}`);
+                console.log(`⚠️ [Monitor] Cambio detectado en ${prod.nombre}: ${stockFoto} -> ${stockReal}`);
                 
-                // Guardamos el historial automáticamente
                 await supabase.from('historial_stock').insert([{
                     producto_id: prod.id,
                     producto_nombre: prod.nombre,
@@ -143,31 +140,30 @@ async function ejecutarLogicaMonitor() {
                 cambiosDetectados++;
             }
 
-            // Preparamos el dato para actualizar la foto
+            // Agregamos a la lista de actualizaciones si hubo cambio o si es nuevo
             if (stockFoto === undefined || stockReal !== stockFoto) {
                 snapshotUpdates.push({ id: prod.id, stock: stockReal });
             }
         }
 
-        // --- D. ACTUALIZAR TABLA SNAPSHOT (Sincronizar) ---
-        // Hacemos el upsert en bloques de 1000 para no saturar si hay muchos cambios
+        // --- D. ACTUALIZAR SNAPSHOT (Por lotes para no saturar) ---
         if (snapshotUpdates.length > 0) {
-            const chunkSize = 1000;
-            for (let i = 0; i < snapshotUpdates.length; i += chunkSize) {
-                const chunk = snapshotUpdates.slice(i, i + chunkSize);
+            const batchSize = 1000;
+            for (let i = 0; i < snapshotUpdates.length; i += batchSize) {
+                const batch = snapshotUpdates.slice(i, i + batchSize);
                 const { error: errUpsert } = await supabase
                     .from('monitor_snapshot')
-                    .upsert(chunk);
+                    .upsert(batch);
                 
-                if (errUpsert) console.error("Error actualizando tabla snapshot:", errUpsert);
+                if (errUpsert) console.error("Error guardando lote de snapshot:", errUpsert);
             }
-            if (cambiosDetectados > 0) console.log(`✅ Snapshot actualizado con ${snapshotUpdates.length} cambios.`);
+            if (cambiosDetectados > 0) console.log(`✅ Snapshot actualizado (${snapshotUpdates.length} items procesados).`);
         }
         
         return cambiosDetectados;
 
     } catch (e) {
-        console.error("Error en lógica del monitor:", e);
+        console.error("Error crítico en monitor:", e);
         return 0;
     }
 }
@@ -647,4 +643,5 @@ async function generarPDF(pedido) {
 app.listen(PORT, () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
