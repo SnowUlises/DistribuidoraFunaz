@@ -161,22 +161,22 @@
   
 <script>
 // VARIABLES GLOBALES
-let historialDB = [];           // Lo que viene de la base de datos (pasado)
-let movimientosEnVivo = [];     // Lo que detectamos mientras la pagina está abierta
-let snapshotProductos = {};     // LA COPIA DE SEGURIDAD (ID -> {stock, nombre})
+let historialDB = [];         // El historial "oficial" que viene del backend
+let ajustesDetectados = [];   // Los ajustes que detectamos nosotros (NO SE BORRA NUNCA)
+let snapshotStock = {};       // La "Foto Vieja" para comparar
 
 let filtroActual = 'dia';
 let limiteCarga = 50;
 
-// --- 1. INICIO ---
+// --- 1. INICIO Y BUCLE ---
 async function iniciar() {
-    await obtenerDatosIniciales();
-    // Monitor cada 4 minutos
-    setInterval(monitorSilencioso, 240000); 
+    // 1. Cargar Historial Base + Foto Inicial
+    await cargarDatosIniciales();
+    // 2. Activar Monitor cada 4 min
+    setInterval(chequearCambios, 240000); 
 }
 
-// Carga Inicial: Historial DB + Primera Foto de la API
-async function obtenerDatosIniciales() {
+async function cargarDatosIniciales() {
     try {
         const [resHist, resProd] = await Promise.all([
             fetch('https://distribuidorafunaz-a2o6.onrender.com/api/historial'),
@@ -185,7 +185,6 @@ async function obtenerDatosIniciales() {
         
         if(resHist.ok) {
             historialDB = await resHist.json();
-            // Formateamos para que tenga la misma estructura
             historialDB = historialDB.map(h => ({
                 ...h, esAjuste: false, sortKey: new Date(h.fecha).getTime()
             }));
@@ -193,83 +192,101 @@ async function obtenerDatosIniciales() {
 
         if(resProd.ok) {
             const prods = await resProd.json();
-            // GUARDAMOS LA PRIMERA COPIA (SNAPSHOT)
-            snapshotProductos = {};
+            // GUARDAMOS LA PRIMERA "FOTO VIEJA"
+            snapshotStock = {};
             prods.forEach(p => {
-                snapshotProductos[p.id] = { stock: p.stock, nombre: p.nombre };
+                snapshotStock[p.id] = { stock: p.stock, nombre: p.nombre };
             });
+            
+            // Opcional: Si quieres comparar historial vs primera foto, 
+            // hazlo aquí, sino, empezamos a monitorear desde YA.
         }
 
         renderizar();
-
     } catch (err) { console.error(err); }
 }
 
-// --- 2. EL MONITOR (LA LÓGICA QUE PEDISTE) ---
-async function monitorSilencioso() {
-    console.log("Monitor: Comparando foto anterior con actual...");
+// --- 2. LA LÓGICA DE COMPARACIÓN (SNAPSHOT) ---
+async function chequearCambios() {
+    console.log("Monitor: Revisando...");
     try {
-        // 1. Bajamos la nueva data
+        // 1. Obtenemos la "Foto Nueva"
         const res = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/productos');
         if(!res.ok) return;
         const productosNuevos = await res.json();
         
         let huboCambios = false;
+        const ahora = new Date(); // La hora del chequeo
 
-        // 2. Comparamos NUEVO vs VIEJO (Snapshot)
+        // 2. Comparamos "Foto Nueva" vs "Foto Vieja" (snapshotStock)
         productosNuevos.forEach(nuevo => {
-            const viejo = snapshotProductos[nuevo.id]; // Recuperamos la copia guardada
+            const viejo = snapshotStock[nuevo.id]; // Recuperamos la foto vieja
 
+            // Si el producto ya existía en la foto vieja
             if (viejo) {
-                // Si ya existía, comparamos stock
                 if (nuevo.stock !== viejo.stock) {
-                    // ¡DIFERENCIA DETECTADA! -> Creamos movimiento
-                    const ahora = new Date();
-                    movimientosEnVivo.push({
-                        id: 'live-' + nuevo.id + '-' + nowTs(),
+                    // DIFERENCIA ENCONTRADA -> AGREGAR AJUSTE
+                    ajustesDetectados.push({
+                        id: 'live-' + nuevo.id + '-' + ahora.getTime(), // ID único
                         producto_nombre: nuevo.nombre,
                         fecha: ahora.toISOString(),
                         stock_anterior: viejo.stock,
                         stock_nuevo: nuevo.stock,
-                        cantidad_cambio: nuevo.stock - viejo.stock, // Ej: 50 - 48 = +2
+                        cantidad_cambio: nuevo.stock - viejo.stock,
                         tipo_movimiento: 'ajuste_db',
                         esAjuste: true,
                         sortKey: ahora.getTime()
                     });
-
-                    // IMPORTANTE: Actualizamos la foto para la próxima vez
-                    snapshotProductos[nuevo.id].stock = nuevo.stock;
+                    
+                    // IMPORTANTE: La foto nueva se convierte en la vieja para este producto
+                    snapshotStock[nuevo.id].stock = nuevo.stock;
                     huboCambios = true;
                 }
-            } else {
-                // Producto nuevo que antes no estaba
-                snapshotProductos[nuevo.id] = { stock: nuevo.stock, nombre: nuevo.nombre };
+            } 
+            // Si el producto es nuevo (no estaba en la foto vieja)
+            else {
+                // Creamos la entrada en la foto vieja para la próxima
+                snapshotStock[nuevo.id] = { stock: nuevo.stock, nombre: nuevo.nombre };
+                
+                // Opcional: ¿Quieres registrar que apareció un producto nuevo con stock?
+                if(nuevo.stock > 0) {
+                     ajustesDetectados.push({
+                        id: 'new-' + nuevo.id + '-' + ahora.getTime(),
+                        producto_nombre: nuevo.nombre,
+                        fecha: ahora.toISOString(),
+                        stock_anterior: 0,
+                        stock_nuevo: nuevo.stock,
+                        cantidad_cambio: nuevo.stock,
+                        tipo_movimiento: 'ajuste_db',
+                        esAjuste: true,
+                        sortKey: ahora.getTime()
+                    });
+                    huboCambios = true;
+                }
             }
         });
 
+        // Solo si hubo cambios renderizamos de nuevo
         if(huboCambios) {
-            console.log("Monitor: Cambios detectados y registrados.");
+            console.log("Monitor: Cambios detectados.");
             renderizar();
         }
 
     } catch(e) { console.error(e); }
 }
 
+// Boton Manual
 async function forzarCheck() {
     const btn = document.querySelector('.btn-check');
     const txt = btn.innerText;
     btn.innerText = "⏳...";
     btn.disabled = true;
-    await monitorSilencioso(); // Ejecuta la misma lógica de comparación
+    await chequearCambios(); // Llama a la misma función lógica
     btn.innerText = "✅";
     setTimeout(() => { btn.innerText = txt; btn.disabled = false; }, 1000);
 }
 
-// Helper para ID único
-function nowTs() { return new Date().getTime(); }
-
-
-// --- 3. RENDERIZADO (Mezcla Historial + En Vivo) ---
+// --- 3. RENDERIZADO (Combinar Listas) ---
 function renderizar() {
     const cont = document.getElementById('contenedorHistorial');
     const busq = document.getElementById('buscador').value.toLowerCase();
@@ -277,13 +294,13 @@ function renderizar() {
 
     cont.innerHTML = '';
 
-    // UNIFICAMOS LISTAS: Historial Viejo + Lo que acabamos de detectar
-    let listaCompleta = [...historialDB, ...movimientosEnVivo];
+    // UNIFICAMOS: Historial "Oficial" + Ajustes "Locales"
+    // Como ajustesDetectados nunca se borra, los movimientos se acumulan ahí
+    let listaCompleta = [...historialDB, ...ajustesDetectados];
 
-    // ORDENAR: Del más reciente al más antiguo
+    // Ordenar por fecha (más nuevo arriba)
     listaCompleta.sort((a,b) => b.sortKey - a.sortKey);
 
-    // FILTROS
     const listaFiltrada = listaCompleta.filter(i => {
         return i.producto_nombre.toLowerCase().includes(busq) && (!soloAjuste || i.esAjuste);
     });
@@ -333,7 +350,7 @@ function renderizar() {
                 </div>
                 <div style="margin-top:5px">
                     <span class="tipo-mov">
-                        ${esAjuste ? 'Ajuste Detectado (En Vivo)' : item.tipo_movimiento.replace('_',' ')}
+                        ${esAjuste ? 'Ajuste Detectado' : item.tipo_movimiento.replace('_',' ')}
                     </span>
                 </div>
             `;
@@ -351,7 +368,7 @@ function renderizar() {
     }
 }
 
-// Helpers visuales
+// Helpers
 function filtrar(tipo, btn) {
     filtroActual = tipo;
     document.querySelectorAll('.filtros button').forEach(b => b.classList.remove('active'));
