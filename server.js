@@ -17,14 +17,11 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY
 const PDF_PATH = path.join(process.cwd(), 'public', 'pedidos-pdf');
 if (!fs.existsSync(PDF_PATH)) fs.mkdirSync(PDF_PATH, { recursive: true });
 
-// RUTA DEL ARCHIVO JSON DE HISTORIAL
-const HISTORIAL_FILE = path.join(process.cwd(), 'historial.json');
-
 /* =========================================================
-   FUNCIONES AUXILIARES
+   FUNCIONES AUXILIARES PARA EL MONITOR DE STOCK (BASE DE DATOS)
    ========================================================= */
 
-// 1. REGISTRAR MOVIMIENTO Y ACTUALIZAR JSON LOCAL (Para ventas/modificaciones)
+// 1. REGISTRAR MOVIMIENTO Y ACTUALIZAR SNAPSHOT (Para ventas/modificaciones)
 async function registrarMovimiento(prodId, nombre, cambio, stockAnt, stockNue, tipo, ref) {
   try {
     // A. Guardamos en la base de datos (Historial oficial)
@@ -39,109 +36,116 @@ async function registrarMovimiento(prodId, nombre, cambio, stockAnt, stockNue, t
       fecha: new Date().toISOString()
     }]);
 
-    // B. ACTUALIZAMOS EL JSON LOCALMENTE PARA EVITAR DUPLICADOS EN EL MONITOR
-    // Si la venta ya bajó el stock, actualizamos el archivo para que el monitor
-    // cuando corra al minuto, vea que el archivo y la API coinciden.
-    if (fs.existsSync(HISTORIAL_FILE)) {
-      try {
-        let historialData = JSON.parse(fs.readFileSync(HISTORIAL_FILE, 'utf-8'));
-        // Buscamos el producto y actualizamos su stock en el archivo
-        const index = historialData.findIndex(p => p.id === prodId);
-        if (index !== -1) {
-            historialData[index].stock = Number(stockNue);
-        } else {
-            // Si no estaba en el json (raro), lo agregamos básico
-            historialData.push({ id: prodId, nombre: nombre, stock: Number(stockNue) });
-        }
-        fs.writeFileSync(HISTORIAL_FILE, JSON.stringify(historialData, null, 2));
-      } catch (errJson) {
-        console.error("Error actualizando historial.json en venta:", errJson);
-      }
-    }
+    // B. ACTUALIZAMOS LA FOTO EN LA TABLA AUXILIAR 'monitor_snapshot'
+    // Esto evita que el monitor detecte este cambio legítimo como un "desajuste"
+    const { error } = await supabase
+        .from('monitor_snapshot')
+        .upsert({ id: prodId, stock: stockNue });
+
+    if (error) console.error("❌ Error actualizando snapshot en venta:", error.message);
 
   } catch (e) {
     console.error("Error registrando historial:", e);
   }
 }
 
-// 2. LÓGICA DEL MONITOR (DESCARGAR URL -> COMPARAR -> GUARDAR)
+// 2. LÓGICA DEL MONITOR (DB REAL vs TABLA SNAPSHOT)
 async function ejecutarLogicaMonitor() {
     try {
-        console.log("🔍 [Monitor] Verificando cambios contra URL...");
+        // A. OBTENER REALIDAD (Tabla Productos)
+        const { data: productosReales, error: errProd } = await supabase
+            .from('productos')
+            .select('*');
         
-        // A. COPIAR TODO DE LA URL (Tu API en Render)
-        const response = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/productos');
-        if (!response.ok) throw new Error(`Error al fetchear API: ${response.statusText}`);
-        const productosApi = await response.json();
-
-        // B. LEER HISTORIAL ANTERIOR
-        let productosLocal = [];
-        if (fs.existsSync(HISTORIAL_FILE)) {
-            try {
-                productosLocal = JSON.parse(fs.readFileSync(HISTORIAL_FILE, 'utf-8'));
-            } catch (err) {
-                console.error("Error leyendo historial.json, se asumirá vacío.");
-            }
+        if (errProd || !productosReales) {
+            console.error("Error leyendo productos reales:", errProd);
+            return 0;
         }
+
+        // B. OBTENER FOTO ANTERIOR (Tabla monitor_snapshot)
+        const { data: snapshotData, error: errSnap } = await supabase
+            .from('monitor_snapshot')
+            .select('*');
+
+        if (errSnap) {
+            console.error("Error leyendo snapshot:", errSnap);
+            return 0;
+        }
+
+        // Convertimos snapshot a un objeto { id: stock } para buscar rápido
+        const snapshotMap = {};
+        snapshotData.forEach(item => {
+            snapshotMap[item.id] = Number(item.stock);
+        });
 
         let cambiosDetectados = 0;
+        let snapshotUpdates = [];
 
         // C. COMPARAR
-        // Recorremos lo que acabamos de descargar de la API
-        for (const pApi of productosApi) {
-            const stockReal = Number(pApi.stock);
-            
-            // Buscamos cómo estaba en el json anterior
-            const pLocal = productosLocal.find(p => p.id === pApi.id);
+        for (const prod of productosReales) {
+            const stockReal = Number(prod.stock);
+            const stockFoto = snapshotMap[prod.id]; 
 
-            // Si existe en el local y el stock es diferente
-            if (pLocal) {
-                const stockMemoria = Number(pLocal.stock);
+            // Caso A: Producto nuevo en snapshot (undefined) -> Se agregará al final
+            // Caso B: El stock cambió sin pasar por nuestros endpoints de venta
+            if (stockFoto !== undefined && stockReal !== stockFoto) {
+                const diferencia = stockReal - stockFoto;
+                console.log(`⚠️ [Monitor] Cambio externo detectado en ${prod.nombre}: ${stockFoto} -> ${stockReal}`);
                 
-                if (stockReal !== stockMemoria) {
-                    const diferencia = stockReal - stockMemoria;
-                    console.log(`⚠️ [Monitor] Diferencia detectada en ${pApi.nombre}: ${stockMemoria} -> ${stockReal}`);
+                // Guardamos el historial automáticamente
+                await supabase.from('historial_stock').insert([{
+                    producto_id: prod.id,
+                    producto_nombre: prod.nombre,
+                    cantidad_cambio: diferencia,
+                    stock_anterior: stockFoto,
+                    stock_nuevo: stockReal,
+                    tipo_movimiento: 'ajuste db', // Texto exacto solicitado
+                    referencia_id: 'MONITOR',
+                    fecha: new Date().toISOString()
+                }]);
+                
+                cambiosDetectados++;
+            }
 
-                    // D. AGREGAR LAS DIFERENCIAS (AJUSTE DB)
-                    await supabase.from('historial_stock').insert([{
-                        producto_id: pApi.id,
-                        producto_nombre: pApi.nombre,
-                        cantidad_cambio: diferencia,
-                        stock_anterior: stockMemoria,
-                        stock_nuevo: stockReal,
-                        tipo_movimiento: 'ajuste db', // Texto exacto solicitado
-                        referencia_id: 'MONITOR',
-                        fecha: new Date().toISOString()
-                    }]);
-                    cambiosDetectados++;
-                }
+            // Preparamos el dato para actualizar la foto (siempre sincronizamos al final)
+            // Solo agregamos si hay diferencia o es nuevo para optimizar, 
+            // pero upsert maneja bien todo.
+            if (stockFoto === undefined || stockReal !== stockFoto) {
+                snapshotUpdates.push({ id: prod.id, stock: stockReal });
             }
         }
 
-        // E. REESCRIBIR EL HISTORIAL.JSON CON LO NUEVO (TODO LO DE LA API)
-        fs.writeFileSync(HISTORIAL_FILE, JSON.stringify(productosApi, null, 2));
+        // D. ACTUALIZAR TABLA SNAPSHOT (Sincronizar)
+        if (snapshotUpdates.length > 0) {
+            const { error: errUpsert } = await supabase
+                .from('monitor_snapshot')
+                .upsert(snapshotUpdates);
+            
+            if (errUpsert) console.error("Error actualizando tabla snapshot:", errUpsert);
+            else if (cambiosDetectados > 0) console.log(`✅ Snapshot actualizado con ${snapshotUpdates.length} cambios.`);
+        }
         
         return cambiosDetectados;
-
     } catch (e) {
         console.error("Error en lógica del monitor:", e);
         return 0;
     }
 }
 
-// 3. INICIAR MONITOR AUTOMÁTICO (Cada 1 minuto)
+// 3. INICIAR MONITOR AUTOMÁTICO
 function iniciarMonitorStock() {
-    console.log("🚀 Monitor iniciado: Revisión cada 60 segundos.");
-    // Ejecutar inmediatamente al arrancar
+    console.log("🔍 [Monitor] Iniciando vigilancia de stock (Vía Tabla DB)...");
+
+    // Ejecución inicial inmediata para cargar la primera foto si está vacía
     ejecutarLogicaMonitor();
-    
-    // Intervalo de 1 minuto
+
+    // Intervalo automático (cada 60 segundos)
     setInterval(async () => {
         await ejecutarLogicaMonitor();
     }, 60000); 
 }
 
-// Iniciamos el monitor
+// Iniciamos el monitor al arrancar el servidor
 iniciarMonitorStock();
 
 
@@ -149,9 +153,10 @@ iniciarMonitorStock();
    ENDPOINTS
    ========================================================= */
 
-/* --- FORZAR MONITOR DESDE FRONTEND --- */
+/* --- NUEVO: FORZAR MONITOR DESDE FRONTEND --- */
 app.post('/api/forzar-monitor', async (req, res) => {
     try {
+        console.log("⚡ Forzando monitor desde frontend...");
         const cambios = await ejecutarLogicaMonitor();
         res.json({ ok: true, mensaje: 'Monitor ejecutado', cambios: cambios });
     } catch (err) {
@@ -212,7 +217,7 @@ app.put('/api/actualizar-pedido/:id', async (req, res) => {
         
         if (updErr) console.error('❌ Error actualizando stock:', updErr);
         else {
-            // REGISTRO Y ACTUALIZACION DE JSON
+            // REGISTRO Y ACTUALIZACION DE SNAPSHOT
             await registrarMovimiento(update.id, prod.nombre, -cantidadRestada, stockAnterior, newStock, 'MODIF_PEDIDO', pedidoId);
         }
       }
@@ -278,7 +283,7 @@ app.post('/api/guardar-pedidos', async (req, res) => {
       if (updErr) {
         return res.status(500).json({ error: `Error actualizando stock para producto ${prodId}: ${updErr.message}` });
       } else {
-        // REGISTRO Y ACTUALIZACION DE JSON
+        // REGISTRO Y ACTUALIZACION DE SNAPSHOT
         await registrarMovimiento(prodId, prod.nombre, -cantidadFinal, stockAnterior, newStock, 'VENTA', id);
       }
     }
@@ -330,7 +335,7 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
           const { error: updErr } = await supabase.from('productos').update({ stock: newStock }).eq('id', prodId);
           
           if (!updErr) {
-             // REGISTRO Y ACTUALIZACION DE JSON
+             // REGISTRO Y ACTUALIZACION DE SNAPSHOT
              await registrarMovimiento(prodId, prod.nombre, cantidadRestaurar, stockAnterior, newStock, 'ELIMINAR_PEDIDO', id);
           }
         }
@@ -350,7 +355,6 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
 
 /* =========================================================
    RESTO DE ENDPOINTS (PDF, PETICIONES, LISTADOS)
-   SIN CAMBIOS EN LOGICA DE STOCK
    ========================================================= */
 
 // GENERAR PDF DE PETICIÓN (PREVIEW)
