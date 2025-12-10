@@ -50,26 +50,62 @@ async function registrarMovimiento(prodId, nombre, cambio, stockAnt, stockNue, t
 }
 
 // 2. LÓGICA DEL MONITOR (DB REAL vs TABLA SNAPSHOT)
+// 2. LÓGICA DEL MONITOR (CON PAGINACIÓN AUTOMÁTICA)
 async function ejecutarLogicaMonitor() {
     try {
-        // A. OBTENER REALIDAD (Tabla Productos)
-        const { data: productosReales, error: errProd } = await supabase
-            .from('productos')
-            .select('*');
-        
-        if (errProd || !productosReales) {
-            console.error("Error leyendo productos reales:", errProd);
-            return 0;
+        // --- A. OBTENER REALIDAD (Tabla Productos) ---
+        // Leemos TODOS los productos usando un loop (por si tienes más de 1000)
+        let productosReales = [];
+        let from = 0;
+        const limit = 1000;
+        let more = true;
+
+        while (more) {
+            const { data, error } = await supabase
+                .from('productos')
+                .select('*')
+                .range(from, from + limit - 1);
+
+            if (error) {
+                console.error("Error leyendo productos reales (chunk):", error);
+                return 0; // Salimos por seguridad
+            }
+
+            if (data.length > 0) {
+                productosReales = productosReales.concat(data);
+                from += limit;
+                if (data.length < limit) more = false; // Ya no hay más
+            } else {
+                more = false;
+            }
         }
+        
+        if (productosReales.length === 0) return 0;
 
-        // B. OBTENER FOTO ANTERIOR (Tabla monitor_snapshot)
-        const { data: snapshotData, error: errSnap } = await supabase
-            .from('monitor_snapshot')
-            .select('*');
+        // --- B. OBTENER FOTO ANTERIOR (Tabla monitor_snapshot) ---
+        // También leemos el snapshot completo con paginación
+        let snapshotData = [];
+        from = 0;
+        more = true;
 
-        if (errSnap) {
-            console.error("Error leyendo snapshot:", errSnap);
-            return 0;
+        while (more) {
+            const { data, error } = await supabase
+                .from('monitor_snapshot')
+                .select('*')
+                .range(from, from + limit - 1);
+
+            if (error) {
+                console.error("Error leyendo snapshot (chunk):", error);
+                return 0;
+            }
+
+            if (data.length > 0) {
+                snapshotData = snapshotData.concat(data);
+                from += limit;
+                if (data.length < limit) more = false;
+            } else {
+                more = false;
+            }
         }
 
         // Convertimos snapshot a un objeto { id: stock } para buscar rápido
@@ -81,12 +117,12 @@ async function ejecutarLogicaMonitor() {
         let cambiosDetectados = 0;
         let snapshotUpdates = [];
 
-        // C. COMPARAR
+        // --- C. COMPARAR ---
         for (const prod of productosReales) {
             const stockReal = Number(prod.stock);
             const stockFoto = snapshotMap[prod.id]; 
 
-            // Caso A: Producto nuevo en snapshot (undefined) -> Se agregará al final
+            // Caso A: Producto nuevo en snapshot (undefined) -> Se agregará
             // Caso B: El stock cambió sin pasar por nuestros endpoints de venta
             if (stockFoto !== undefined && stockReal !== stockFoto) {
                 const diferencia = stockReal - stockFoto;
@@ -99,7 +135,7 @@ async function ejecutarLogicaMonitor() {
                     cantidad_cambio: diferencia,
                     stock_anterior: stockFoto,
                     stock_nuevo: stockReal,
-                    tipo_movimiento: 'ajuste db', // Texto exacto solicitado
+                    tipo_movimiento: 'ajuste db',
                     referencia_id: 'MONITOR',
                     fecha: new Date().toISOString()
                 }]);
@@ -107,25 +143,29 @@ async function ejecutarLogicaMonitor() {
                 cambiosDetectados++;
             }
 
-            // Preparamos el dato para actualizar la foto (siempre sincronizamos al final)
-            // Solo agregamos si hay diferencia o es nuevo para optimizar, 
-            // pero upsert maneja bien todo.
+            // Preparamos el dato para actualizar la foto
             if (stockFoto === undefined || stockReal !== stockFoto) {
                 snapshotUpdates.push({ id: prod.id, stock: stockReal });
             }
         }
 
-        // D. ACTUALIZAR TABLA SNAPSHOT (Sincronizar)
+        // --- D. ACTUALIZAR TABLA SNAPSHOT (Sincronizar) ---
+        // Hacemos el upsert en bloques de 1000 para no saturar si hay muchos cambios
         if (snapshotUpdates.length > 0) {
-            const { error: errUpsert } = await supabase
-                .from('monitor_snapshot')
-                .upsert(snapshotUpdates);
-            
-            if (errUpsert) console.error("Error actualizando tabla snapshot:", errUpsert);
-            else if (cambiosDetectados > 0) console.log(`✅ Snapshot actualizado con ${snapshotUpdates.length} cambios.`);
+            const chunkSize = 1000;
+            for (let i = 0; i < snapshotUpdates.length; i += chunkSize) {
+                const chunk = snapshotUpdates.slice(i, i + chunkSize);
+                const { error: errUpsert } = await supabase
+                    .from('monitor_snapshot')
+                    .upsert(chunk);
+                
+                if (errUpsert) console.error("Error actualizando tabla snapshot:", errUpsert);
+            }
+            if (cambiosDetectados > 0) console.log(`✅ Snapshot actualizado con ${snapshotUpdates.length} cambios.`);
         }
         
         return cambiosDetectados;
+
     } catch (e) {
         console.error("Error en lógica del monitor:", e);
         return 0;
@@ -607,3 +647,4 @@ async function generarPDF(pedido) {
 app.listen(PORT, () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
