@@ -27,6 +27,50 @@ let globalStockSnapshot = {};
    FUNCIONES AUXILIARES
    ========================================================= */
 
+async function ejecutarLogicaMonitor() {
+    try {
+        // Bajamos la realidad actual de la DB
+        const { data: productosDB } = await supabase.from('productos').select('*');
+        if(!productosDB) return;
+
+        let cambiosDetectados = 0;
+
+        for (const p of productosDB) {
+            const stockReal = Number(p.stock);
+            const stockMemoria = globalStockSnapshot[p.id];
+
+            // Caso A: Producto nuevo
+            if (stockMemoria === undefined) {
+                globalStockSnapshot[p.id] = stockReal;
+                continue;
+            }
+
+            // Caso B: Desajuste detectado
+            if (stockReal !== stockMemoria) {
+                const diferencia = stockReal - stockMemoria;
+                console.log(`⚠️ [Monitor] Cambio detectado en ${p.nombre}: ${stockMemoria} -> ${stockReal}`);
+                
+                await registrarMovimiento(
+                    p.id, 
+                    p.nombre, 
+                    diferencia, 
+                    stockMemoria, 
+                    stockReal, 
+                    'AJUSTE_DETECTADO_DB', 
+                    'MONITOR_AUTO'
+                );
+                
+                globalStockSnapshot[p.id] = stockReal;
+                cambiosDetectados++;
+            }
+        }
+        return cambiosDetectados;
+    } catch (e) {
+        console.error("Error en ciclo del monitor:", e);
+        return 0;
+    }
+}
+
 // 1. REGISTRAR MOVIMIENTO Y ACTUALIZAR MEMORIA
 async function registrarMovimiento(prodId, nombre, cambio, stockAnt, stockNue, tipo, ref) {
   try {
@@ -260,6 +304,16 @@ app.post('/api/guardar-pedidos', async (req, res) => {
     console.error('❌ Exception en guardar-pedidos:', err);
     res.status(500).json({ error: err.message || 'Error interno del servidor' });
   }
+});
+
+app.post('/api/forzar-monitor', async (req, res) => {
+    try {
+        console.log("⚡ Forzando monitor desde frontend...");
+        const cambios = await ejecutarLogicaMonitor();
+        res.json({ ok: true, mensaje: 'Monitor ejecutado', cambios: cambios });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 /* --- ELIMINAR PEDIDO (RESTAURAR) --- */
@@ -559,3 +613,4 @@ async function generarPDF(pedido) {
 app.listen(PORT, () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
