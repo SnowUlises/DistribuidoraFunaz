@@ -238,6 +238,7 @@ async function monitorSilencioso() {
 }
 
 // --- 2. LA LÓGICA DE LA CADENA ---
+// --- 2. LA LÓGICA DE LA CADENA (CORREGIDA) ---
 function procesarCadena() {
     listaUnificada = [];
     
@@ -265,19 +266,17 @@ function procesarCadena() {
                 const stockQueRealmenteHabiaAlInicio = actual.stock_nuevo - actual.cantidad_cambio;
 
                 if(stockQueDeberiaHaber !== stockQueRealmenteHabiaAlInicio) {
-                    // ¡ESLABON ROTO! Agregamos el ajuste naranaja
-                    // Fecha: Usamos la fecha del movimiento actual (para que quede pegado a el)
                     const diferencia = stockQueRealmenteHabiaAlInicio - stockQueDeberiaHaber;
                     listaUnificada.push({
                         id: 'ajuste-hist-' + actual.id,
                         producto_nombre: actual.producto_nombre,
-                        fecha: actual.fecha, // Misma fecha para agrupar
+                        fecha: actual.fecha, 
                         stock_anterior: stockQueDeberiaHaber,
                         stock_nuevo: stockQueRealmenteHabiaAlInicio,
                         cantidad_cambio: diferencia,
                         tipo_movimiento: 'ajuste_db',
                         esAjuste: true,
-                        sortKey: new Date(actual.fecha).getTime() - 1 // Un ms antes para orden
+                        sortKey: new Date(actual.fecha).getTime() - 1 
                     });
                 }
             }
@@ -297,17 +296,23 @@ function procesarCadena() {
         if(stockRealAhora !== undefined && ultimo.stock_nuevo !== stockRealAhora) {
             // ¡CAMBIO RECIENTE!
             const diferencia = stockRealAhora - ultimo.stock_nuevo;
-            const ahora = new Date();
+            
+            // --- CORRECCIÓN AQUÍ ---
+            // En lugar de usar "new Date()" (ahora), usamos la fecha del último movimiento + 1 segundo.
+            // Esto "ancla" el ajuste al último movimiento conocido y evita que la hora cambie sola.
+            const fechaFicticia = new Date(ultimo.fecha);
+            fechaFicticia.setSeconds(fechaFicticia.getSeconds() + 1); 
+
             listaUnificada.push({
                 id: 'ajuste-live-' + ultimo.producto_id,
                 producto_nombre: ultimo.producto_nombre,
-                fecha: ahora.toISOString(),
+                fecha: fechaFicticia.toISOString(), // Usamos la fecha anclada
                 stock_anterior: ultimo.stock_nuevo,
                 stock_nuevo: stockRealAhora,
                 cantidad_cambio: diferencia,
                 tipo_movimiento: 'ajuste_db',
                 esAjuste: true,
-                sortKey: nowTs = ahora.getTime() // Ahora mismo
+                sortKey: fechaFicticia.getTime() // Usamos el timestamp anclado
             });
         }
     });
