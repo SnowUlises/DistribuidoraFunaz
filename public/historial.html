@@ -5,124 +5,44 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Historial de Stock - Distribuidora Funaz</title>
   <style>
-    :root {
-      --primary-green: #2E7D32;
-      --light-green: #4CAF50;
-      --soft-green: #E8F5E9;
-      --bg-color: #fcfdfc;
-      --white: #ffffff;
-      --text-dark: #333;
-      --text-grey: #666;
-      --orange: #ff9800;
-      --orange-bg: #fff3e0;
-      --orange-border: #ffb74d;
-    }
-
+    /* ... (MANTÉN TUS ESTILOS EXACTAMENTE IGUAL) ... */
+    :root { --primary-green: #2E7D32; --light-green: #4CAF50; --soft-green: #E8F5E9; --bg-color: #fcfdfc; --white: #ffffff; --text-dark: #333; --text-grey: #666; --orange: #ff9800; --orange-bg: #fff3e0; --orange-border: #ffb74d; }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg-color); color: var(--text-dark); padding-bottom: 80px; }
-
-    /* HEADER */
-    header {
-      background: var(--primary-green); color: var(--white);
-      padding: 1em; position: sticky; top: 0; z-index: 100;
-      display: flex; align-items: center; justify-content: space-between;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
+    header { background: var(--primary-green); color: var(--white); padding: 1em; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
     header h1 { margin: 0; font-size: 1.2em; font-weight: 600; }
     .btn-volver { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 0.9em; display:flex; gap:5px; align-items:center; }
-
-    /* CONTROLES */
-    .controles-superiores {
-      padding: 10px 1em;
-      background: var(--white);
-      display: flex; flex-direction: column; gap: 10px;
-      border-bottom: 1px solid #f0f0f0;
-    }
+    .controles-superiores { padding: 10px 1em; background: var(--white); display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid #f0f0f0; }
     .fila-controles { display: flex; gap: 10px; align-items: center; justify-content: space-between; width: 100%; }
-
     .buscador-container { flex-grow: 1; }
-    .input-buscador {
-      width: 100%; padding: 8px 12px; border-radius: 20px;
-      border: 1px solid #ddd; outline: none; font-size: 0.95em;
-    }
+    .input-buscador { width: 100%; padding: 8px 12px; border-radius: 20px; border: 1px solid #ddd; outline: none; font-size: 0.95em; }
     .input-buscador:focus { border-color: var(--primary-green); }
-
-    /* BOTON CHECK */
-    .btn-check {
-        background: var(--text-dark); color: white; border: none;
-        padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold;
-        font-size: 0.85em; white-space: nowrap; display: flex; align-items: center; gap: 5px;
-    }
+    .btn-check { background: var(--text-dark); color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 0.85em; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
     .btn-check:active { transform: scale(0.95); }
-
-    .toggle-orange {
-      display: flex; align-items: center; gap: 5px;
-      font-size: 0.85em; color: #e65100; font-weight: bold; cursor: pointer;
-    }
+    .toggle-orange { display: flex; align-items: center; gap: 5px; font-size: 0.85em; color: #e65100; font-weight: bold; cursor: pointer; }
     .toggle-orange input { accent-color: var(--orange); transform: scale(1.2); }
-
-    /* FILTROS */
-    .filtros {
-      display: flex; gap: 10px; padding: 10px 1em; 
-      overflow-x: auto; white-space: nowrap;
-      background: var(--white); border-bottom: 1px solid #eee;
-    }
-    .filtros button {
-      padding: 6px 14px; border: 1px solid #ddd; background: var(--white);
-      border-radius: 20px; color: var(--text-grey); font-weight: 500; cursor: pointer;
-      transition: all 0.2s; font-size: 0.9em;
-    }
-    .filtros button.active {
-      background: var(--soft-green); border-color: var(--primary-green); color: var(--primary-green); font-weight: bold;
-    }
-
-    /* CONTENEDOR PRINCIPAL */
+    .filtros { display: flex; gap: 10px; padding: 10px 1em; overflow-x: auto; white-space: nowrap; background: var(--white); border-bottom: 1px solid #eee; }
+    .filtros button { padding: 6px 14px; border: 1px solid #ddd; background: var(--white); border-radius: 20px; color: var(--text-grey); font-weight: 500; cursor: pointer; transition: all 0.2s; font-size: 0.9em; }
+    .filtros button.active { background: var(--soft-green); border-color: var(--primary-green); color: var(--primary-green); font-weight: bold; }
     main { max-width: 800px; margin: 0 auto; padding: 1em; }
-
     .fecha-grupo { margin-bottom: 2em; }
-    .fecha-header {
-      font-size: 0.9em; text-transform: uppercase; color: var(--text-grey);
-      margin-bottom: 10px; font-weight: bold; letter-spacing: 1px;
-      border-bottom: 2px solid #eee; padding-bottom: 5px;
-    }
-
-    /* CARDS */
-    .card {
-      background: var(--white);
-      border-radius: 12px; padding: 1em; margin-bottom: 10px;
-      border: 1px solid #f0f0f0; box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-      display: flex; flex-direction: column; gap: 8px;
-    }
-    
+    .fecha-header { font-size: 0.9em; text-transform: uppercase; color: var(--text-grey); margin-bottom: 10px; font-weight: bold; letter-spacing: 1px; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+    .card { background: var(--white); border-radius: 12px; padding: 1em; margin-bottom: 10px; border: 1px solid #f0f0f0; box-shadow: 0 2px 8px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 8px; }
     .card.normal { border-left: 4px solid var(--light-green); }
     .card.ajuste { border-left: 4px solid var(--orange); background: var(--orange-bg); border-color: var(--orange-border); }
-
     .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
     .prod-nombre { font-weight: bold; font-size: 1.1em; color: var(--text-dark); }
     .hora { font-size: 0.8em; color: var(--text-grey); }
-
     .card-body { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
-    
-    .stock-flow {
-      display: flex; align-items: center; gap: 8px;
-      font-family: monospace; font-size: 1.1em; color: #555;
-    }
+    .stock-flow { display: flex; align-items: center; gap: 8px; font-family: monospace; font-size: 1.1em; color: #555; }
     .arrow { color: #999; }
     .cambio-badge { padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em; }
     .negativo { background: #ffebee; color: #d32f2f; }
     .positivo { background: #e8f5e9; color: #2e7d32; }
     .neutro { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
-
     .tipo-mov { font-size: 0.75em; padding: 3px 6px; border-radius: 4px; background: #eee; color: #666; }
-
-    .btn-cargar-mas {
-      display: block; width: 100%; max-width: 300px; margin: 20px auto;
-      padding: 12px; background: var(--white); border: 1px solid var(--primary-green);
-      color: var(--primary-green); font-weight: bold; border-radius: 25px;
-      cursor: pointer; transition: all 0.2s;
-    }
+    .btn-cargar-mas { display: block; width: 100%; max-width: 300px; margin: 20px auto; padding: 12px; background: var(--white); border: 1px solid var(--primary-green); color: var(--primary-green); font-weight: bold; border-radius: 25px; cursor: pointer; transition: all 0.2s; }
     .btn-cargar-mas:hover { background: var(--soft-green); }
-
   </style>
 </head>
 <body>
@@ -162,131 +82,66 @@
 <script>
 // VARIABLES GLOBALES
 let historialDB = [];         // El historial "oficial" que viene del backend
-let ajustesDetectados = [];   // Los ajustes que detectamos nosotros (NO SE BORRA NUNCA)
-let snapshotStock = {};       // La "Foto Vieja" para comparar
 
 let filtroActual = 'dia';
 let limiteCarga = 50;
 
-// --- 1. INICIO Y BUCLE ---
+// --- 1. INICIO ---
 async function iniciar() {
-    // 1. Cargar Historial Base + Foto Inicial
-    await cargarDatosIniciales();
-    // 2. Activar Monitor cada 4 min
-    setInterval(chequearCambios, 240000); 
+    await cargarDatos();
+    // Ya no necesitamos setInterval aquí para "detectar" cosas.
+    // Simplemente recargamos el historial cada cierto tiempo para ver si el backend detectó algo
+    setInterval(cargarDatos, 60000); 
 }
 
-async function cargarDatosIniciales() {
+// Carga del Historial (Ya procesado por el backend)
+async function cargarDatos() {
     try {
-        const [resHist, resProd] = await Promise.all([
-            fetch('https://distribuidorafunaz-a2o6.onrender.com/api/historial'),
-            fetch('https://distribuidorafunaz-a2o6.onrender.com/api/productos')
-        ]);
-        
-        if(resHist.ok) {
-            historialDB = await resHist.json();
+        const res = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/historial');
+        if(res.ok) {
+            historialDB = await res.json();
+            // Formatear para visualización
             historialDB = historialDB.map(h => ({
-                ...h, esAjuste: false, sortKey: new Date(h.fecha).getTime()
+                ...h, 
+                esAjuste: h.tipo_movimiento === 'AJUSTE_DETECTADO_DB' || h.tipo_movimiento === 'AJUSTE_MANUAL',
+                sortKey: new Date(h.fecha).getTime()
             }));
+            renderizar();
         }
-
-        if(resProd.ok) {
-            const prods = await resProd.json();
-            // GUARDAMOS LA PRIMERA "FOTO VIEJA"
-            snapshotStock = {};
-            prods.forEach(p => {
-                snapshotStock[p.id] = { stock: p.stock, nombre: p.nombre };
-            });
-            
-            // Opcional: Si quieres comparar historial vs primera foto, 
-            // hazlo aquí, sino, empezamos a monitorear desde YA.
-        }
-
-        renderizar();
     } catch (err) { console.error(err); }
 }
 
-// --- 2. LA LÓGICA DE COMPARACIÓN (SNAPSHOT) ---
-async function chequearCambios() {
-    console.log("Monitor: Revisando...");
-    try {
-        // 1. Obtenemos la "Foto Nueva"
-        const res = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/productos');
-        if(!res.ok) return;
-        const productosNuevos = await res.json();
-        
-        let huboCambios = false;
-        const ahora = new Date(); // La hora del chequeo
-
-        // 2. Comparamos "Foto Nueva" vs "Foto Vieja" (snapshotStock)
-        productosNuevos.forEach(nuevo => {
-            const viejo = snapshotStock[nuevo.id]; // Recuperamos la foto vieja
-
-            // Si el producto ya existía en la foto vieja
-            if (viejo) {
-                if (nuevo.stock !== viejo.stock) {
-                    // DIFERENCIA ENCONTRADA -> AGREGAR AJUSTE
-                    ajustesDetectados.push({
-                        id: 'live-' + nuevo.id + '-' + ahora.getTime(), // ID único
-                        producto_nombre: nuevo.nombre,
-                        fecha: ahora.toISOString(),
-                        stock_anterior: viejo.stock,
-                        stock_nuevo: nuevo.stock,
-                        cantidad_cambio: nuevo.stock - viejo.stock,
-                        tipo_movimiento: 'ajuste_db',
-                        esAjuste: true,
-                        sortKey: ahora.getTime()
-                    });
-                    
-                    // IMPORTANTE: La foto nueva se convierte en la vieja para este producto
-                    snapshotStock[nuevo.id].stock = nuevo.stock;
-                    huboCambios = true;
-                }
-            } 
-            // Si el producto es nuevo (no estaba en la foto vieja)
-            else {
-                // Creamos la entrada en la foto vieja para la próxima
-                snapshotStock[nuevo.id] = { stock: nuevo.stock, nombre: nuevo.nombre };
-                
-                // Opcional: ¿Quieres registrar que apareció un producto nuevo con stock?
-                if(nuevo.stock > 0) {
-                     ajustesDetectados.push({
-                        id: 'new-' + nuevo.id + '-' + ahora.getTime(),
-                        producto_nombre: nuevo.nombre,
-                        fecha: ahora.toISOString(),
-                        stock_anterior: 0,
-                        stock_nuevo: nuevo.stock,
-                        cantidad_cambio: nuevo.stock,
-                        tipo_movimiento: 'ajuste_db',
-                        esAjuste: true,
-                        sortKey: ahora.getTime()
-                    });
-                    huboCambios = true;
-                }
-            }
-        });
-
-        // Solo si hubo cambios renderizamos de nuevo
-        if(huboCambios) {
-            console.log("Monitor: Cambios detectados.");
-            renderizar();
-        }
-
-    } catch(e) { console.error(e); }
-}
-
-// Boton Manual
+// --- 2. FORZAR MONITOR (Llamar al backend) ---
 async function forzarCheck() {
     const btn = document.querySelector('.btn-check');
     const txt = btn.innerText;
+    
+    // Feedback visual
     btn.innerText = "⏳...";
     btn.disabled = true;
-    await chequearCambios(); // Llama a la misma función lógica
-    btn.innerText = "✅";
+
+    try {
+        // 1. Pedimos al backend que revise AHORA
+        const res = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/forzar-monitor', { method: 'POST' });
+        const data = await res.json();
+        
+        console.log("Resultado monitor:", data);
+
+        // 2. Recargamos la lista para ver si apareció algo nuevo
+        await cargarDatos();
+        
+        btn.innerText = "✅";
+    } catch (e) {
+        console.error(e);
+        btn.innerText = "❌";
+    }
+
+    // Restaurar botón
     setTimeout(() => { btn.innerText = txt; btn.disabled = false; }, 1000);
 }
 
-// --- 3. RENDERIZADO (Combinar Listas) ---
+
+// --- 3. RENDERIZADO (SIMPLE) ---
 function renderizar() {
     const cont = document.getElementById('contenedorHistorial');
     const busq = document.getElementById('buscador').value.toLowerCase();
@@ -294,14 +149,8 @@ function renderizar() {
 
     cont.innerHTML = '';
 
-    // UNIFICAMOS: Historial "Oficial" + Ajustes "Locales"
-    // Como ajustesDetectados nunca se borra, los movimientos se acumulan ahí
-    let listaCompleta = [...historialDB, ...ajustesDetectados];
-
-    // Ordenar por fecha (más nuevo arriba)
-    listaCompleta.sort((a,b) => b.sortKey - a.sortKey);
-
-    const listaFiltrada = listaCompleta.filter(i => {
+    // Filtrar
+    const listaFiltrada = historialDB.filter(i => {
         return i.producto_nombre.toLowerCase().includes(busq) && (!soloAjuste || i.esAjuste);
     });
 
@@ -350,7 +199,7 @@ function renderizar() {
                 </div>
                 <div style="margin-top:5px">
                     <span class="tipo-mov">
-                        ${esAjuste ? 'Ajuste Detectado' : item.tipo_movimiento.replace('_',' ')}
+                        ${item.tipo_movimiento.replace(/_/g,' ')}
                     </span>
                 </div>
             `;
