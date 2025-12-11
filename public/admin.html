@@ -100,7 +100,8 @@
       border: 1px solid #ffcdd2;
       display: none;
     }
-    #mensajeError:not(:empty) { display: block; }
+    #mensajeError:not(:empty) { display: block;
+    }
 
     /* --- Toolbar de Agrupación --- */
     #groupToolbar {
@@ -134,7 +135,8 @@
       padding: 8px 16px;
       border-radius: 20px;
     }
-    #groupToolbar button.cancel { background: #666; }
+    #groupToolbar button.cancel { background: #666;
+    }
 
     /* --- Checkbox de Selección de Usuario --- */
     .user-select-check {
@@ -142,6 +144,14 @@
       margin-right: 15px;
       cursor: pointer;
       accent-color: var(--primary);
+    }
+    
+    /* Checkbox de Selección de Petición */
+    .peticion-check {
+        transform: scale(1.5);
+        margin-right: 10px;
+        cursor: pointer;
+        accent-color: var(--info);
     }
 
     /* --- Etiqueta de Sub-Usuario en Grupos --- */
@@ -175,7 +185,8 @@
     details > summary:hover {
       background: rgba(0,0,0,0.03);
     }
-    details > summary::-webkit-details-marker { display: none; }
+    details > summary::-webkit-details-marker { display: none;
+    }
     details > summary::before {
       content: "›";
       font-size: 1.2em;
@@ -290,7 +301,8 @@
     }
 
     /* --- Listas de Items --- */
-    ul { list-style: none; padding: 0; margin: 0; }
+    ul { list-style: none; padding: 0;
+      margin: 0; }
     
     .pedido-item, .peticion-info {
       background: #fafafa;
@@ -314,7 +326,8 @@
       padding-bottom: 0.5em;
       border-bottom: 1px dotted #ccc;
     }
-    .pedido-line strong, .peticion-header-info strong { color: var(--primary); }
+    .pedido-line strong, .peticion-header-info strong { color: var(--primary);
+    }
 
     /* --- Items individuales --- */
     .item {
@@ -327,7 +340,8 @@
     }
     .item:last-child { border-bottom: none; }
     
-    .item-controls { display: flex; gap: 4px; }
+    .item-controls { display: flex;
+      gap: 4px; }
     .item-controls button {
       padding: 2px 8px;
       border-radius: 4px;
@@ -336,9 +350,11 @@
       font-size: 0.85em;
       font-weight: bold;
     }
-    .item-controls button.increase { background: #dcedc8; color: #33691e; }
+    .item-controls button.increase { background: #dcedc8; color: #33691e;
+    }
     .item-controls button.decrease { background: #fff9c4; color: #f57f17; }
-    .item-controls button.delete { background: #ffcdd2; color: #c62828; }
+    .item-controls button.delete { background: #ffcdd2;
+      color: #c62828; }
 
     /* --- Botoneras --- */
     .pedido-actions, .button-group {
@@ -362,22 +378,30 @@
       font-weight: 600;
       transition: all 0.2s;
     }
-    button:hover { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    button:hover { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
 
     /* Botones específicos */
-    .guardar-btn, .confirmar { border-color: var(--primary-light); color: var(--primary); }
-    .guardar-btn:hover, .confirmar:hover { background: var(--primary); color: white; }
+    .guardar-btn, .confirmar { border-color: var(--primary-light); color: var(--primary);
+    }
+    .guardar-btn:hover, .confirmar:hover { background: var(--primary); color: white;
+    }
     
-    .confirmar-plus { color: #00838f; border-color: #b2ebf2; }
+    .confirmar-plus { color: #00838f; border-color: #b2ebf2;
+    }
     .confirmar-plus:hover { background: #e0f7fa; }
 
-    .add-product, .copy-faltantes { color: var(--info); border-color: #b3e5fc; }
+    .add-product, .copy-faltantes { color: var(--info); border-color: #b3e5fc;
+    }
     .add-product:hover, .copy-faltantes:hover { background: #e1f5fe; }
     
-    .actualizar-precios, .preview-pdf { color: var(--warning); border-color: #ffe0b2; }
-    .actualizar-precios:hover, .preview-pdf:hover { background: #fff3e0; }
+    .actualizar-precios, .preview-pdf { color: var(--warning);
+      border-color: #ffe0b2; }
+    .actualizar-precios:hover, .preview-pdf:hover { background: #fff3e0;
+    }
 
-    .delete-peticion, .delete, button[onclick*="eliminarPedido"] { color: var(--danger); border-color: #ffcdd2; }
+    .delete-peticion, .delete, button[onclick*="eliminarPedido"] { color: var(--danger); border-color: #ffcdd2;
+    }
     .delete-peticion:hover, button[onclick*="eliminarPedido"]:hover { background: #ffebee; }
     
     .btn-disolver {
@@ -389,7 +413,8 @@
         flex: 0;
         white-space: nowrap;
     }
-    .btn-disolver:hover { background: #eee; color: #333; }
+    .btn-disolver:hover { background: #eee; color: #333;
+    }
 
     /* --- Status Bar --- */
     .status-container {
@@ -402,7 +427,8 @@
       border-radius: 6px;
       justify-content: space-around;
     }
-    .status-container label { cursor: pointer; display: flex; align-items: center; gap: 4px; }
+    .status-container label { cursor: pointer; display: flex; align-items: center; gap: 4px;
+    }
 
     /* --- Modal --- */
     dialog {
@@ -414,15 +440,20 @@
       max-width: 450px;
     }
     dialog::backdrop { background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); }
-    dialog form { display: flex; flex-direction: column; gap: 1em; }
-    dialog input { padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
+    dialog form { display: flex;
+      flex-direction: column; gap: 1em; }
+    dialog input { padding: 10px; border: 1px solid #ddd; border-radius: 6px;
+    }
 
-    footer { text-align: center; color: #888; font-size: 0.9em; margin-top: 4em; }
+    footer { text-align: center; color: #888; font-size: 0.9em; margin-top: 4em;
+    }
 
     /* Responsive */
     @media (max-width: 600px) {
-      #listaUsuarios, #listaPeticiones { grid-template-columns: 1fr; }
-      .top-controls { flex-direction: column-reverse; }
+      #listaUsuarios, #listaPeticiones { grid-template-columns: 1fr;
+    }
+      .top-controls { flex-direction: column-reverse;
+    }
     }
   </style>
 </head>
@@ -443,10 +474,15 @@
     <details open>
       <summary>Usuarios y Pedidos</summary>
       <div id="listaUsuarios"></div>
+  
     </details>
 
     <details open>
       <summary>Peticiones Pendientes</summary>
+      <div style="margin-bottom: 1em; padding: 10px; background: #e3f2fd; border-radius: 8px; display: flex; align-items: center; gap: 15px;">
+        <button onclick="copiarFaltantesGrupo()" style="background: var(--info); color: white; border: none; flex: 0 0 auto;">Faltantes En Grupo</button>
+        <span id="peticionesSelectedCount" style="font-size: 0.9em; color: #555;">0 seleccionados</span>
+      </div>
       <div id="listaPeticiones"></div>
     </details>
   </main>
@@ -463,14 +499,18 @@
 
   <dialog id="addProductModal">
     <form>
-      <label for="productsInput" style="font-weight:600; color:var(--primary)">Productos (IDxCantidad, separados por coma):</label>
+      <label for="productsInput" style="font-weight:600;
+      color:var(--primary)">Productos (IDxCantidad, separados por coma):</label>
       <input type="text" id="productsInput" placeholder="Ej: 353x5, 24x2">
       <label>
         <input type="checkbox" id="apply3percent"> Aplicar -3%
       </label>
-      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:1em;">
-        <button type="button" onclick="closeAddModal()" style="background:#eee; color:#333; border:none;">Cancelar</button>
-        <button type="button" onclick="addProductsToPedido()" style="background:var(--primary); color:white; border:none;">Añadir</button>
+      <div style="display:flex;
+      gap:10px; justify-content:flex-end; margin-top:1em;">
+        <button type="button" onclick="closeAddModal()" style="background:#eee; color:#333;
+        border:none;">Cancelar</button>
+        <button type="button" onclick="addProductsToPedido()" style="background:var(--primary); color:white;
+        border:none;">Añadir</button>
       </div>
     </form>
   </dialog>
@@ -492,28 +532,29 @@
   let productos = [];
   let currentPedidoId = null;
   window.usersPedidos = {};
+  
   let selectedUsersForGroup = new Set(); // Para la selección múltiple
 
   // --- Funciones de Persistencia ---
   function guardarEstados() {
     localStorage.setItem('estadosPedidos', JSON.stringify(estadosPedidos));
-  }
+    }
   function saveUsedButtons() {
     localStorage.setItem('usedButtons', JSON.stringify(usedButtons));
   }
   function guardarOriginalCache() {
     localStorage.setItem('originalPedidosCache', JSON.stringify(originalPedidosCache));
-  }
+    }
   function saveGroups() {
       localStorage.setItem('groupsConfig', JSON.stringify(groupsConfig));
-  }
+    }
 
   // --- UI Helpers ---
   function mostrarError(msg) {
     const el = document.getElementById('mensajeError');
     if (el) el.textContent = msg;
     else console.warn('mensajeError no encontrado:', msg);
-  }
+    }
 
   function formatMoney(n) {
     try {
@@ -530,12 +571,11 @@
     const formattedDate = `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
     const formattedTime = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
     return { formattedDate, formattedTime };
-  }
+    }
 
   // --- Buscador ---
   function filtrarUsuarios() {
       const query = document.getElementById('searchInput').value.toLowerCase();
-      
       // Filtrar lista de Usuarios/Grupos
       document.querySelectorAll('.user-details').forEach(detail => {
           const name = detail.dataset.searchName.toLowerCase();
@@ -545,7 +585,7 @@
               detail.style.display = 'none';
           }
       });
-  }
+    }
 
   // ==================== LÓGICA DE PEDIDOS (USUARIOS) ====================
 
@@ -556,33 +596,31 @@
     const btn = selectedPedido.querySelector('.enfocar');
     const estaEnfocado = selectedPedido.classList.contains('enfocado');
     const peticionesSection = document.getElementById('listaPeticiones').closest('details');
-
     document.querySelectorAll('.pedido-item').forEach(p => {
       p.style.display = '';
       p.classList.remove('enfocado');
       const b = p.querySelector('.enfocar');
       if (b) b.textContent = 'Enfocar';
     });
-
     if (peticionesSection) peticionesSection.style.display = '';
 
     if (!estaEnfocado) {
       document.querySelectorAll('.pedido-item').forEach(p => {
         if (p.id !== `pedido-${pedidoId}`) p.style.display = 'none';
       });
-      if (peticionesSection) peticionesSection.style.display = 'none';
+    if (peticionesSection) peticionesSection.style.display = 'none';
 
       selectedPedido.classList.add('enfocado');
       btn.textContent = 'Mostrar todos';
 
       const userDetails = selectedPedido.closest('.user-details');
-      if (userDetails) {
+    if (userDetails) {
         document.querySelectorAll('.user-details').forEach(ud => ud.open = false);
         userDetails.open = true;
         document.querySelectorAll('.user-details').forEach(ud => {
             if(ud !== userDetails) ud.style.display = 'none';
         });
-      }
+    }
       selectedPedido.scrollIntoView({ behavior: 'smooth', block: 'center' });
     } else {
       document.querySelectorAll('.user-details').forEach(ud => ud.style.display = '');
@@ -600,13 +638,14 @@
         ${editable ? `
         <div class="item-controls">
           <button class="increase" onclick="modificarCantidadPedido('${pedidoId}', ${itemIndex}, 1)">+</button>
+ 
           <button class="decrease" onclick="modificarCantidadPedido('${pedidoId}', ${itemIndex}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
           <button class="delete" onclick="eliminarItemPedido('${pedidoId}', ${itemIndex})">×</button>
         </div>
         ` : ''}
       </div>
     `).join('');
-  }
+    }
 
   function updatePedidoItems(pedidoId, items, editable = true) {
     const container = document.getElementById(`items-${pedidoId}`);
@@ -627,14 +666,14 @@
     if (!confirm(`¿Actualizar precios según lista actual${descuentoTexto}?`)) return;
     try {
       const res = await fetch(`${apiBase}/productos`, { cache: 'no-store' });
-      if (!res.ok) throw new Error('Error al cargar productos');
+    if (!res.ok) throw new Error('Error al cargar productos');
       const currentProductos = await res.json();
-      const precioMap = new Map(currentProductos.map(p => [p.id, p.precio]));
+    const precioMap = new Map(currentProductos.map(p => [p.id, p.precio]));
 
       let items = JSON.parse(pedidoDiv.dataset.items || '[]');
       let changed = false;
-      const multiplier = applyDiscount ? 1.10 * 0.97 : 1.10;
-      const updatedItems = items.map(item => {
+    const multiplier = applyDiscount ? 1.10 * 0.97 : 1.10;
+    const updatedItems = items.map(item => {
         const basePrecio = precioMap.get(item.id);
         if (basePrecio !== undefined) {
           const nuevoPrecio = Number((basePrecio * multiplier).toFixed(2));
@@ -642,7 +681,8 @@
           return { ...item, precio_unitario: nuevoPrecio, subtotal: nuevoPrecio * item.cantidad };
         }
         return item;
-       });
+     
+    });
       if (!changed) return alert('Todos los precios ya están actualizados.');
 
       pedidoDiv.dataset.items = JSON.stringify(updatedItems);
@@ -666,27 +706,20 @@
     pedidoDiv.querySelectorAll('button').forEach(b => {
       if (!b.classList.contains('ver-original')) b.disabled = isViewingOriginal;
     });
-  }
+    }
 
   // --- Lógica Principal de Renderizado de Pedido ---
   // Modificado para soportar visualizar un "nombre original" diferente al del grupo
   function buildPedidoHTML(pedido, index, groupOrUserName) {
     const items = pedido.items;
-    // IMPORTANTE: Para la Key de estado usamos el ID del pedido si existe, o un fallback
-    // Si estamos en un grupo, el "userName" es el nombre del grupo, pero el pedido tiene su "user" original.
-    
     const pedidoId = pedido.id ?? `${pedido.user}-${index}`;
-    // Fallback key para estados (Guardado/Recibido)
-    // Si el pedido tiene ID, usamos el ID. Si no, usamos la combinación UsuarioOriginal-Index.
-    // Esto previene que se rompan los estados al agrupar.
     const key = pedido.id ? pedido.id : `${pedido.user}-${index}`; 
     
-    // Mapeo en estadosPedidos: si la key no existe, buscamos por la vieja forma (compatibilidad)
-    const estado = estadosPedidos[key] || estadosPedidos[`${groupOrUserName}-${index}`] || {};
+    const estado = estadosPedidos[key] ||
+    estadosPedidos[`${groupOrUserName}-${index}`] || {};
     
     const total = items.reduce((sum, p) => sum + p.subtotal, 0);
     const { formattedDate, formattedTime } = formatDateTime(pedido.fecha);
-    
     if (pedido.id && !originalPedidosCache[pedidoId]) {
       originalPedidosCache[pedidoId] = structuredClone(items);
       guardarOriginalCache();
@@ -694,9 +727,9 @@
 
     // Header especial si es un grupo y el pedido es de alguien específico
     const subUserHeader = (groupOrUserName !== pedido.user) 
-        ? `<div class="sub-user-label">${pedido.user}</div>` 
+        ?
+    `<div class="sub-user-label">${pedido.user}</div>` 
         : '';
-
     return `
       <li>
         ${subUserHeader}
@@ -706,6 +739,7 @@
           </div>
           <div class="peticion-items" id="items-${pedidoId}">
             ${renderItemsHTML(pedidoId, items)}
+    
           </div>
           <div class="pedido-actions">
             <button onclick="eliminarPedido('${pedidoId}', '${pedido.user}', ${index})">Eliminar</button>
@@ -713,18 +747,21 @@
             <button class="preview-pdf" onclick="previewPDFPedido('${pedidoId}')">PDF</button>
             <button class="add-product" onclick="openAddModal('${pedidoId}')">+ Prod</button>
             <button class="actualizar-precios" onclick="actualizarPreciosPedido('${pedidoId}', false)">$ Act</button>
+      
             <button class="actualizar-precios" onclick="actualizarPreciosPedido('${pedidoId}', true)">$ -3%</button>
             <button class="ver-original" onclick="toggleViewOriginal('${pedidoId}')">Original</button>
             <button class="confirmar" onclick="guardarCambiosPedido('${pedidoId}')">Confirmar</button>
             <button class="enfocar" onclick="enfocarPedido('${pedidoId}')">Enfocar</button>
-            <span class="guardar-status" id="guardar-status-${pedidoId}" aria-hidden="true" style="align-self:center; margin-left:auto;">
+            <span class="guardar-status" id="guardar-status-${pedidoId}" aria-hidden="true" style="align-self:center;
+            margin-left:auto;">
               ${estado.guardado ? '✅' : ''}
             </span>
           </div>
           <div class='status-container'>
             <label><input type='checkbox' ${estado.guardado ? 'checked' : ''} onchange="toggleGuardado('${key}', this)"> Guardado</label>
             <label><input type='checkbox' ${estado.recibido ? 'checked' : ''} onchange="toggleRecibido('${key}', this)"> Recibido</label>
-             <label><input type="checkbox" id="modo-devolucion-${pedidoId}"> Devolución</label>
+       
+            <label><input type="checkbox" id="modo-devolucion-${pedidoId}"> Devolución</label>
           </div>
         </div>
       </li>`;
@@ -737,7 +774,8 @@
       const statusSpan = document.getElementById(`guardar-status-${pedidoId}`);
       if (statusSpan) statusSpan.textContent = '⏳';
       try {
-        await guardarPedido(pedidoId);
+        await 
+        guardarPedido(pedidoId);
         if (statusSpan) statusSpan.textContent = '✅';
         
         estadosPedidos[stateKey] = estadosPedidos[stateKey] || {};
@@ -757,17 +795,17 @@
   function toggleUserSelection(userName, checkbox) {
       if (checkbox.checked) {
           selectedUsersForGroup.add(userName);
-      } else {
+    } else {
           selectedUsersForGroup.delete(userName);
       }
       updateGroupToolbar();
-  }
+    }
 
   function clearSelection() {
       selectedUsersForGroup.clear();
       document.querySelectorAll('.user-select-check').forEach(cb => cb.checked = false);
       updateGroupToolbar();
-  }
+    }
 
   function updateGroupToolbar() {
       const toolbar = document.getElementById('groupToolbar');
@@ -776,10 +814,8 @@
       
       const count = selectedUsersForGroup.size;
       countSpan.textContent = `${count} seleccionado${count!==1?'s':''}`;
-      
       if (count > 0) {
           toolbar.classList.add('visible');
-          
           // Lógica inteligente de botón
           let groupCount = 0;
           let userCount = 0;
@@ -787,7 +823,6 @@
               if (groupsConfig[name]) groupCount++;
               else userCount++;
           });
-
           if (groupCount === 1 && userCount > 0) {
               btnAction.textContent = "Unir al Grupo";
           } else if (groupCount === 0 && userCount > 1) {
@@ -800,28 +835,26 @@
 
       } else {
           toolbar.classList.remove('visible');
-      }
+    }
   }
 
   function handleGroupAction() {
       let groupNames = [];
       let normalUsers = [];
-      
       selectedUsersForGroup.forEach(name => {
           if (groupsConfig[name]) groupNames.push(name);
           else normalUsers.push(name);
       });
-
       // CASO 1: Crear nuevo grupo (solo usuarios normales seleccionados)
       if (groupNames.length === 0 && normalUsers.length > 1) {
           const newName = prompt("Nombre para el nuevo grupo (ej: 'Vendedores Maxi'):");
-          if (!newName) return;
+        if (!newName) return;
           if (groupsConfig[newName] || usersPedidos[newName]) return alert("Ese nombre ya existe.");
           
           groupsConfig[newName] = normalUsers;
           saveGroups();
           location.reload();
-      }
+    }
       // CASO 2: Agregar a grupo existente (1 grupo + N usuarios)
       else if (groupNames.length === 1 && normalUsers.length > 0) {
           const targetGroup = groupNames[0];
@@ -832,7 +865,7 @@
       // ERROR
       else {
           alert("Selección inválida. Para agrupar: Selecciona varios usuarios individuales. Para unir: Selecciona 1 grupo existente y usuarios individuales.");
-      }
+    }
   }
 
   function disolverGrupo(groupName) {
@@ -846,16 +879,15 @@
   async function cargarUsuarios() {
     try {
       const listaPedidos = document.getElementById('listaUsuarios');
-      if (!listaPedidos) return;
+    if (!listaPedidos) return;
       listaPedidos.innerHTML = '<p style="text-align:center">Cargando pedidos...</p>';
       
       const res = await fetch(`${apiBase}/pedidos`, { cache: 'no-store' });
       if (!res.ok) {
         listaPedidos.innerHTML = '<p style="text-align:center">Error al cargar pedidos.</p>';
         return;
-      }
+    }
       const pedidosRaw = await res.json();
-      
       const processedPedidos = pedidosRaw.map(p => {
         let items = Array.isArray(p.items) ? p.items : JSON.parse(p.items || '[]');
         items = items.map(item => ({
@@ -863,16 +895,15 @@
           nombre: String(item.nombre || 'Sin nombre'),
           cantidad: Number(item.cantidad) || 1,
           precio_unitario: Number(item.precio_unitario || item.precio) || 0,
-          subtotal: Number(item.subtotal) || (Number(item.cantidad) * Number(item.precio_unitario || item.precio)) || 0
+          subtotal: 
+            Number(item.subtotal) || (Number(item.cantidad) * Number(item.precio_unitario || item.precio)) || 0
         }));
         return { ...p, items, user: p.user || 'Invitado' };
       });
-
       const userToGroupMap = {};
       Object.entries(groupsConfig).forEach(([groupName, members]) => {
           members.forEach(member => userToGroupMap[member] = groupName);
       });
-
       const pedidosOrganizados = {};
       processedPedidos.forEach(pedido => {
           const key = userToGroupMap[pedido.user] || pedido.user;
@@ -895,7 +926,8 @@
         
         let pedidosHTML = '<ul>';
         pedidosToShow.forEach((pedido, index) => {
-          pedidosHTML += buildPedidoHTML(pedido, index, displayName);
+          
+            pedidosHTML += buildPedidoHTML(pedido, index, displayName);
         });
         pedidosHTML += '</ul>';
         
@@ -905,18 +937,21 @@
 
         const userDiv = document.createElement('details');
         userDiv.className = 'user-details';
-        userDiv.dataset.searchName = displayName;
+        userDiv.dataset.searchName = 
+        displayName;
         
         const isGroup = !!groupsConfig[displayName];
-        const disolverBtn = isGroup ? `<button class="btn-disolver" onclick="event.preventDefault(); disolverGrupo('${displayName}')">Disolver Grupo</button>` : '';
-        const groupTag = isGroup ? ` <span style="font-size:0.6em; background:#333; color:#fff; padding:2px 6px; border-radius:4px; margin-left:8px; vertical-align:middle;">GRUPO</span>` : '';
-        
+        const disolverBtn = isGroup ?
+        `<button class="btn-disolver" onclick="event.preventDefault(); disolverGrupo('${displayName}')">Disolver Grupo</button>` : '';
+        const groupTag = isGroup ?
+        ` <span style="font-size:0.6em; background:#333; color:#fff; padding:2px 6px; border-radius:4px; margin-left:8px; vertical-align:middle;">GRUPO</span>` : '';
         // --- AQUÍ ESTÁ EL CAMBIO PARA EL PUNTITO ---
         userDiv.innerHTML = `
             <summary>
                 <div style="display:flex; align-items:center; gap:10px; flex:1;">
                     <input type="checkbox" class="user-select-check" onclick="event.stopPropagation(); toggleUserSelection('${displayName}', this)">
                     <span>${displayName} ${groupTag}</span>
+   
                     ${disolverBtn}
                 </div>
                 <div class="focus-dot" onclick="enfocarUsuario(this, '${displayName}')" title="Enfocar usuario"></div>
@@ -932,6 +967,7 @@
                guardarOriginalCache();
            }
            const div = document.getElementById(`pedido-${pedidoId}`);
+         
            if(div) div.dataset.veryOriginalItems = JSON.stringify(originalPedidosCache[pedidoId] || pedido.items);
         });
         userDiv.querySelectorAll('.guardar-btn').forEach(addGuardarBtnListener);
@@ -955,7 +991,8 @@
               ud.style.display = ''; 
               ud.classList.remove('usuario-enfocado');
               // Quitamos la clase active de todos los puntitos
-              const d = ud.querySelector('.focus-dot');
+              const 
+                d = ud.querySelector('.focus-dot');
               if(d) d.classList.remove('active');
           });
           filtrarUsuarios(); 
@@ -965,11 +1002,11 @@
               if (ud !== container) {
                   ud.style.display = 'none';
               }
-              // Aseguramos que otros puntitos se apaguen
+              // Aseguramos que otros puntitos 
+                // se apaguen
               const d = ud.querySelector('.focus-dot');
               if(d) d.classList.remove('active');
           });
-          
           container.classList.add('usuario-enfocado');
           container.open = true;
           dotElement.classList.add('active');
@@ -977,7 +1014,8 @@
   }
 
   function loadMorePedidos(btn) {
-    const userName = btn.dataset.username; // Esto puede ser nombre de usuario o de grupo
+    const userName = btn.dataset.username;
+    // Esto puede ser nombre de usuario o de grupo
     const loaded = parseInt(btn.dataset.loaded);
     const userPedidos = usersPedidos[userName];
     const nextPedidos = userPedidos.slice(loaded, loaded + 5);
@@ -993,7 +1031,8 @@
         div.dataset.items = JSON.stringify(pedido.items);
         if(!originalPedidosCache[pedidoId]) {
             originalPedidosCache[pedidoId] = structuredClone(pedido.items);
-            guardarOriginalCache();
+           
+             guardarOriginalCache();
         }
         div.dataset.veryOriginalItems = JSON.stringify(originalPedidosCache[pedidoId] || pedido.items);
         const gBtn = div.querySelector('.guardar-btn');
@@ -1002,7 +1041,7 @@
     });
     btn.dataset.loaded = loaded + nextPedidos.length;
     if (parseInt(btn.dataset.loaded) >= userPedidos.length) btn.remove();
-  }
+    }
 
   // --- Funciones de Modificación de Pedidos ---
   function modificarCantidadPedido(pedidoId, itemIndex, change) {
@@ -1023,11 +1062,10 @@
     items = items.filter((_, idx) => idx !== itemIndex);
     pedidoDiv.dataset.items = JSON.stringify(items);
     updatePedidoItems(pedidoId, items);
-  }
+    }
 
   async function guardarCambiosPedido(pedidoId) {
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-    
     // Verificación de seguridad
     if (pedidoDiv.classList.contains('viewing-original')) {
         return alert('Estás viendo la versión original. Vuelve a la vista de edición para guardar.');
@@ -1040,7 +1078,6 @@
       const items = JSON.parse(pedidoDiv.dataset.items || '[]');
       const originalItems = JSON.parse(pedidoDiv.dataset.veryOriginalItems || '[]');
       const modoDevolucion = document.getElementById(`modo-devolucion-${pedidoId}`)?.checked || false;
-
       // 2. Calcular Deltas para Stock
       const deltaMap = new Map();
       originalItems.forEach(oi => deltaMap.set(oi.id, -Number(oi.cantidad || 0)));
@@ -1048,12 +1085,11 @@
         const curr = deltaMap.get(item.id) || 0;
         deltaMap.set(item.id, curr + Number(item.cantidad || 0));
       });
-
       const stockUpdates = [];
       for (const [id, delta] of deltaMap.entries()) {
         if (delta !== 0 && (delta > 0 || modoDevolucion)) {
           stockUpdates.push({id, cantidad: delta});
-        }
+    }
       }
 
       // 3. Preparar Payload
@@ -1064,17 +1100,16 @@
           cantidad: item.cantidad,
           precio_unitario: item.precio_unitario, 
           subtotal: item.cantidad * item.precio_unitario
+     
         })),
         stockUpdates
       };
-
       // 4. Enviar a API
       const res = await fetch(`${apiBase}/actualizar-pedido/${pedidoId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-
       if (!res.ok) throw new Error(await res.text());
       const nuevosItemsGuardados = structuredClone(items);
       pedidoDiv.dataset.veryOriginalItems = JSON.stringify(nuevosItemsGuardados);
@@ -1087,7 +1122,6 @@
       const btnVerOriginal = pedidoDiv.querySelector('.ver-original');
       if(btnVerOriginal) btnVerOriginal.textContent = 'Original';
       pedidoDiv.querySelectorAll('button').forEach(b => b.disabled = false);
-
       alert('Cambios guardados con éxito. Puedes seguir editando.');
       
     } catch (e) {
@@ -1100,7 +1134,7 @@
     if (!res.ok) throw new Error('Error al generar PDF');
     const data = await res.json();
     if (data.pdf) window.open(data.pdf, '_blank');
-  }
+    }
 
   async function eliminarPedido(pedidoId, usuario, index) {
     if (!confirm('¿Eliminar pedido permanentemente?')) return;
@@ -1142,16 +1176,16 @@
     
     try {
       const res = await fetch(`${apiBase}/peticiones`, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const peticiones = await res.json();
       lista.innerHTML = '';
       if (peticiones.length === 0) {
         lista.innerHTML = '<p style="text-align:center">No hay peticiones.</p>';
         return;
-      }
+    }
       
       peticiones.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-      peticiones.forEach(peticion => {
+    peticiones.forEach(peticion => {
         const peticionDiv = document.createElement('details');
         peticionDiv.className = 'peticion-details'; 
         peticionDiv.id = `peticion-${peticion.id}`;
@@ -1161,30 +1195,38 @@
         peticionDiv.dataset.nombre = peticion.nombre;
         const { formattedDate, formattedTime } = formatDateTime(peticion.fecha);
         
+     
         peticionDiv.innerHTML = `
-          <summary>${peticion.nombre} <span style="font-weight:400; font-size:0.8em; color:#777;">ID: ${peticion.id} - ${formattedDate} ${formattedTime}</span></summary>
+          <summary style="display:flex; align-items:center; gap:10px;">
+            <input type="checkbox" class="peticion-check" value="${peticion.id}" onclick="event.stopPropagation(); updatePeticionSelection()">
+            <span style="flex:1">${peticion.nombre} <span style="font-weight:400; font-size:0.8em; color:#777;">ID: ${peticion.id} - ${formattedDate} ${formattedTime}</span></span>
+          </summary>
           <div class="peticion-item">
             <div class="peticion-info">
               <div class="peticion-header-info">
                   <strong>Teléfono:</strong> ${peticion.telefono} <br>
-                  <strong>Total Estimado:</strong> <span id="total-${peticion.id}">${formatMoney(peticion.total)}</span>
+                  
+                <strong>Total Estimado:</strong> <span id="total-${peticion.id}">${formatMoney(peticion.total)}</span>
               </div>
               <div class="peticion-items" id="items-${peticion.id}">
                 ${renderPeticionItemsHTML(peticion.items, peticion.id)}
               </div>
               ${isUsed ?
                 `<div style="margin-top:10px; padding:10px; background:#e8f5e9; color:#2e7d32; border-radius:6px; text-align:center; font-weight:bold;">
-                    Estado: ${isUsed === 'plus7' ? '✅ Confirmado -3%' : '✅ Confirmado'}
+                    Estado: ${isUsed === 'plus7' ?
+                    '✅ Confirmado -3%' : '✅ Confirmado'}
                  </div>` : `
                 <div class="button-group">
                   <button class="confirmar" onclick="confirmarPeticion(${peticion.id}, false)">Confirmar</button>
                   <button class="confirmar-plus" onclick="confirmarPeticion(${peticion.id}, true)">Confirmar -3%</button>
+                
                   <button class="preview-pdf" onclick="previewPDF(${peticion.id})">PDF Preview</button>
                   <button class="copy-faltantes" onclick="copiarFaltantes(${peticion.id})">Copiar faltantes</button>
                   <button class="delete-peticion" onclick="eliminarPeticion(${peticion.id})">Eliminar</button>
                   <button class="enfocar-peticion" onclick="enfocarPeticion('${peticion.id}')">Enfocar</button>
                 </div>
               `}
+    
             </div>
           </div>
         `;
@@ -1204,18 +1246,20 @@
         stockWarning = '<span style="color: #d32f2f; font-weight:bold; font-size:0.8em; margin-left:5px;">⚠️ Falta stock</span>';
         }
         return `
-        <div class="item" data-item-index="${index}">
+        <div 
+        class="item" data-item-index="${index}">
         <span id="item-text-${peticionId}-${index}" style="flex:1;">
             ${item.nombre}: <b><span id="cantidad-${peticionId}-${index}">${item.cantidad}</span></b> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}${stockWarning}
         </span>
         <div class="item-controls">
             <button class="increase" onclick="modificarCantidad('${peticionId}', ${index}, 1)">+</button>
-            <button class="decrease" onclick="modificarCantidad('${peticionId}', ${index}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
+            <button class="decrease" onclick="modificarCantidad('${peticionId}', ${index}, -1)" ${item.cantidad <= 1 ?
+            'disabled' : ''}>-</button>
             <button class="delete" onclick="eliminarItemPeticion('${peticionId}', ${index})">×</button>
         </div>
         </div>
         `;
-    }).join('');
+        }).join('');
   }
 
   function enfocarPeticion(peticionId) {
@@ -1234,15 +1278,13 @@
         const b = d.querySelector('.enfocar-peticion');
         if(b) b.textContent = 'Enfocar';
     });
-    
     const usuariosSection = document.querySelector('main details:nth-of-type(1)');
     if (usuariosSection) usuariosSection.style.display = '';
-
     if (!estaEnfocado) {
         document.querySelectorAll('.peticion-details').forEach(d => {
             if (d.id !== `peticion-${peticionId}`) d.style.display = 'none';
         });
-        if (usuariosSection) usuariosSection.style.display = 'none';
+    if (usuariosSection) usuariosSection.style.display = 'none';
 
         peticionItemInner.classList.add('enfocado');
         selectedPeticion.open = true;
@@ -1258,7 +1300,6 @@
     items[itemIndex].cantidad = Math.max(1, items[itemIndex].cantidad + change);
     items[itemIndex].subtotal = items[itemIndex].cantidad * items[itemIndex].precio_unitario;
     peticionDiv.dataset.items = JSON.stringify(items);
-    
     const total = items.reduce((sum, it) => sum + it.subtotal, 0);
     document.getElementById(`total-${peticionId}`).textContent = formatMoney(total);
     
@@ -1303,7 +1344,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user: nombre, pedido: pedidoItems })
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
       
       await fetch(`${apiBase}/peticiones/${peticionId}`, { method: 'DELETE' });
       
@@ -1333,11 +1374,12 @@
       const product = productos.find(p => p.id === item.id);
       const stock = product ? Math.max(product.stock || 0, 0) : 0;
       const missing = Math.max(0, item.cantidad - stock);
-      if (missing > 0) faltantes.push(`${missing} ${item.nombre}`);
+    if (missing > 0) faltantes.push(`${missing} ${item.nombre}`);
     }
-    const text = faltantes.join('\n') || 'No faltan productos en stock para esta petición.';
+    const text = faltantes.join('\n') ||
+    'No faltan productos en stock para esta petición.';
     navigator.clipboard.writeText(text).then(() => alert('Copiado:\n' + text));
-  }
+    }
 
   async function previewPDF(peticionId) {
       const peticionDiv = document.getElementById(`peticion-${peticionId}`);
@@ -1349,7 +1391,8 @@
               id: i.id, nombre: i.nombre, cantidad: i.cantidad,
               precio_unitario: i.precio_unitario * 0.97 * 1.10,
               subtotal: i.cantidad * (i.precio_unitario * 0.97 * 1.10)
-          })),
+          
+        })),
           total: 0, 
           fecha: new Date().toISOString()
       };
@@ -1370,7 +1413,8 @@
     document.getElementById('apply3percent').checked = false;
     document.getElementById('addProductModal').showModal();
   }
-  function closeAddModal() { document.getElementById('addProductModal').close(); }
+  function closeAddModal() { document.getElementById('addProductModal').close();
+    }
   
   async function addProductsToPedido() {
     const input = document.getElementById('productsInput').value.trim();
@@ -1389,7 +1433,7 @@
         const p = productos.find(x => x.id == idStr);
         if(p) {
             let precio = p.precio * 1.10;
-            if(apply3) precio *= 0.97;
+        if(apply3) precio *= 0.97;
             newItems.push({
                 id: p.id, nombre: p.nombre, cantidad: parseInt(qtyStr)||1,
                 precio_unitario: precio, subtotal: (parseInt(qtyStr)||1)*precio
@@ -1436,6 +1480,54 @@
     } catch(e) { console.error(e); }
   }
 
+  // --- Funciones Nuevas: Faltantes en Grupo ---
+  function updatePeticionSelection() {
+      const checks = document.querySelectorAll('.peticion-check:checked');
+      const span = document.getElementById('peticionesSelectedCount');
+      if(span) span.textContent = `${checks.length} seleccionados`;
+  }
+
+  function copiarFaltantesGrupo() {
+    const checks = document.querySelectorAll('.peticion-check:checked');
+    if(checks.length === 0) return alert('Selecciona al menos una petición.');
+
+    const aggregated = {}; // { id: { nombre: "x", cantidad: 0 } }
+
+    // 1. Sumar totales requeridos de todas las peticiones seleccionadas
+    checks.forEach(chk => {
+        const peticionId = chk.value;
+        const div = document.getElementById(`peticion-${peticionId}`);
+        if(!div) return;
+        const items = JSON.parse(div.dataset.items || '[]');
+
+        items.forEach(item => {
+            if(!aggregated[item.id]) {
+                aggregated[item.id] = { nombre: item.nombre, cantidad: 0 };
+            }
+            aggregated[item.id].cantidad += item.cantidad;
+        });
+    });
+
+    // 2. Calcular faltantes comparando TOTAL requerido vs Stock REAL (una sola vez)
+    const faltantes = [];
+    Object.keys(aggregated).forEach(id => {
+        const req = aggregated[id];
+        const prod = productos.find(p => p.id == id);
+        const stock = prod ? (prod.stock || 0) : 0;
+
+        // Si piden 3 y hay 1 en stock, faltan 2.
+        const missing = req.cantidad - stock;
+        
+        if(missing > 0) {
+            faltantes.push(`${missing} ${req.nombre}`);
+        }
+    });
+
+    // 3. Copiar
+    const text = faltantes.join('\n') || 'No faltan productos (El stock cubre todas las peticiones seleccionadas).';
+    navigator.clipboard.writeText(text).then(() => alert('Faltantes copiados:\n' + text));
+  }
+
   // --- INIT ---
   window.addEventListener('DOMContentLoaded', async () => {
     await cargarProductos();
@@ -1445,6 +1537,3 @@
   </script>
 </body>
 </html>
-
-
-
