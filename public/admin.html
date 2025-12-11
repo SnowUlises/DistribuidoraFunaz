@@ -221,18 +221,41 @@
       border-bottom: 1px solid transparent;
       transition: border-color 0.3s;
       display: flex;
-      justify-content: flex-start; /* Cambiado para el checkbox */
+      justify-content: flex-start;
       align-items: center;
       color: var(--text);
     }
     .user-details > summary::before, .peticion-details > summary::before {
-      content: none; /* Quitar la flecha grande global */
+      content: none;
     }
 
     .user-details[open] > summary, .peticion-details[open] > summary {
       border-bottom: 1px solid #eee;
       color: var(--primary);
       background: var(--accent);
+    }
+    
+    /* --- Botón Enfocar Usuario (NUEVO) --- */
+    .btn-enfocar-user {
+        margin-left: auto; /* Empuja el botón a la derecha */
+        background: transparent;
+        border: 1px solid var(--primary);
+        color: var(--primary);
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 0.8em;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+    .btn-enfocar-user:hover {
+        background: var(--primary);
+        color: white;
+    }
+    /* Resalte cuando el usuario está enfocado */
+    .user-details.usuario-enfocado {
+        border: 2px solid var(--primary);
+        box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.1);
     }
 
     .usuario-item, .peticion-item {
@@ -370,7 +393,6 @@
 
     footer { text-align: center; color: #888; font-size: 0.9em; margin-top: 4em; }
 
-    /* Responsive */
     @media (max-width: 600px) {
       #listaUsuarios, #listaPeticiones { grid-template-columns: 1fr; }
       .top-controls { flex-direction: column-reverse; }
@@ -821,23 +843,18 @@
       });
 
       // 2. Agrupar según Lógica de Grupos Configurados
-      // Primero, crear mapa inverso: usuario -> grupo
       const userToGroupMap = {};
       Object.entries(groupsConfig).forEach(([groupName, members]) => {
           members.forEach(member => userToGroupMap[member] = groupName);
       });
 
-      // Organizar pedidos en buckets (NombreUsuario o NombreGrupo)
-      const pedidosOrganizados = {}; // { "NombreVisual": [pedidos...] }
-
+      const pedidosOrganizados = {};
       processedPedidos.forEach(pedido => {
-          // Si el usuario pertenece a un grupo, la key es el grupo. Si no, es su nombre.
           const key = userToGroupMap[pedido.user] || pedido.user;
           if (!pedidosOrganizados[key]) pedidosOrganizados[key] = [];
           pedidosOrganizados[key].push(pedido);
       });
-
-      window.usersPedidos = pedidosOrganizados; // Actualizar global
+      window.usersPedidos = pedidosOrganizados;
 
       // 3. Renderizar
       listaPedidos.innerHTML = '';
@@ -847,7 +864,7 @@
       }
 
       Object.entries(pedidosOrganizados).forEach(([displayName, userPedidos]) => {
-        // Ordenar Cronológicamente (Más reciente primero)
+        // Ordenar Cronológicamente
         userPedidos.sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
         
         const initialCount = 5;
@@ -865,17 +882,21 @@
 
         const userDiv = document.createElement('details');
         userDiv.className = 'user-details';
-        userDiv.dataset.searchName = displayName; // Para el buscador
+        userDiv.dataset.searchName = displayName;
         
-        // Detectar si es un Grupo para agregar botón de disolver
         const isGroup = !!groupsConfig[displayName];
         const disolverBtn = isGroup ? `<button class="btn-disolver" onclick="event.preventDefault(); disolverGrupo('${displayName}')">Disolver Grupo</button>` : '';
         const groupTag = isGroup ? ` <span style="font-size:0.6em; background:#333; color:#fff; padding:2px 6px; border-radius:4px; margin-left:8px; vertical-align:middle;">GRUPO</span>` : '';
-
+        
+        // ESTRUCTURA NUEVA PARA INCLUIR EL BOTÓN DE ENFOCAR
         userDiv.innerHTML = `
             <summary>
-                <input type="checkbox" class="user-select-check" onclick="event.stopPropagation(); toggleUserSelection('${displayName}', this)">
-                ${displayName} ${groupTag} ${disolverBtn}
+                <div style="display:flex; align-items:center; gap:10px; flex:1;">
+                    <input type="checkbox" class="user-select-check" onclick="event.stopPropagation(); toggleUserSelection('${displayName}', this)">
+                    <span>${displayName} ${groupTag}</span>
+                    ${disolverBtn}
+                </div>
+                <button class="btn-enfocar-user" onclick="enfocarUsuario(this, '${displayName}')">Enfocar</button>
             </summary>
             <div class='usuario-item'>${pedidosHTML}</div>
         `;
@@ -883,7 +904,7 @@
 
         // Inicializar datos para botones
         pedidosToShow.forEach((pedido, index) => {
-           const pedidoId = pedido.id ?? `${pedido.user}-${index}`; // Key consistente
+           const pedidoId = pedido.id ?? `${pedido.user}-${index}`;
            if(pedido.id && !originalPedidosCache[pedidoId]) {
                originalPedidosCache[pedidoId] = structuredClone(pedido.items);
                guardarOriginalCache();
@@ -897,6 +918,39 @@
       console.error(err);
       mostrarError('Error inesperado al cargar usuarios.');
     }
+  }
+
+  function enfocarUsuario(btn, userName) {
+      // Evitamos que el click cierre/abra el details por defecto
+      event.preventDefault(); 
+      event.stopPropagation();
+
+      const container = btn.closest('.user-details');
+      const yaEnfocado = container.classList.contains('usuario-enfocado');
+
+      if (yaEnfocado) {
+          // --- RESTAURAR TODO (DESENFOCAR) ---
+          document.querySelectorAll('.user-details').forEach(ud => {
+              ud.style.display = ''; // Mostrar todos
+              ud.classList.remove('usuario-enfocado');
+              // Restaurar texto del botón
+              const b = ud.querySelector('.btn-enfocar-user');
+              if(b) b.textContent = 'Enfocar';
+          });
+          // Re-aplicar filtro del buscador por si había algo escrito
+          filtrarUsuarios(); 
+      } else {
+          // --- ENFOCAR ESTE USUARIO ---
+          document.querySelectorAll('.user-details').forEach(ud => {
+              if (ud !== container) {
+                  ud.style.display = 'none'; // Ocultar los demás
+              }
+          });
+          
+          container.classList.add('usuario-enfocado');
+          container.open = true; // Abrimos el details para que el Ctrl+F funcione
+          btn.textContent = 'Mostrar todos';
+      }
   }
 
   function loadMorePedidos(btn) {
@@ -950,19 +1004,28 @@
 
   async function guardarCambiosPedido(pedidoId) {
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-    if (pedidoDiv.classList.contains('viewing-original')) return alert('Estás viendo la versión original.');
-    if (!confirm('¿Guardar cambios?')) return;
+    
+    // Verificación de seguridad
+    if (pedidoDiv.classList.contains('viewing-original')) {
+        return alert('Estás viendo la versión original. Vuelve a la vista de edición para guardar.');
+    }
+
+    if (!confirm('¿Guardar cambios permanentemente?')) return;
+
     try {
+      // 1. Obtener datos actuales
       const items = JSON.parse(pedidoDiv.dataset.items || '[]');
       const originalItems = JSON.parse(pedidoDiv.dataset.veryOriginalItems || '[]');
       const modoDevolucion = document.getElementById(`modo-devolucion-${pedidoId}`)?.checked || false;
 
+      // 2. Calcular Deltas para Stock
       const deltaMap = new Map();
       originalItems.forEach(oi => deltaMap.set(oi.id, -Number(oi.cantidad || 0)));
       items.forEach(item => {
         const curr = deltaMap.get(item.id) || 0;
         deltaMap.set(item.id, curr + Number(item.cantidad || 0));
       });
+
       const stockUpdates = [];
       for (const [id, delta] of deltaMap.entries()) {
         if (delta !== 0 && (delta > 0 || modoDevolucion)) {
@@ -970,25 +1033,40 @@
         }
       }
 
+      // 3. Preparar Payload
       const payload = {
         items: items.map(item => ({
-          id: item.id, nombre: item.nombre, cantidad: item.cantidad,
-          precio_unitario: item.precio_unitario, subtotal: item.cantidad * item.precio_unitario
+          id: item.id, 
+          nombre: item.nombre, 
+          cantidad: item.cantidad,
+          precio_unitario: item.precio_unitario, 
+          subtotal: item.cantidad * item.precio_unitario
         })),
         stockUpdates
       };
+
+      // 4. Enviar a API
       const res = await fetch(`${apiBase}/actualizar-pedido/${pedidoId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      if (!res.ok) throw new Error(await res.text());
 
-      pedidoDiv.dataset.veryOriginalItems = JSON.stringify(items);
-      originalPedidosCache[pedidoId] = items;
+      if (!res.ok) throw new Error(await res.text());
+      const nuevosItemsGuardados = structuredClone(items);
+      pedidoDiv.dataset.veryOriginalItems = JSON.stringify(nuevosItemsGuardados);
+      originalPedidosCache[pedidoId] = nuevosItemsGuardados;
       guardarOriginalCache();
-      alert('Cambios guardados.');
-      toggleViewOriginal(pedidoId);
+
+      pedidoDiv.dataset.items = JSON.stringify(nuevosItemsGuardados);
+      updatePedidoItems(pedidoId, nuevosItemsGuardados, true);
+      pedidoDiv.classList.remove('viewing-original');
+      const btnVerOriginal = pedidoDiv.querySelector('.ver-original');
+      if(btnVerOriginal) btnVerOriginal.textContent = 'Original';
+      pedidoDiv.querySelectorAll('button').forEach(b => b.disabled = false);
+
+      alert('Cambios guardados con éxito. Puedes seguir editando.');
+      
     } catch (e) {
       mostrarError(`Error al guardar: ${e.message}`);
     }
@@ -1344,3 +1422,4 @@
   </script>
 </body>
 </html>
+
