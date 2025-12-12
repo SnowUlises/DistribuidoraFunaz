@@ -37,7 +37,6 @@ async function registrarMovimiento(prodId, nombre, cambio, stockAnt, stockNue, t
     }]);
 
     // B. ACTUALIZAMOS LA FOTO EN LA TABLA AUXILIAR 'monitor_snapshot'
-    // Esto evita que el monitor detecte este cambio legítimo como un "desajuste"
     const { error } = await supabase
         .from('monitor_snapshot')
         .upsert({ id: prodId, stock: stockNue });
@@ -49,7 +48,6 @@ async function registrarMovimiento(prodId, nombre, cambio, stockAnt, stockNue, t
   }
 }
 
-// 2. LÓGICA DEL MONITOR (DB REAL vs TABLA SNAPSHOT)
 // 2. LÓGICA DEL MONITOR (CON PAGINACIÓN AUTOMÁTICA)
 async function ejecutarLogicaMonitor() {
     try {
@@ -279,6 +277,12 @@ app.post('/api/guardar-pedidos', async (req, res) => {
   try {
     const pedidoItems = req.body.pedido;
     const usuarioPedido = req.body.user || req.body.usuario || 'invitado';
+    
+    // --- NUEVO: Recibimos ID y Negocio ---
+    const userId = req.body.user_id || null;
+    const nombreNegocio = req.body.nombre_negocio || null;
+    // -------------------------------------
+
     if (!Array.isArray(pedidoItems) || pedidoItems.length === 0) {
       return res.status(400).json({ error: 'Pedido inválido' });
     }
@@ -327,7 +331,18 @@ app.post('/api/guardar-pedidos', async (req, res) => {
     if (items.length === 0) return res.status(400).json({ error: 'No hay items válidos para el pedido' });
     
     const fechaLocal = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
-    const payload = { id, user: usuarioPedido, fecha: fechaLocal, items, total };
+    
+    // --- PAYLOAD MODIFICADO ---
+    const payload = { 
+        id, 
+        user: usuarioPedido, 
+        fecha: fechaLocal, 
+        items, 
+        total,
+        user_id: userId,
+        nombre_negocio: nombreNegocio
+    };
+    
     console.log('💾 Guardando pedido:', payload);
     
     const { data, error } = await supabase.from('pedidos').insert([payload]).select().single();
@@ -393,10 +408,10 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
    RESTO DE ENDPOINTS (PDF, PETICIONES, LISTADOS)
    ========================================================= */
 
-// GENERAR PDF DE PETICIÓN (PREVIEW)
+// GENERAR PDF DE PETICIÓN (PREVIEW) - 🔥 MODIFICADO PARA NEGOCIO
 app.post('/api/generar-pdf-peticion', async (req, res) => {
   try {
-    const { user, items, total, fecha } = req.body;
+    const { user, items, total, fecha, nombre_negocio } = req.body; // <-- Recibe nombre_negocio
     if (!user || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Datos inválidos' });
     }
@@ -412,7 +427,8 @@ app.post('/api/generar-pdf-peticion', async (req, res) => {
         subtotal: Number(item.subtotal) || 0
       })),
       total: Number(total) || 0,
-      fecha: fechaLocal || new Date().toISOString()
+      fecha: fechaLocal || new Date().toISOString(),
+      nombre_negocio: nombre_negocio // <-- Lo pasa al generador
     };
     
     const pdfBuffer = await generarPDF(pedido);
@@ -489,6 +505,44 @@ app.get('/api/peticiones', async (req, res) => {
   }
 });
 
+// HISTORIAL DE USUARIO
+app.get('/api/mis-pedidos', async (req, res) => {
+  try {
+    const userId = req.query.uid;
+    if (!userId) return res.status(400).json({ error: 'Falta User ID' });
+
+    // 1. Buscar en Peticiones (Pendientes)
+    const { data: peticiones, error: errPet } = await supabase
+      .from('Peticiones')
+      .select('*')
+      .eq('user_id', userId);
+    if (errPet) throw errPet;
+
+    // 2. Buscar en Pedidos (Aprobados)
+    const { data: pedidos, error: errPed } = await supabase
+      .from('pedidos')
+      .select('*')
+      .eq('user_id', userId);
+    if (errPed) throw errPed;
+
+    // 3. Unificar y etiquetar
+    const listaPeticiones = (peticiones || []).map(p => ({
+      ...p, tipo: 'peticion', estado_etiqueta: '⏳ Pendiente', color_estado: '#FF9800'
+    }));
+    const listaPedidos = (pedidos || []).map(p => ({
+      ...p, tipo: 'pedido', estado_etiqueta: '✅ Preparado', color_estado: '#4CAF50'
+    }));
+
+    // Ordenar por fecha (más reciente primero)
+    const historial = [...listaPeticiones, ...listaPedidos].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+    res.json(historial);
+  } catch (err) {
+    console.error('❌ Error cargando historial:', err);
+    res.status(500).json({ error: 'Error al obtener historial' });
+  }
+});
+
 // OBTENER PDF DE UN PEDIDO
 app.get('/api/pedidos/:id/pdf', async (req, res) => {
   try {
@@ -512,22 +566,27 @@ app.get('/api/pedidos/:id/pdf', async (req, res) => {
   }
 });
 
-// GUARDAR PETICIÓN (ENVIAR)
+// GUARDAR PETICIÓN (ENVIAR) - 🔥 MODIFICADO: SIN TELEFONO
 app.post('/api/Enviar-Peticion', async (req, res) => {
     try {
         console.log('Received payload:', JSON.stringify(req.body, null, 2));
-        const { nombre, telefono, items: pedidoItems } = req.body;
         
-        if (!nombre || !telefono || !Array.isArray(pedidoItems) || pedidoItems.length === 0) {
-            return res.status(400).json({ error: 'Datos incompletos' });
+        // 1. Extraer datos (SIN TELEFONO)
+        let { nombre, items: pedidoItems, total: providedTotal, user_id, nombre_negocio } = req.body;
+        
+        // Remove "Nombre: " prefix if present
+        if (nombre && nombre.startsWith('Nombre: ')) {
+            nombre = nombre.slice('Nombre: '.length).trim();
         }
-        
-        const telefonoNum = parseInt(telefono.replace(/\D/g, ''));
-        if (isNaN(telefonoNum)) return res.status(400).json({ error: 'Teléfono inválido' });
-        
+
+        // 2. Validación (SIN TELEFONO)
+        if (!nombre || !Array.isArray(pedidoItems) || pedidoItems.length === 0) {
+            return res.status(400).json({ error: 'Petición inválida: nombre o items faltantes' });
+        }
+
+        // 3. Procesar items
         let total = 0;
         const processedItems = [];
-        const fechaLocal = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
         
         for (const it of pedidoItems) {
             const prodId = it.id;
@@ -553,19 +612,27 @@ app.post('/api/Enviar-Peticion', async (req, res) => {
         if (processedItems.length === 0) return res.status(400).json({ error: 'No hay items válidos' });
         
         const totalInt = Math.round(total);
+        const fechaLocal = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
+        
+        // 4. Payload SIN telefono, CON nuevos campos
         const payload = {
             nombre,
-            telefono: telefonoNum,
+            // telefono: ELIMINADO
             items: processedItems,
             total: totalInt,
-            fecha: fechaLocal
+            fecha: fechaLocal,
+            user_id: user_id || null,
+            nombre_negocio: nombre_negocio || null
         };
         
+        console.log('💾 Guardando petición:', payload);
+
         const { data, error } = await supabase.from('Peticiones').insert([payload]).select().single();
         if (error) return res.status(500).json({ error: error.message });
         
         res.json({ ok: true, mensaje: 'Petición guardada', id: data?.id });
     } catch (err) {
+        console.error('❌ Exception en Enviar-Peticion:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -596,11 +663,17 @@ async function generarPDF(pedido) {
     }
     
     // Encabezado
-    doc.font('Helvetica-Bold').fontSize(16).text(`${pedido.user || 'Invitado'}`, { align: 'center' });
+    doc.font('Helvetica-Bold').fontSize(16).text(`${pedido.user || pedido.nombre || 'Invitado'}`, { align: 'center' });
     doc.moveDown(1);
     doc.font('Helvetica').fontSize(14);
     doc.text(`Dirección: Calle Colon 1740 Norte`);
     doc.text(`Factura N°: ${pedido.id || ''}`);
+    
+    // 🔥 NUEVO: Mostrar Negocio
+    if(pedido.nombre_negocio) {
+        doc.text(`Negocio: ${pedido.nombre_negocio}`);
+    }
+
     doc.text(`Pedidos: 2645583761`);
     doc.text(`Consultas: 2645156933`);
     doc.moveDown(1.5);
@@ -640,8 +713,7 @@ async function generarPDF(pedido) {
   });
 }
 
-app.listen(PORT, () => {
+// ⚠️ PUERTO CONFIGURADO PARA RENDER
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
-
-
