@@ -166,7 +166,18 @@
       margin-bottom: 5px;
       border: 1px solid #b2dfdb;
     }
-
+    .business-label {
+      background: #fff8e1; /* Fondo amarillento suave */
+      color: #f57f17;      /* Texto naranja oscuro */
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.85em;
+      font-weight: bold;
+      display: inline-block;
+      margin-bottom: 5px;
+      border: 1px solid #ffecb3;
+      margin-right: 5px;
+    }
     /* --- Secciones (Details) --- */
     details > summary {
       list-style: none;
@@ -710,28 +721,35 @@
 
   // --- Lógica Principal de Renderizado de Pedido ---
   // Modificado para soportar visualizar un "nombre original" diferente al del grupo
+  // --- Lógica Principal de Renderizado de Pedido ---
   function buildPedidoHTML(pedido, index, groupOrUserName) {
     const items = pedido.items;
     const pedidoId = pedido.id ?? `${pedido.user}-${index}`;
     const key = pedido.id ? pedido.id : `${pedido.user}-${index}`; 
     
-    const estado = estadosPedidos[key] ||
-    estadosPedidos[`${groupOrUserName}-${index}`] || {};
+    const estado = estadosPedidos[key] || estadosPedidos[`${groupOrUserName}-${index}`] || {};
     
     const total = items.reduce((sum, p) => sum + p.subtotal, 0);
     const { formattedDate, formattedTime } = formatDateTime(pedido.fecha);
+
     if (pedido.id && !originalPedidosCache[pedidoId]) {
       originalPedidosCache[pedidoId] = structuredClone(items);
       guardarOriginalCache();
     }
 
-    // Header especial si es un grupo y el pedido es de alguien específico
+    // 1. Header si es Grupo (sub-usuario)
     const subUserHeader = (groupOrUserName !== pedido.user) 
-        ?
-    `<div class="sub-user-label">${pedido.user}</div>` 
+        ? `<div class="sub-user-label">👤 ${pedido.user}</div>` 
         : '';
+
+    // 2. Header de Negocio (Nuevo) 🔥
+    const negocioHeader = (pedido.nombre_negocio)
+        ? `<div class="business-label">🏢 ${pedido.nombre_negocio}</div>`
+        : '';
+
     return `
       <li>
+        ${negocioHeader}
         ${subUserHeader}
         <div class="pedido-item" id="pedido-${pedidoId}" data-items='${JSON.stringify(items)}' data-veryOriginalItems='${JSON.stringify(originalPedidosCache[pedidoId] || items)}'>
           <div class="pedido-line">
@@ -739,7 +757,6 @@
           </div>
           <div class="peticion-items" id="items-${pedidoId}">
             ${renderItemsHTML(pedidoId, items)}
-    
           </div>
           <div class="pedido-actions">
             <button onclick="eliminarPedido('${pedidoId}', '${pedido.user}', ${index})">Eliminar</button>
@@ -747,20 +764,17 @@
             <button class="preview-pdf" onclick="previewPDFPedido('${pedidoId}')">PDF</button>
             <button class="add-product" onclick="openAddModal('${pedidoId}')">+ Prod</button>
             <button class="actualizar-precios" onclick="actualizarPreciosPedido('${pedidoId}', false)">$ Act</button>
-      
             <button class="actualizar-precios" onclick="actualizarPreciosPedido('${pedidoId}', true)">$ -3%</button>
             <button class="ver-original" onclick="toggleViewOriginal('${pedidoId}')">Original</button>
             <button class="confirmar" onclick="guardarCambiosPedido('${pedidoId}')">Confirmar</button>
             <button class="enfocar" onclick="enfocarPedido('${pedidoId}')">Enfocar</button>
-            <span class="guardar-status" id="guardar-status-${pedidoId}" aria-hidden="true" style="align-self:center;
-            margin-left:auto;">
+            <span class="guardar-status" id="guardar-status-${pedidoId}" aria-hidden="true" style="align-self:center; margin-left:auto;">
               ${estado.guardado ? '✅' : ''}
             </span>
           </div>
           <div class='status-container'>
             <label><input type='checkbox' ${estado.guardado ? 'checked' : ''} onchange="toggleGuardado('${key}', this)"> Guardado</label>
             <label><input type='checkbox' ${estado.recibido ? 'checked' : ''} onchange="toggleRecibido('${key}', this)"> Recibido</label>
-       
             <label><input type="checkbox" id="modo-devolucion-${pedidoId}"> Devolución</label>
           </div>
         </div>
@@ -1605,6 +1619,7 @@
   </script>
 </body>
 </html>
+
 
 
 
