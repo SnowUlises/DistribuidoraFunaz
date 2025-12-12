@@ -1370,37 +1370,55 @@
     const checks = document.querySelectorAll('.peticion-check:checked');
     if(checks.length === 0) return alert('Selecciona al menos una petición.');
 
-    // Usamos Map para mantener el orden de los productos tal cual aparecen
-    const aggregated = new Map(); 
+    const aggregated = new Map();
 
-    // 1. Sumar totales requeridos
+    // 1. Recorrer peticiones y sumar productos
     checks.forEach(chk => {
         const peticionId = chk.value;
         const div = document.getElementById(`peticion-${peticionId}`);
         if(!div) return;
+        
+        // Obtener items actualizados desde el HTML
         const items = JSON.parse(div.dataset.items || '[]');
 
         items.forEach(item => {
-            const id = String(item.id);
-            if(!aggregated.has(id)) {
-                aggregated.set(id, { nombre: item.nombre, cantidad: 0 });
+            const idKey = String(item.id); // Usar String para ID consistente
+            
+            if(!aggregated.has(idKey)) {
+                aggregated.set(idKey, { nombre: item.nombre, cantidad: 0 });
             }
-            // Aseguramos que sea numero para sumar y no concatenar texto
-            aggregated.get(id).cantidad += Number(item.cantidad);
+            
+            // SUMA SEGURA: Convertir a Número explícitamente para evitar concatenación de texto
+            const qtyNumerica = Number(item.cantidad) || 0;
+            aggregated.get(idKey).cantidad += qtyNumerica;
         });
     });
-    const faltantes = [];
-    for (const [id, req] of aggregated) {
-        const prod = productos.find(p => String(p.id) === id);
-        const stockRaw = prod ? Number(prod.stock || 0) : 0;
-        const stockReal = Math.max(stockRaw, 0); 
 
-        const missing = req.cantidad - stockReal;
+    // 2. Calcular faltantes comparando con Stock Global
+    const faltantes = [];
+    
+    // El bucle sobre el Map respeta el orden de inserción (visual)
+    for (const [idKey, data] of aggregated) {
+        // Buscar producto en la lista global (usando '==' para coincidir texto/numero)
+        const product = productos.find(p => p.id == idKey);
+        
+        // LÓGICA STOCK: Convertir a número. Si es negativo o no existe, cuenta como 0.
+        let stock = product ? Number(product.stock) : 0;
+        if (isNaN(stock) || stock < 0) {
+            stock = 0;
+        }
+
+        const missing = data.cantidad - stock;
         
         if(missing > 0) {
-            faltantes.push(`${missing} ${req.nombre}`);
+            faltantes.push(`${missing} ${data.nombre}`);
         }
     }
+
+    // 3. Copiar al portapapeles
+    const text = faltantes.join('\n') || 'No faltan productos (Stock suficiente para la selección).';
+    navigator.clipboard.writeText(text).then(() => alert('Faltantes copiados:\n' + text));
+  }
 
     // 3. Copiar
     const text = faltantes.join('\n') || 'No faltan productos (El stock cubre lo seleccionado).';
@@ -1563,4 +1581,5 @@
   </script>
 </body>
 </html>
+
 
