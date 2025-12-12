@@ -274,27 +274,33 @@ app.put('/api/actualizar-pedido/:id', async (req, res) => {
 });
 
 /* --- GUARDAR PEDIDO (VENTA) --- */
+/* --- GUARDAR PEDIDO (VENTA / ACEPTAR PETICIÓN) --- */
 app.post('/api/guardar-pedidos', async (req, res) => {
   try {
     const pedidoItems = req.body.pedido;
+    // Capturamos el nombre de usuario (fallback a 'usuario' o 'invitado')
     const usuarioPedido = req.body.user || req.body.usuario || 'invitado';
     
-    // 🔥 NUEVO: Recibimos ID y Negocio para no perderlos al aceptar pedido
-    const userId = req.body.user_id || null;
-    const nombreNegocio = req.body.nombre_negocio || null;
-    // -------------------------------------
+    // 🔥 CORRECCIÓN CLAVE: Capturar IDs y Datos de Negocio
+    // Agregamos fallbacks por si el frontend los envía con otros nombres comunes (uid, negocio)
+    const userId = req.body.user_id || req.body.uid || null;
+    const nombreNegocio = req.body.nombre_negocio || req.body.negocio || null; 
 
     if (!Array.isArray(pedidoItems) || pedidoItems.length === 0) {
       return res.status(400).json({ error: 'Pedido inválido' });
     }
+
     let total = 0;
     const items = [];
+    // Usamos timestamp para el ID, asegurando que sea string
     const id = Date.now().toString();
 
-    // Loop de items
+    // --- Procesamiento de Items y Stock ---
     for (const it of pedidoItems) {
       const prodId = it.id;
+      // Consultar producto actual en DB
       const { data: prod, error: prodError } = await supabase.from('productos').select('*').eq('id', prodId).single();
+      
       if (prodError || !prod) {
         return res.status(400).json({ error: `Producto con ID ${prodId} no encontrado` });
       }
@@ -305,6 +311,7 @@ app.post('/api/guardar-pedidos', async (req, res) => {
       }
       
       const stockAnterior = Number(prod.stock) || 0;
+      // Prioridad: Precio del item (si hubo descuento/edición) > Precio DB
       const precioUnitario = Number(it.precio ?? it.precio_unitario ?? prod.precio) || 0;
       const subtotal = cantidadFinal * precioUnitario;
       total += subtotal;
@@ -317,34 +324,36 @@ app.post('/api/guardar-pedidos', async (req, res) => {
         subtotal
       });
       
-      // Update DB
+      // Actualizar Stock en DB
       const newStock = stockAnterior - cantidadFinal;
       const { error: updErr } = await supabase.from('productos').update({ stock: newStock }).eq('id', prodId);
       
       if (updErr) {
         return res.status(500).json({ error: `Error actualizando stock para producto ${prodId}: ${updErr.message}` });
       } else {
-        // REGISTRO Y ACTUALIZACION DE SNAPSHOT
+        // Registrar movimiento en historial y snapshot
         await registrarMovimiento(prodId, prod.nombre, -cantidadFinal, stockAnterior, newStock, 'VENTA', id);
       }
     }
     
     if (items.length === 0) return res.status(400).json({ error: 'No hay items válidos para el pedido' });
     
+    // Ajuste de fecha local (GMT-3 aprox)
     const fechaLocal = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
     
-    // --- 🔥 PAYLOAD MODIFICADO: Guardamos user_id y nombre_negocio ---
+    // --- 🔥 ARMADO DEL PAYLOAD CON LOS DATOS DE USUARIO Y NEGOCIO ---
     const payload = { 
         id, 
         user: usuarioPedido, 
         fecha: fechaLocal, 
         items, 
         total,
+        // Aquí insertamos los datos que antes se borraban:
         user_id: userId,
         nombre_negocio: nombreNegocio
     };
     
-    console.log('💾 Guardando pedido:', payload);
+    console.log('💾 Guardando pedido completo:', payload);
     
     const { data, error } = await supabase.from('pedidos').insert([payload]).select().single();
     if (error) return res.status(500).json({ error: `Error al guardar el pedido: ${error.message}` });
@@ -356,6 +365,7 @@ app.post('/api/guardar-pedidos', async (req, res) => {
       id: returnedId,
       endpoint_pdf: `/api/pedidos/${returnedId}/pdf`
     });
+
   } catch (err) {
     console.error('❌ Exception en guardar-pedidos:', err);
     res.status(500).json({ error: err.message || 'Error interno del servidor' });
@@ -718,3 +728,4 @@ async function generarPDF(pedido) {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
