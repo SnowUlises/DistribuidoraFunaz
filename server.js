@@ -37,6 +37,7 @@ async function registrarMovimiento(prodId, nombre, cambio, stockAnt, stockNue, t
     }]);
 
     // B. ACTUALIZAMOS LA FOTO EN LA TABLA AUXILIAR 'monitor_snapshot'
+    // Esto evita que el monitor detecte este cambio legítimo como un "desajuste"
     const { error } = await supabase
         .from('monitor_snapshot')
         .upsert({ id: prodId, stock: stockNue });
@@ -278,7 +279,7 @@ app.post('/api/guardar-pedidos', async (req, res) => {
     const pedidoItems = req.body.pedido;
     const usuarioPedido = req.body.user || req.body.usuario || 'invitado';
     
-    // --- NUEVO: Recibimos ID y Negocio ---
+    // 🔥 NUEVO: Recibimos ID y Negocio para no perderlos al aceptar pedido
     const userId = req.body.user_id || null;
     const nombreNegocio = req.body.nombre_negocio || null;
     // -------------------------------------
@@ -332,7 +333,7 @@ app.post('/api/guardar-pedidos', async (req, res) => {
     
     const fechaLocal = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
     
-    // --- PAYLOAD MODIFICADO ---
+    // --- 🔥 PAYLOAD MODIFICADO: Guardamos user_id y nombre_negocio ---
     const payload = { 
         id, 
         user: usuarioPedido, 
@@ -408,10 +409,10 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
    RESTO DE ENDPOINTS (PDF, PETICIONES, LISTADOS)
    ========================================================= */
 
-// GENERAR PDF DE PETICIÓN (PREVIEW) - 🔥 MODIFICADO PARA NEGOCIO
+// GENERAR PDF DE PETICIÓN (PREVIEW) - 🔥 MODIFICADO PARA INCLUIR NEGOCIO
 app.post('/api/generar-pdf-peticion', async (req, res) => {
   try {
-    const { user, items, total, fecha, nombre_negocio } = req.body; // <-- Recibe nombre_negocio
+    const { user, items, total, fecha, nombre_negocio } = req.body;
     if (!user || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Datos inválidos' });
     }
@@ -428,7 +429,7 @@ app.post('/api/generar-pdf-peticion', async (req, res) => {
       })),
       total: Number(total) || 0,
       fecha: fechaLocal || new Date().toISOString(),
-      nombre_negocio: nombre_negocio // <-- Lo pasa al generador
+      nombre_negocio: nombre_negocio // <-- Pasamos el dato
     };
     
     const pdfBuffer = await generarPDF(pedido);
@@ -566,7 +567,7 @@ app.get('/api/pedidos/:id/pdf', async (req, res) => {
   }
 });
 
-// GUARDAR PETICIÓN (ENVIAR) - 🔥 MODIFICADO: SIN TELEFONO
+// GUARDAR PETICIÓN (ENVIAR) - 🔥 MODIFICADO: SIN TELÉFONO + NUEVOS CAMPOS
 app.post('/api/Enviar-Peticion', async (req, res) => {
     try {
         console.log('Received payload:', JSON.stringify(req.body, null, 2));
@@ -614,7 +615,7 @@ app.post('/api/Enviar-Peticion', async (req, res) => {
         const totalInt = Math.round(total);
         const fechaLocal = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
         
-        // 4. Payload SIN telefono, CON nuevos campos
+        // 4. Payload SIN telefono, CON nuevos campos (user_id, nombre_negocio)
         const payload = {
             nombre,
             // telefono: ELIMINADO
@@ -663,13 +664,13 @@ async function generarPDF(pedido) {
     }
     
     // Encabezado
-    doc.font('Helvetica-Bold').fontSize(16).text(`${pedido.user || pedido.nombre || 'Invitado'}`, { align: 'center' });
+    doc.font('Helvetica-Bold').fontSize(16).text(`${pedido.user || 'Invitado'}`, { align: 'center' });
     doc.moveDown(1);
     doc.font('Helvetica').fontSize(14);
     doc.text(`Dirección: Calle Colon 1740 Norte`);
     doc.text(`Factura N°: ${pedido.id || ''}`);
     
-    // 🔥 NUEVO: Mostrar Negocio
+    // 🔥 NUEVO: Mostrar Negocio si existe
     if(pedido.nombre_negocio) {
         doc.text(`Negocio: ${pedido.nombre_negocio}`);
     }
