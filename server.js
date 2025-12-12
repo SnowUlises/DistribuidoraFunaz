@@ -677,7 +677,7 @@ async function generarPDF(pedido) {
     
     // Si existe nombre del negocio, lo mostramos justo debajo, centrado
     if (pedido.nombre_negocio) {
-        doc.fontSize(14).font('Helvetica-Bold').text(`(Negocio: ${pedido.nombre_negocio})`, { align: 'center' });
+        doc.fontSize(14).font('Helvetica-Bold').text(`${pedido.nombre_negocio}`, { align: 'center' });
     }
 
     doc.moveDown(1);
@@ -729,3 +729,4 @@ async function generarPDF(pedido) {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
