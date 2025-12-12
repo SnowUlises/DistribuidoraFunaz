@@ -1395,6 +1395,26 @@
     }
   }
 
+
+  function copiarFaltantes(peticionId) {
+    const peticionDiv = document.getElementById(`peticion-${peticionId}`);
+    if (!peticionDiv) return alert('Petición no encontrada');
+    const items = JSON.parse(peticionDiv.dataset.items);
+    let faltantes = [];
+    for (const item of items) {
+      const product = productos.find(p => p.id === item.id);
+      const stock = product ? Math.max(product.stock || 0, 0) : 0;
+      const missing = Math.max(0, item.cantidad - stock);
+      if (missing > 0) faltantes.push(`${missing} ${item.nombre}`);
+    }
+    const textToCopy = faltantes.join('\n');
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      alert('Faltantes copiados:\n' + textToCopy);
+    }).catch(() => {
+      alert('Error al copiar. Copia manual:\n' + textToCopy);
+    });
+  }
+    
   function copiarFaltantesGrupo() {
     const checks = document.querySelectorAll('.peticion-check:checked');
     if(checks.length === 0) return alert('Selecciona al menos una petición.');
@@ -1619,6 +1639,7 @@
   </script>
 </body>
 </html>
+
 
 
 
