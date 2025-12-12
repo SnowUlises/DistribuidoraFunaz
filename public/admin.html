@@ -1420,10 +1420,6 @@
     navigator.clipboard.writeText(text).then(() => alert('Faltantes copiados:\n' + text));
   }
 
-    // 3. Copiar
-    const text = faltantes.join('\n') || 'No faltan productos (El stock cubre lo seleccionado).';
-    navigator.clipboard.writeText(text).then(() => alert('Faltantes copiados:\n' + text));
-  }
 
   async function previewPDF(peticionId) {
       const peticionDiv = document.getElementById(`peticion-${peticionId}`);
@@ -1594,5 +1590,6 @@
   </script>
 </body>
 </html>
+
 
 
