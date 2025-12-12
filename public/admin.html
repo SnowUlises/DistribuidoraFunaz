@@ -1193,6 +1193,9 @@
         const isUsed = usedButtons[peticion.id];
         peticionDiv.dataset.items = JSON.stringify(peticion.items);
         peticionDiv.dataset.nombre = peticion.nombre;
+        peticionDiv.dataset.userId = peticion.user_id || '';
+        peticionDiv.dataset.nombreNegocio = peticion.nombre_negocio || '';
+        
         const { formattedDate, formattedTime } = formatDateTime(peticion.fecha);
         
      
@@ -1334,15 +1337,27 @@
       const items = JSON.parse(peticionDiv.dataset.items || '[]');
       if (items.length === 0) return alert('No hay items');
       
+      // Recuperamos datos del dataset
       const nombre = peticionDiv.dataset.nombre;
+      // 🔥 CORRECCIÓN 2: Leemos lo que guardamos en el paso anterior
+      const userId = peticionDiv.dataset.userId || null;
+      const nombreNegocio = peticionDiv.dataset.nombreNegocio || null;
+
       const pedidoItems = items.map(item => ({
         id: item.id, cantidad: item.cantidad,
         precio: subtractThreePercent ? item.precio_unitario * 0.97 : item.precio_unitario
       }));
+
       const res = await fetch(`${apiBase}/guardar-pedidos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user: nombre, pedido: pedidoItems })
+        // 🔥 AHORA SÍ enviamos todo al servidor
+        body: JSON.stringify({ 
+            user: nombre, 
+            pedido: pedidoItems,
+            user_id: userId,
+            nombre_negocio: nombreNegocio
+        })
       });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
       
@@ -1590,5 +1605,6 @@
   </script>
 </body>
 </html>
+
 
 
