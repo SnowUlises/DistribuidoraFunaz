@@ -273,7 +273,6 @@ app.put('/api/actualizar-pedido/:id', async (req, res) => {
   }
 });
 
-/* --- GUARDAR PEDIDO (VENTA) --- */
 /* --- GUARDAR PEDIDO (VENTA / ACEPTAR PETICIÓN) --- */
 app.post('/api/guardar-pedidos', async (req, res) => {
   try {
@@ -673,18 +672,20 @@ async function generarPDF(pedido) {
       doc.moveDown(8);
     }
     
-    // Encabezado
+    // 🔥 CAMBIO: Encabezado con Nombre y debajo el Negocio centrado
     doc.font('Helvetica-Bold').fontSize(16).text(`${pedido.user || 'Invitado'}`, { align: 'center' });
+    
+    // Si existe nombre del negocio, lo mostramos justo debajo, centrado
+    if (pedido.nombre_negocio) {
+        doc.fontSize(14).font('Helvetica-Bold').text(`(Negocio: ${pedido.nombre_negocio})`, { align: 'center' });
+    }
+
     doc.moveDown(1);
+    
     doc.font('Helvetica').fontSize(14);
     doc.text(`Dirección: Calle Colon 1740 Norte`);
     doc.text(`Factura N°: ${pedido.id || ''}`);
     
-    // 🔥 NUEVO: Mostrar Negocio si existe
-    if(pedido.nombre_negocio) {
-        doc.text(`Negocio: ${pedido.nombre_negocio}`);
-    }
-
     doc.text(`Pedidos: 2645583761`);
     doc.text(`Consultas: 2645156933`);
     doc.moveDown(1.5);
@@ -728,4 +729,3 @@ async function generarPDF(pedido) {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
-
