@@ -577,19 +577,20 @@ app.get('/api/pedidos/:id/pdf', async (req, res) => {
 });
 
 // GUARDAR PETICIÓN (ENVIAR) - 🔥 MODIFICADO: SIN TELÉFONO + NUEVOS CAMPOS
+// GUARDAR PETICIÓN (ENVIAR) - 🔥 CORREGIDO: AHORA SÍ GUARDA EL TELÉFONO
 app.post('/api/Enviar-Peticion', async (req, res) => {
     try {
         console.log('Received payload:', JSON.stringify(req.body, null, 2));
         
-        // 1. Extraer datos (SIN TELEFONO)
-        let { nombre, items: pedidoItems, total: providedTotal, user_id, nombre_negocio } = req.body;
+        // 1. Extraer datos (AGREGAMOS 'telefono')
+        let { nombre, telefono, items: pedidoItems, total: providedTotal, user_id, nombre_negocio } = req.body;
         
         // Remove "Nombre: " prefix if present
         if (nombre && nombre.startsWith('Nombre: ')) {
             nombre = nombre.slice('Nombre: '.length).trim();
         }
 
-        // 2. Validación (SIN TELEFONO)
+        // 2. Validación
         if (!nombre || !Array.isArray(pedidoItems) || pedidoItems.length === 0) {
             return res.status(400).json({ error: 'Petición inválida: nombre o items faltantes' });
         }
@@ -624,10 +625,19 @@ app.post('/api/Enviar-Peticion', async (req, res) => {
         const totalInt = Math.round(total);
         const fechaLocal = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
         
-        // 4. Payload SIN telefono, CON nuevos campos (user_id, nombre_negocio)
+        // LIMPIEZA DE TELÉFONO (Para evitar errores con int8)
+        // Esto quita espacios, guiones y paréntesis, dejando solo números.
+        let telefonoLimpio = null;
+        if (telefono) {
+            telefonoLimpio = telefono.toString().replace(/\D/g, ''); 
+            // Si quedó vacío después de limpiar (ej: el usuario puso "no tengo"), enviamos null
+            if (telefonoLimpio === '') telefonoLimpio = null;
+        }
+
+        // 4. Payload CON telefono
         const payload = {
             nombre,
-            // telefono: ELIMINADO
+            telefono: telefonoLimpio, // <--- AQUÍ SE GUARDA EL DATO
             items: processedItems,
             total: totalInt,
             fecha: fechaLocal,
@@ -729,4 +739,5 @@ async function generarPDF(pedido) {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
