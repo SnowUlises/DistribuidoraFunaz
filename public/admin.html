@@ -1345,15 +1345,27 @@
 
   async function confirmarPeticion(peticionId, subtractThreePercent) {
     if (!confirm(`¿Confirmar esta petición${subtractThreePercent ? ' con -3%' : ''}?`)) return;
+
+    // 1. Obtener el contenedor y los botones
+    const peticionDiv = document.getElementById(`peticion-${peticionId}`);
+    const botones = peticionDiv.querySelectorAll('button');
+
+    // 2. BLOQUEAR LOS BOTONES VISUALMENTE (Para evitar doble click)
+    botones.forEach(btn => {
+        btn.disabled = true; // Deshabilita el click
+        if (btn.classList.contains('confirmar') || btn.classList.contains('confirmar-plus')) {
+            btn.dataset.originalText = btn.textContent; // Guardamos el texto original
+            btn.textContent = 'Procesando...'; // Feedback visual
+        }
+    });
+
     try {
-      if (usedButtons[peticionId]) return alert('Ya fue confirmado.');
-      const peticionDiv = document.getElementById(`peticion-${peticionId}`);
-      const items = JSON.parse(peticionDiv.dataset.items || '[]');
-      if (items.length === 0) return alert('No hay items');
+      if (usedButtons[peticionId]) throw new Error('Ya fue confirmado.');
       
-      // Recuperamos datos del dataset
+      const items = JSON.parse(peticionDiv.dataset.items || '[]');
+      if (items.length === 0) throw new Error('No hay items');
+      
       const nombre = peticionDiv.dataset.nombre;
-      // 🔥 CORRECCIÓN 2: Leemos lo que guardamos en el paso anterior
       const userId = peticionDiv.dataset.userId || null;
       const nombreNegocio = peticionDiv.dataset.nombreNegocio || null;
 
@@ -1365,7 +1377,6 @@
       const res = await fetch(`${apiBase}/guardar-pedidos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // 🔥 AHORA SÍ enviamos todo al servidor
         body: JSON.stringify({ 
             user: nombre, 
             pedido: pedidoItems,
@@ -1373,15 +1384,24 @@
             nombre_negocio: nombreNegocio
         })
       });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       
       await fetch(`${apiBase}/peticiones/${peticionId}`, { method: 'DELETE' });
       
       usedButtons[peticionId] = subtractThreePercent ? 'plus7' : 'normal';
       saveUsedButtons();
+      
       alert('Petición confirmada.');
       location.reload(); 
+
     } catch (err) {
+      botones.forEach(btn => {
+          btn.disabled = false;
+          if (btn.dataset.originalText) {
+              btn.textContent = btn.dataset.originalText;
+          }
+      });
       mostrarError(err.message);
     }
   }
@@ -1639,6 +1659,7 @@
   </script>
 </body>
 </html>
+
 
 
 
