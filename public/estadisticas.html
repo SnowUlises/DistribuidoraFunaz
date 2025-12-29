@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estadísticas - Distribuidora Funaz</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --primary: #2e7d32;
+      --primary-light: #4caf50;
+      --bg: #f8f9fa;
+      --text: #2c3e50;
+      --card-bg: #ffffff;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --radius: 12px;
+    }
+    
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      padding-bottom: 2em;
+    }
+
+    header {
+      background: var(--primary);
+      color: white;
+      text-align: center;
+      padding: 1.5em 0;
+      font-size: 1.8em;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2);
+      margin-bottom: 2em;
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1.5em;
+    }
+
+    .top-controls {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 2em;
+    }
+
+    button.btn-volver {
+      background: transparent;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    button.btn-volver:hover {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    /* --- TARJETAS KPI (Resumen) --- */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5em;
+        margin-bottom: 2em;
+    }
+
+    .kpi-card {
+        background: var(--card-bg);
+        padding: 1.5em;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        text-align: center;
+        border-bottom: 4px solid var(--primary);
+    }
+    
+    .kpi-value {
+        font-size: 2em;
+        font-weight: bold;
+        color: var(--primary);
+        margin: 10px 0;
+    }
+    
+    .kpi-label {
+        color: #666;
+        font-size: 0.9em;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* --- GRÁFICOS --- */
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 2em;
+        margin-bottom: 2em;
+    }
+
+    .chart-container {
+        background: white;
+        padding: 1.5em;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+    }
+    
+    h2 {
+        color: var(--primary);
+        border-bottom: 2px solid #e0e0e0;
+        padding-bottom: 10px;
+        margin-top: 0;
+    }
+
+    /* --- TABLAS --- */
+    .table-container {
+        background: white;
+        padding: 1.5em;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    th, td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    th {
+        background-color: var(--primary);
+        color: white;
+    }
+    
+    tr:hover { background-color: #f1f1f1; }
+
+    /* Utilidad para filtros de fecha */
+    .filter-bar {
+        background: white;
+        padding: 1em;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        margin-bottom: 2em;
+        display: flex;
+        gap: 1em;
+        align-items: center;
+    }
+    
+    select {
+        padding: 8px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        font-size: 1em;
+    }
+  </style>
+</head>
+<body>
+
+  <header>📊 Estadísticas y Métricas</header>
+
+  <main>
+    <div class="top-controls">
+      <button class="btn-volver" onclick="location.href='admin.txt'">← Volver al Admin</button> </div>
+
+    <div class="filter-bar">
+        <strong>Filtrar por:</strong>
+        <select id="mesSelect" onchange="cargarDatos()">
+            </select>
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-label">Ventas Totales</div>
+            <div class="kpi-value" id="kpi-total">$0</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Pedidos Realizados</div>
+            <div class="kpi-value" id="kpi-pedidos">0</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Ticket Promedio</div>
+            <div class="kpi-value" id="kpi-ticket">$0</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Producto Estrella</div>
+            <div class="kpi-value" id="kpi-top-prod" style="font-size: 1.2em;">-</div>
+        </div>
+    </div>
+
+    <div class="charts-grid">
+        <div class="chart-container">
+            <h2>📈 Ventas por Día</h2>
+            <canvas id="chartVentasDia"></canvas>
+        </div>
+        <div class="chart-container">
+            <h2>🏆 Top 5 Productos (Unidades)</h2>
+            <canvas id="chartTopProductos"></canvas>
+        </div>
+    </div>
+
+    <div class="charts-grid">
+        <div class="chart-container">
+            <h2>🏢 Mejores Clientes</h2>
+            <canvas id="chartTopClientes"></canvas>
+        </div>
+        <div class="chart-container">
+            <h2>📦 Valor Stock vs Ventas</h2>
+            <canvas id="chartStockRatio"></canvas>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <h2>⚠️ Alerta de Stock Bajo (Menos de 10 u.)</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Stock Actual</th>
+                    <th>Precio Unit.</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody id="tablaStockBajo">
+                </tbody>
+        </table>
+    </div>
+
+  </main>
+
+  <script>
+    const apiBase = 'https://distribuidorafunaz-a2o6.onrender.com/api';
+    let chartVentas, chartProductos, chartClientes, chartStock;
+    let allPedidos = [];
+    let allProductos = [];
+
+    // Formateador de dinero
+    const moneyFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
+
+    // Inicializar
+    window.addEventListener('DOMContentLoaded', async () => {
+        await fetchData();
+        setupFilters();
+        procesarDatos(); // Procesa con el mes actual por defecto
+    });
+
+    async function fetchData() {
+        try {
+            // Cargar Pedidos y Productos en paralelo
+            const [resPedidos, resProductos] = await Promise.all([
+                fetch(`${apiBase}/pedidos`),
+                fetch(`${apiBase}/productos`)
+            ]);
+
+            allPedidos = await resPedidos.json();
+            allProductos = await resProductos.json();
+
+        } catch (error) {
+            console.error("Error cargando datos:", error);
+            alert("Error cargando datos del servidor.");
+        }
+    }
+
+    function setupFilters() {
+        const select = document.getElementById('mesSelect');
+        const meses = [
+            "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+            "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+        ];
+        
+        const hoy = new Date();
+        const mesActual = hoy.getMonth(); // 0-11
+        
+        // Llenar select con meses (simple, año actual)
+        meses.forEach((m, i) => {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = m + " " + hoy.getFullYear();
+            if(i === mesActual) option.selected = true;
+            select.appendChild(option);
+        });
+    }
+
+    function procesarDatos() {
+        const mesSeleccionado = parseInt(document.getElementById('mesSelect').value);
+        const anioActual = new Date().getFullYear();
+
+        // 1. Filtrar pedidos por mes y año
+        const pedidosFiltrados = allPedidos.filter(p => {
+            const fecha = new Date(p.fecha);
+            return fecha.getMonth() === mesSeleccionado && fecha.getFullYear() === anioActual;
+        });
+
+        actualizarKPIs(pedidosFiltrados);
+        actualizarGraficoVentasDia(pedidosFiltrados, mesSeleccionado, anioActual);
+        actualizarGraficoTopProductos(pedidosFiltrados);
+        actualizarGraficoClientes(pedidosFiltrados);
+        actualizarGraficoStock();
+        actualizarTablaStockBajo();
+    }
+
+    function actualizarKPIs(pedidos) {
+        const totalVentas = pedidos.reduce((sum, p) => sum + (Number(p.total) || 0), 0);
+        const cantidadPedidos = pedidos.length;
+        const ticketPromedio = cantidadPedidos > 0 ? totalVentas / cantidadPedidos : 0;
+
+        // Calcular Top Producto General
+        const conteoProductos = {};
+        pedidos.forEach(p => {
+            const items = Array.isArray(p.items) ? p.items : JSON.parse(p.items || '[]');
+            items.forEach(item => {
+                conteoProductos[item.nombre] = (conteoProductos[item.nombre] || 0) + Number(item.cantidad);
+            });
+        });
+        
+        let topProd = '-';
+        let maxVendidos = 0;
+        Object.entries(conteoProductos).forEach(([nombre, cant]) => {
+            if(cant > maxVendidos) {
+                maxVendidos = cant;
+                topProd = nombre;
+            }
+        });
+
+        // Render
+        document.getElementById('kpi-total').textContent = moneyFormatter.format(totalVentas);
+        document.getElementById('kpi-pedidos').textContent = cantidadPedidos;
+        document.getElementById('kpi-ticket').textContent = moneyFormatter.format(ticketPromedio);
+        document.getElementById('kpi-top-prod').textContent = topProd.length > 15 ? topProd.substring(0,15)+'...' : topProd;
+    }
+
+    function actualizarGraficoVentasDia(pedidos, mes, anio) {
+        // Crear array de días del mes (1 al 31)
+        const diasEnMes = new Date(anio, mes + 1, 0).getDate();
+        const labels = Array.from({length: diasEnMes}, (_, i) => i + 1);
+        const dataVentas = new Array(diasEnMes).fill(0);
+
+        pedidos.forEach(p => {
+            const dia = new Date(p.fecha).getDate();
+            dataVentas[dia - 1] += Number(p.total) || 0;
+        });
+
+        const ctx = document.getElementById('chartVentasDia').getContext('2d');
+        if(chartVentas) chartVentas.destroy();
+
+        chartVentas = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Ventas Diarias ($)',
+                    data: dataVentas,
+                    borderColor: '#2e7d32',
+                    backgroundColor: 'rgba(46, 125, 50, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        });
+    }
+
+    function actualizarGraficoTopProductos(pedidos) {
+        const conteo = {};
+        pedidos.forEach(p => {
+            const items = Array.isArray(p.items) ? p.items : JSON.parse(p.items || '[]');
+            items.forEach(item => {
+                conteo[item.nombre] = (conteo[item.nombre] || 0) + Number(item.cantidad);
+            });
+        });
+
+        // Ordenar y tomar Top 5
+        const sorted = Object.entries(conteo).sort((a,b) => b[1] - a[1]).slice(0, 5);
+        
+        const ctx = document.getElementById('chartTopProductos').getContext('2d');
+        if(chartProductos) chartProductos.destroy();
+
+        chartProductos = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: sorted.map(x => x[0]),
+                datasets: [{
+                    label: 'Unidades Vendidas',
+                    data: sorted.map(x => x[1]),
+                    backgroundColor: [
+                        '#2e7d32', '#43a047', '#66bb6a', '#81c784', '#a5d6a7'
+                    ]
+                }]
+            },
+            options: { indexAxis: 'y', responsive: true }
+        });
+    }
+
+    function actualizarGraficoClientes(pedidos) {
+        const clientes = {};
+        pedidos.forEach(p => {
+            // Prioridad: Nombre Negocio > Usuario
+            const nombre = p.nombre_negocio || p.user || 'Desconocido';
+            clientes[nombre] = (clientes[nombre] || 0) + (Number(p.total) || 0);
+        });
+
+        const sorted = Object.entries(clientes).sort((a,b) => b[1] - a[1]).slice(0, 5);
+
+        const ctx = document.getElementById('chartTopClientes').getContext('2d');
+        if(chartClientes) chartClientes.destroy();
+
+        chartClientes = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: sorted.map(x => x[0]),
+                datasets: [{
+                    data: sorted.map(x => x[1]),
+                    backgroundColor: ['#f57f17', '#fbc02d', '#fff176', '#ff9800', '#ffcc80']
+                }]
+            }
+        });
+    }
+
+    function actualizarGraficoStock() {
+        // Este no depende de las ventas, sino del stock actual
+        // Calculamos Valor total del inventario vs productos sin stock
+        let valorInventario = 0;
+        let itemsSinStock = 0;
+        let itemsConStock = 0;
+
+        allProductos.forEach(p => {
+            const stock = Number(p.stock) || 0;
+            const precio = Number(p.precio) || 0;
+            if (stock <= 0) itemsSinStock++;
+            else itemsConStock++;
+            valorInventario += (stock * precio);
+        });
+
+        const ctx = document.getElementById('chartStockRatio').getContext('2d');
+        if(chartStock) chartStock.destroy();
+
+        chartStock = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Con Stock', 'Sin Stock'],
+                datasets: [{
+                    data: [itemsConStock, itemsSinStock],
+                    backgroundColor: ['#2e7d32', '#d32f2f']
+                }]
+            },
+            options: {
+                plugins: {
+                    title: { display: true, text: `Valor Inventario: ${moneyFormatter.format(valorInventario)}` }
+                }
+            }
+        });
+    }
+
+    function actualizarTablaStockBajo() {
+        const tbody = document.getElementById('tablaStockBajo');
+        tbody.innerHTML = '';
+        
+        // Filtramos productos con stock < 10
+        const bajoStock = allProductos.filter(p => (Number(p.stock)||0) < 10).sort((a,b) => Number(a.stock) - Number(b.stock));
+
+        bajoStock.forEach(p => {
+            const tr = document.createElement('tr');
+            const stock = Number(p.stock)||0;
+            const colorStock = stock <= 0 ? 'color:#d32f2f; font-weight:bold;' : 'color:#f57c00;';
+            
+            tr.innerHTML = `
+                <td>${p.nombre}</td>
+                <td style="${colorStock}">${stock}</td>
+                <td>${moneyFormatter.format(p.precio)}</td>
+                <td>${stock === 0 ? 'AGOTADO' : 'Bajo'}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+  </script>
+</body>
+</html>
