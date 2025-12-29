@@ -12,265 +12,323 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         
-        /* Scrollbar más visible y cómodo */
-        .custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #e2e8f0; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        /* Scrollbar Fina y Elegante */
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        /* Estilos del Switch de Estado */
-        .switch-checkbox { display: none; }
-        .switch-label {
-            width: 44px; height: 24px;
+        /* Switch Toggle (Armando/Preparado) */
+        .toggle-switch {
+            position: relative; width: 44px; height: 24px;
             background-color: #fb923c; /* Orange default */
-            border-radius: 999px; position: relative; cursor: pointer;
-            transition: background-color 0.2s;
+            border-radius: 9999px; cursor: pointer; transition: background-color 0.3s ease;
         }
-        .switch-label::after {
+        .toggle-switch::after {
             content: ''; position: absolute; top: 2px; left: 2px;
             width: 20px; height: 20px; background-color: white; border-radius: 50%;
-            transition: transform 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
-        .switch-checkbox:checked + .switch-label { background-color: #65a30d; /* Lime/Green */ }
-        .switch-checkbox:checked + .switch-label::after { transform: translateX(20px); }
+        .toggle-input:checked + .toggle-switch { background-color: #65a30d; /* Lime/Green */ }
+        .toggle-input:checked + .toggle-switch::after { transform: translateX(20px); }
+        .toggle-input { display: none; }
 
         [v-cloak] { display: none; }
     </style>
 </head>
 <body>
-    <div id="app" v-cloak class="min-h-screen pb-20">
+    <div id="app" v-cloak class="min-h-screen pb-32 text-slate-800">
         
         <!-- HEADER -->
-        <header class="bg-white sticky top-0 z-50 shadow-md border-b border-gray-200">
-            <div class="max-w-[1920px] mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
-                <div class="flex items-center gap-4">
-                    <a href="/" class="p-2 hover:bg-gray-100 rounded-full transition"><i data-lucide="arrow-left" class="w-6 h-6 text-gray-600"></i></a>
-                    <h1 class="text-2xl font-bold text-gray-800">Administración</h1>
+        <header class="bg-white sticky top-0 z-50 border-b border-slate-200 shadow-sm backdrop-blur-md bg-opacity-90">
+            <div class="max-w-[1920px] mx-auto px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <a href="/" class="p-2 -ml-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition">
+                        <i data-lucide="arrow-left" class="w-6 h-6"></i>
+                    </a>
+                    <h1 class="text-2xl font-bold tracking-tight text-slate-800">Panel de Control</h1>
                 </div>
 
                 <!-- Buscador -->
-                <div class="w-full md:w-1/3 relative">
+                <div class="w-full md:w-[500px] relative group">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i data-lucide="search" class="w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors"></i>
+                    </div>
                     <input v-model="search" type="text" placeholder="Buscar cliente, ID o producto..." 
-                        class="w-full pl-11 pr-4 py-3 bg-gray-100 border-2 border-transparent focus:bg-white focus:border-blue-500 rounded-xl text-lg outline-none transition shadow-inner">
-                    <i data-lucide="search" class="w-6 h-6 text-gray-400 absolute left-3 top-3.5"></i>
+                        class="w-full pl-11 pr-4 py-2.5 bg-slate-100 border border-transparent rounded-xl text-base focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all shadow-sm">
+                    <button v-if="search" @click="search = ''" class="absolute right-3 top-2.5 text-slate-400 hover:text-red-500 transition">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
                 </div>
 
-                <!-- Métricas Rápidas -->
-                <div class="flex gap-4 text-sm font-semibold">
-                    <div class="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg border border-blue-200 shadow-sm flex flex-col items-center">
-                        <span>Peticiones</span>
-                        <span class="text-xl leading-none">{{ peticiones.length }}</span>
-                    </div>
-                    <div class="bg-orange-50 text-orange-700 px-4 py-2 rounded-lg border border-orange-200 shadow-sm flex flex-col items-center">
-                        <span>Armando</span>
-                        <span class="text-xl leading-none">{{ ordersArmando }}</span>
-                    </div>
-                    <div class="bg-green-50 text-green-700 px-4 py-2 rounded-lg border border-green-200 shadow-sm flex flex-col items-center">
-                        <span>Preparados</span>
-                        <span class="text-xl leading-none">{{ ordersPreparado }}</span>
+                <!-- Acciones Globales -->
+                <div class="flex items-center gap-3">
+                    <div class="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-bold border border-blue-100 flex items-center gap-2">
+                        <i data-lucide="inbox" class="w-5 h-5"></i>
+                        <span>{{ peticiones.length }} Peticiones</span>
                     </div>
                 </div>
             </div>
         </header>
 
-        <main class="max-w-[1920px] mx-auto px-4 py-6 space-y-8">
+        <main class="max-w-[1920px] mx-auto px-6 py-8 space-y-10">
             
-            <!-- Notificación Flotante -->
-            <div v-if="mensaje" :class="`fixed top-24 right-5 z-[100] p-4 rounded-xl shadow-2xl flex items-center gap-3 border-l-8 text-lg font-medium animate-bounce ${mensajeTipo === 'error' ? 'bg-red-100 text-red-800 border-red-500' : 'bg-green-100 text-green-800 border-green-500'}`">
-                <span>{{ mensaje }}</span>
-            </div>
+            <!-- Notificaciones -->
+            <transition enter-active-class="transition ease-out duration-300" enter-from-class="transform opacity-0 translate-y-2" enter-to-class="transform opacity-100 translate-y-0" leave-active-class="transition ease-in duration-200" leave-from-class="transform opacity-100 translate-y-0" leave-to-class="transform opacity-0 translate-y-2">
+                <div v-if="mensaje" :class="`fixed bottom-6 right-6 z-[100] px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 border-l-4 font-medium text-lg ${mensajeTipo === 'error' ? 'bg-white text-red-600 border-red-500' : 'bg-slate-800 text-white border-green-500'}`">
+                    <i :data-lucide="mensajeTipo === 'error' ? 'alert-circle' : 'check-circle'" class="w-6 h-6"></i>
+                    <span>{{ mensaje }}</span>
+                </div>
+            </transition>
 
-            <!-- SECCIÓN PETICIONES (Nuevos) -->
-            <section v-if="peticiones.length > 0" class="bg-blue-50/50 p-4 rounded-2xl border border-blue-200">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-blue-900 flex items-center gap-2">
-                        <i data-lucide="bell" class="w-6 h-6"></i> Nuevas Peticiones ({{peticiones.length}})
+            <!-- SECCIÓN PETICIONES -->
+            <section v-if="peticiones.length > 0" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                        <span class="bg-blue-100 text-blue-600 p-1.5 rounded-lg"><i data-lucide="bell" class="w-5 h-5"></i></span>
+                        Solicitudes Nuevas
                     </h2>
                     <div class="flex gap-2">
-                        <button v-if="selectedPeticiones.length" @click="procesarPeticionesMasivo(false)" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold shadow transition">Aceptar Selecc.</button>
-                        <button v-if="selectedPeticiones.length" @click="procesarPeticionesMasivo(true)" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg font-bold shadow transition">Aceptar -10%</button>
+                        <transition name="fade">
+                            <div v-if="selectedPeticiones.length > 0" class="flex gap-2">
+                                <button @click="procesarPeticionesMasivo(false)" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-sm transition flex items-center gap-2">
+                                    <i data-lucide="check" class="w-4 h-4"></i> Aceptar ({{selectedPeticiones.length}})
+                                </button>
+                                <button @click="procesarPeticionesMasivo(true)" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-sm transition flex items-center gap-2">
+                                    <i data-lucide="percent" class="w-4 h-4"></i> Aceptar -10%
+                                </button>
+                            </div>
+                        </transition>
                     </div>
                 </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    <div v-for="peticion in peticiones" :key="peticion.id" class="bg-white rounded-xl shadow border border-blue-100 overflow-hidden">
-                        <div class="bg-blue-100 p-3 flex justify-between items-center">
-                            <div class="flex items-center gap-3 overflow-hidden">
-                                <input type="checkbox" v-model="selectedPeticiones" :value="peticion.id" class="w-5 h-5 cursor-pointer">
-                                <h3 class="font-bold text-gray-800 truncate">{{ peticion.nombre }}</h3>
+                
+                <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 bg-slate-50/50">
+                    <div v-for="peticion in peticiones" :key="peticion.id" class="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow duration-200 flex flex-col group">
+                        <!-- Header Petición -->
+                        <div class="p-4 border-b border-slate-100 bg-white rounded-t-xl">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="flex items-center gap-3">
+                                    <input type="checkbox" v-model="selectedPeticiones" :value="peticion.id" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                    <div>
+                                        <h3 class="font-bold text-slate-900 leading-tight">{{ peticion.nombre }}</h3>
+                                        <div class="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
+                                            <i data-lucide="clock" class="w-3 h-3"></i> {{ formatDate(peticion.fecha) }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-mono text-slate-400 bg-slate-100 px-2 py-1 rounded">#{{ peticion.id }}</span>
                             </div>
-                            <span class="text-xs font-mono text-blue-600 bg-white px-2 py-0.5 rounded">#{{ peticion.id }}</span>
+                            <div class="flex justify-between items-center text-sm">
+                                <span v-if="peticion.telefono" class="text-slate-600 font-medium flex items-center gap-1">
+                                    <i data-lucide="phone" class="w-3 h-3"></i> {{ peticion.telefono }}
+                                </span>
+                                <span class="font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">{{ formatMoney(peticion.total) }}</span>
+                            </div>
                         </div>
-                        <div class="p-3">
-                            <div class="flex justify-between text-sm mb-2 font-medium">
-                                <span>{{ peticion.telefono }}</span>
-                                <span class="text-blue-700 font-bold text-base">{{ formatMoney(peticion.total) }}</span>
-                            </div>
-                            <div class="bg-gray-50 p-2 rounded border max-h-40 overflow-y-auto custom-scroll text-sm mb-3">
-                                <div v-for="item in parseItems(peticion.items)" class="flex justify-between border-b border-gray-200 py-1">
-                                    <span class="truncate pr-2"><b>{{ item.cantidad }}</b> x {{ item.nombre }}</span>
-                                    <span>{{ formatMoney(item.subtotal) }}</span>
+
+                        <!-- Body Petición -->
+                        <div class="p-2 flex-1 bg-white relative">
+                            <div class="bg-slate-50 rounded-lg p-2 max-h-[180px] overflow-y-auto custom-scroll border border-slate-100 space-y-1">
+                                <div v-for="item in parseItems(peticion.items)" class="flex justify-between text-sm py-1 border-b border-slate-100 last:border-0 border-dashed">
+                                    <span class="truncate pr-2 text-slate-700">
+                                        <span class="font-bold bg-white border border-slate-200 px-1.5 rounded text-slate-900 mr-1">{{ item.cantidad }}</span> 
+                                        {{ item.nombre }}
+                                        <span v-if="getStockWarning(item)" class="text-red-500 ml-1 font-bold" title="Sin stock">!</span>
+                                    </span>
+                                    <span class="text-slate-500 font-medium">{{ formatMoney(item.subtotal) }}</span>
                                 </div>
                             </div>
-                            <div class="grid grid-cols-2 gap-2 text-sm font-bold">
-                                <button @click="confirmarPeticion(peticion, false)" class="bg-white border-2 border-green-500 text-green-600 py-2 rounded hover:bg-green-50">Confirmar</button>
-                                <button @click="confirmarPeticion(peticion, true)" class="bg-white border-2 border-teal-500 text-teal-600 py-2 rounded hover:bg-teal-50">-10%</button>
-                                <button @click="previewPDFPeticion(peticion)" class="bg-white border-2 border-orange-400 text-orange-600 py-2 rounded hover:bg-orange-50">Ver PDF</button>
-                                <button @click="eliminarPeticion(peticion.id)" class="bg-red-50 border border-red-200 text-red-600 py-2 rounded hover:bg-red-100">Eliminar</button>
-                            </div>
+                        </div>
+
+                        <!-- Footer Petición -->
+                        <div class="p-3 bg-slate-50 border-t border-slate-100 rounded-b-xl grid grid-cols-2 gap-2">
+                            <button @click="confirmarPeticion(peticion, false)" class="bg-white border border-green-200 text-green-700 hover:bg-green-50 py-1.5 rounded-lg text-xs font-bold transition">Confirmar</button>
+                            <button @click="confirmarPeticion(peticion, true)" class="bg-white border border-teal-200 text-teal-700 hover:bg-teal-50 py-1.5 rounded-lg text-xs font-bold transition">-10% Desc</button>
+                            <button @click="previewPDFPeticion(peticion)" class="bg-white border border-orange-200 text-orange-700 hover:bg-orange-50 py-1.5 rounded-lg text-xs font-bold transition">Ver PDF</button>
+                            <button @click="eliminarPeticion(peticion.id)" class="bg-white border border-red-200 text-red-600 hover:bg-red-50 py-1.5 rounded-lg text-xs font-bold transition">Eliminar</button>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- SECCIÓN CLIENTES (ACORDEÓN OPTIMIZADO) -->
+            <!-- SECCIÓN CLIENTES Y PEDIDOS -->
             <section>
-                <div class="flex items-center justify-between mb-4 sticky top-20 z-40 bg-gray-100/90 py-2 backdrop-blur">
-                    <h2 class="text-2xl font-bold text-gray-800">Clientes</h2>
-                    <!-- Acciones Masivas -->
-                    <div v-if="selectedOrders.length > 0" class="flex items-center gap-3 bg-gray-900 text-white px-6 py-2 rounded-full shadow-lg animate-fade-in">
-                        <span class="font-bold text-orange-300">{{ selectedOrders.length }} pedidos</span>
-                        <div class="h-4 w-px bg-gray-600"></div>
-                        <button @click="accionMasivaPedidos('cloud')" class="hover:text-green-300 font-bold transition">Guardar Cloud</button>
-                        <button @click="accionMasivaPedidos('pdf')" class="hover:text-orange-300 font-bold transition">Ver PDF</button>
-                        <button @click="selectedOrders = []" class="ml-2 bg-gray-700 rounded-full p-1"><i data-lucide="x" class="w-4 h-4"></i></button>
-                    </div>
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-slate-800">Clientes Activos</h2>
+                    
+                    <!-- Toolbar Flotante -->
+                    <transition name="fade">
+                        <div v-if="selectedOrders.length > 0" class="flex items-center gap-4 bg-slate-900 text-white px-6 py-2.5 rounded-full shadow-xl">
+                            <span class="font-bold text-orange-300">{{ selectedOrders.length }} seleccionados</span>
+                            <div class="h-5 w-px bg-slate-700"></div>
+                            <button @click="accionMasivaPedidos('cloud')" class="hover:text-green-400 font-bold transition text-sm flex items-center gap-1">
+                                <i data-lucide="cloud" class="w-4 h-4"></i> Guardar Cloud
+                            </button>
+                            <button @click="accionMasivaPedidos('pdf')" class="hover:text-orange-400 font-bold transition text-sm flex items-center gap-1">
+                                <i data-lucide="file-text" class="w-4 h-4"></i> Ver PDF
+                            </button>
+                            <button @click="selectedOrders = []" class="ml-2 hover:bg-slate-700 rounded-full p-1 transition"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        </div>
+                    </transition>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
+                <!-- GRID DE CLIENTES -->
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                     
-                    <!-- TARJETA DE CLIENTE -->
                     <div v-for="(orders, clientName) in filteredClients" :key="clientName" 
-                         class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden transition-all duration-200 hover:shadow-lg">
+                         class="bg-white rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-all duration-300 flex flex-col">
                         
-                        <!-- Cabecera Cliente (Siempre visible) -->
+                        <!-- Header Cliente (Acordeón) -->
                         <div @click="toggleClient(clientName)" 
-                             :class="['p-4 cursor-pointer flex justify-between items-center transition-colors select-none', activeClient === clientName ? 'bg-gray-800 text-white' : 'bg-white text-gray-800 hover:bg-gray-50']">
-                            <div>
-                                <h3 class="font-bold text-lg truncate">{{ clientName }}</h3>
-                                <div :class="['text-xs font-bold px-2 py-0.5 rounded inline-block mt-1', activeClient === clientName ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-500']">
-                                    {{ orders.length }} pedidos
+                             :class="['p-5 cursor-pointer flex justify-between items-center transition-colors select-none rounded-t-2xl', activeClient === clientName ? 'bg-slate-800 text-white' : 'bg-white text-slate-800 hover:bg-slate-50']">
+                            <div class="flex items-center gap-3">
+                                <div :class="['w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg', activeClient === clientName ? 'bg-slate-700 text-slate-200' : 'bg-slate-100 text-slate-600']">
+                                    {{ clientName.charAt(0).toUpperCase() }}
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-lg leading-tight">{{ clientName }}</h3>
+                                    <span :class="['text-xs font-medium', activeClient === clientName ? 'text-slate-400' : 'text-slate-500']">{{ orders.length }} pedidos</span>
                                 </div>
                             </div>
-                            <i :data-lucide="activeClient === clientName ? 'chevron-up' : 'chevron-down'" class="w-6 h-6"></i>
+                            <i :data-lucide="activeClient === clientName ? 'chevron-up' : 'chevron-down'" class="w-5 h-5 opacity-70"></i>
                         </div>
 
-                        <!-- CUERPO CLIENTE (Lazy Load con v-if para rendimiento) -->
-                        <div v-if="activeClient === clientName" class="p-3 bg-gray-100 border-t border-gray-200">
-                            <!-- GRID DE PEDIDOS DEL CLIENTE -->
+                        <!-- Cuerpo Cliente (Lazy Load) -->
+                        <div v-if="activeClient === clientName" class="p-4 bg-slate-100/50 border-t border-slate-200 rounded-b-2xl flex-1">
+                            
+                            <!-- Grid Interno de Pedidos (Restaurado) -->
                             <div class="grid grid-cols-1 gap-4">
-                                <div v-for="(pedido, idx) in orders" :key="pedido.uid"
-                                     :class="['rounded-lg border-l-8 shadow-sm transition-all duration-300 bg-white', 
-                                              getEstado(pedido.uid).recibido ? 'border-l-green-500 border border-green-200' : 'border-l-orange-500 border border-orange-200']">
+                                
+                                <div v-for="(pedido, idx) in getItemsSlice(clientName, orders)" :key="pedido.uid"
+                                     :class="['bg-white rounded-xl shadow-sm border-2 transition-all duration-200 overflow-hidden flex flex-col', 
+                                              getEstado(pedido.uid).recibido ? 'border-green-400 bg-green-50/30' : 'border-orange-400 bg-orange-50/30']">
                                     
-                                    <!-- Cabecera Pedido -->
-                                    <div :class="['p-3 border-b flex justify-between items-start rounded-t-lg', getEstado(pedido.uid).recibido ? 'bg-green-50 border-green-100' : 'bg-orange-50 border-orange-100']">
+                                    <!-- Header Pedido -->
+                                    <div class="p-3 border-b border-slate-100 flex justify-between items-start bg-white/80 backdrop-blur-sm">
                                         <div class="flex gap-3 w-full">
-                                            <input type="checkbox" v-model="selectedOrders" :value="pedido.uid" class="mt-1 w-5 h-5 cursor-pointer accent-gray-800">
-                                            <div>
-                                                <div v-if="pedido.nombre_negocio" class="text-xs font-bold text-orange-700 bg-white px-1 rounded border border-orange-200 mb-1 inline-block">🏢 {{ pedido.nombre_negocio }}</div>
-                                                <div v-if="pedido.user !== clientName" class="text-xs font-bold text-teal-700 bg-white px-1 rounded border border-teal-200 mb-1 inline-block">👤 {{ pedido.user }}</div>
-                                                <div class="text-sm text-gray-500 font-mono">{{ formatDate(pedido.fecha) }}</div>
-                                                <div class="text-2xl font-bold text-gray-800 mt-1">{{ formatMoney(calculateTotal(pedido)) }}</div>
+                                            <input type="checkbox" v-model="selectedOrders" :value="pedido.uid" class="mt-1 w-5 h-5 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer">
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex flex-wrap gap-1 mb-1">
+                                                    <span v-if="pedido.nombre_negocio" class="text-[10px] font-bold uppercase tracking-wide text-orange-700 bg-orange-100 px-1.5 py-0.5 rounded">{{ pedido.nombre_negocio }}</span>
+                                                    <span v-if="pedido.user !== clientName" class="text-[10px] font-bold uppercase tracking-wide text-teal-700 bg-teal-100 px-1.5 py-0.5 rounded">{{ pedido.user }}</span>
+                                                </div>
+                                                <div class="text-xs text-slate-500 font-mono mb-0.5">{{ formatDate(pedido.fecha) }}</div>
+                                                <div class="text-xl font-bold text-slate-800">{{ formatMoney(calculateTotal(pedido)) }}</div>
                                             </div>
                                         </div>
-                                        <div class="text-right">
-                                            <div class="text-xs text-gray-400 font-mono mb-1">ID: {{ String(pedido.id).slice(-4) }}</div>
-                                            <div v-if="estadosPedidos[pedido.uid]?.guardado" class="text-xl" title="Guardado Cloud">☁️</div>
+                                        <div class="text-right shrink-0 flex flex-col items-end">
+                                            <span class="text-[10px] font-mono text-slate-300">#{{ String(pedido.id).slice(-4) }}</span>
+                                            <i v-if="estadosPedidos[pedido.uid]?.guardado" data-lucide="cloud-lightning" class="w-4 h-4 text-blue-500 mt-1"></i>
                                         </div>
                                     </div>
 
-                                    <!-- Lista Items -->
-                                    <div class="p-2 max-h-[250px] overflow-y-auto custom-scroll bg-white">
-                                        <div v-for="(item, iIdx) in getItemsToShow(pedido)" :key="iIdx" class="flex justify-between items-center py-2 border-b border-gray-100 text-sm hover:bg-gray-50 px-1">
-                                            <div class="flex-1 pr-2">
-                                                <div class="font-medium text-gray-800">
-                                                    <span class="bg-gray-200 px-2 py-0.5 rounded font-bold mr-1">{{ item.cantidad }}</span>
+                                    <!-- Lista Items (Scrollable) -->
+                                    <div class="p-2 flex-1 max-h-[220px] overflow-y-auto custom-scroll bg-white relative">
+                                        <div v-if="loadingOrders[pedido.uid]" class="absolute inset-0 bg-white/80 z-10 flex items-center justify-center">
+                                            <div class="animate-spin text-orange-500"><i data-lucide="loader-2" class="w-8 h-8"></i></div>
+                                        </div>
+                                        <div v-for="(item, iIdx) in getItemsToShow(pedido)" :key="iIdx" class="flex justify-between items-center py-2 border-b border-dashed border-slate-100 last:border-0 hover:bg-slate-50 px-1 group/item">
+                                            <div class="flex-1 pr-2 text-sm leading-snug">
+                                                <div class="font-medium text-slate-700">
+                                                    <span class="bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded font-bold text-slate-800 mr-1">{{ item.cantidad }}</span>
                                                     {{ item.nombre }}
                                                 </div>
-                                                <div class="text-xs text-gray-400 pl-1">{{ formatMoney(item.precio_unitario) }}</div>
+                                                <div class="text-[11px] text-slate-400 pl-1 mt-0.5">{{ formatMoney(item.precio_unitario) }} u.</div>
                                             </div>
-                                            <div class="flex flex-col items-end gap-1">
-                                                <span class="font-bold text-gray-700">{{ formatMoney(item.subtotal) }}</span>
-                                                <!-- Botones edición rápida -->
-                                                <div v-if="!isOriginalView(pedido.uid)" class="flex gap-1">
-                                                    <button @click="modItem(pedido.uid, iIdx, 1)" class="w-6 h-6 flex items-center justify-center bg-green-100 text-green-700 rounded hover:bg-green-200 font-bold">+</button>
-                                                    <button @click="modItem(pedido.uid, iIdx, -1)" class="w-6 h-6 flex items-center justify-center bg-orange-100 text-orange-700 rounded hover:bg-orange-200 font-bold">-</button>
-                                                    <button @click="delItem(pedido.uid, iIdx)" class="w-6 h-6 flex items-center justify-center bg-red-100 text-red-700 rounded hover:bg-red-200 font-bold">×</button>
+                                            <div class="flex flex-col items-end gap-1 shrink-0">
+                                                <span class="font-bold text-slate-700 text-sm">{{ formatMoney(item.subtotal) }}</span>
+                                                <!-- Botones flotantes (hover) -->
+                                                <div v-if="!isOriginalView(pedido.uid)" class="flex gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity bg-white shadow-sm rounded-md border border-slate-100 p-0.5 scale-90 origin-right">
+                                                    <button @click="modItem(pedido.uid, iIdx, 1)" class="w-6 h-6 flex items-center justify-center bg-green-50 text-green-600 rounded hover:bg-green-100"><i data-lucide="plus" class="w-3 h-3"></i></button>
+                                                    <button @click="modItem(pedido.uid, iIdx, -1)" class="w-6 h-6 flex items-center justify-center bg-orange-50 text-orange-600 rounded hover:bg-orange-100"><i data-lucide="minus" class="w-3 h-3"></i></button>
+                                                    <button @click="delItem(pedido.uid, iIdx)" class="w-6 h-6 flex items-center justify-center bg-red-50 text-red-600 rounded hover:bg-red-100"><i data-lucide="x" class="w-3 h-3"></i></button>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
                                     <!-- Footer Controles -->
-                                    <div class="p-3 bg-gray-50 border-t border-gray-200 rounded-b-lg space-y-3">
+                                    <div class="p-3 bg-slate-50 border-t border-slate-200 space-y-3">
                                         
-                                        <!-- SWITCH ARMANDO / PREPARADO -->
-                                        <div class="flex items-center justify-between bg-white p-2 rounded-lg border shadow-sm">
-                                            <span :class="['text-sm font-bold uppercase', getEstado(pedido.uid).recibido ? 'text-green-600' : 'text-orange-500']">
-                                                {{ getEstado(pedido.uid).recibido ? 'Preparado' : 'Armando' }}
+                                        <!-- Switch Estado Visual -->
+                                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg border shadow-sm">
+                                            <span :class="['text-xs font-bold uppercase tracking-wide', getEstado(pedido.uid).recibido ? 'text-green-600' : 'text-orange-500']">
+                                                {{ getEstado(pedido.uid).recibido ? 'Preparado (Verde)' : 'Armando (Naranja)' }}
                                             </span>
-                                            
-                                            <div class="flex items-center gap-2">
-                                                <input type="checkbox" :id="'sw-'+pedido.uid" class="switch-checkbox"
+                                            <div class="relative">
+                                                <input type="checkbox" :id="'sw-'+pedido.uid" class="toggle-input"
                                                        :checked="getEstado(pedido.uid).recibido"
                                                        @change="toggleEstado(pedido.uid, $event.target.checked)">
-                                                <label :for="'sw-'+pedido.uid" class="switch-label"></label>
+                                                <label :for="'sw-'+pedido.uid" class="toggle-switch"></label>
                                             </div>
                                         </div>
 
-                                        <!-- Botones Acción -->
-                                        <div class="grid grid-cols-2 gap-2 text-sm font-bold">
-                                            <button @click="guardarCloud(pedido)" class="bg-gray-800 text-white py-2 rounded hover:bg-black transition">Guardar PDF</button>
-                                            <button @click="previewPDF(pedido)" class="bg-orange-500 text-white py-2 rounded hover:bg-orange-600 transition">PDF + 10%</button>
+                                        <!-- Botonera -->
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <button @click="guardarCloud(pedido)" class="bg-slate-800 text-white py-2 rounded-lg hover:bg-slate-900 transition text-xs font-bold flex items-center justify-center gap-1">
+                                                <i data-lucide="cloud" class="w-3 h-3"></i> PDF Cloud
+                                            </button>
+                                            <button @click="previewPDF(pedido)" class="bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition text-xs font-bold flex items-center justify-center gap-1">
+                                                <i data-lucide="file-search" class="w-3 h-3"></i> PDF +10%
+                                            </button>
                                             
-                                            <button @click="openAddModal(pedido.uid)" class="bg-white border-2 border-blue-200 text-blue-600 py-2 rounded hover:bg-blue-50">+ Prod</button>
-                                            <button @click="toggleOriginal(pedido.uid)" :class="['py-2 rounded border-2 transition', isOriginalView(pedido.uid) ? 'bg-purple-100 text-purple-700 border-purple-300' : 'bg-white text-purple-600 border-purple-200']">
+                                            <button @click="openAddModal(pedido.uid)" class="bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 py-2 rounded-lg text-xs font-bold transition">
+                                                + Prod
+                                            </button>
+                                            <button @click="toggleOriginal(pedido.uid)" :class="['py-2 rounded-lg text-xs font-bold transition border', isOriginalView(pedido.uid) ? 'bg-purple-100 text-purple-700 border-purple-300' : 'bg-white text-purple-600 border-purple-200 hover:bg-purple-50']">
                                                 {{ isOriginalView(pedido.uid) ? 'Volver' : 'Original' }}
                                             </button>
                                             
-                                            <button @click="actualizarPrecios(pedido.uid, false)" class="text-gray-600 bg-white border border-gray-300 py-2 rounded hover:bg-gray-100">$ Actualizar</button>
-                                            <button @click="actualizarPrecios(pedido.uid, true)" class="text-teal-600 bg-white border border-teal-200 py-2 rounded hover:bg-teal-50">$ -10%</button>
+                                            <button @click="actualizarPrecios(pedido.uid, false)" class="bg-white border border-slate-300 text-slate-600 hover:bg-slate-50 py-2 rounded-lg text-xs font-bold transition">$ Act</button>
+                                            <button @click="actualizarPrecios(pedido.uid, true)" class="bg-white border border-teal-300 text-teal-600 hover:bg-teal-50 py-2 rounded-lg text-xs font-bold transition">$ -10%</button>
                                         </div>
 
-                                        <div class="flex gap-2 pt-2 border-t border-gray-200">
-                                            <button @click="guardarCambios(pedido.uid)" :disabled="isOriginalView(pedido.uid)" class="flex-1 bg-green-600 text-white font-bold py-2 rounded hover:bg-green-700 shadow disabled:opacity-50">
+                                        <div class="flex gap-2 pt-1">
+                                            <button @click="guardarCambios(pedido.uid)" :disabled="isOriginalView(pedido.uid)" class="flex-1 bg-green-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-green-700 shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed">
                                                 Confirmar Cambios
                                             </button>
-                                            <button @click="eliminarPedido(pedido)" class="px-3 bg-red-50 text-red-500 border border-red-200 rounded hover:bg-red-100">
-                                                <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                            <button @click="eliminarPedido(pedido)" class="bg-white border border-red-200 text-red-500 hover:bg-red-50 px-3 rounded-lg transition" title="Eliminar Pedido">
+                                                <i data-lucide="trash-2" class="w-4 h-4"></i>
                                             </button>
                                         </div>
                                     </div>
-
                                 </div>
                             </div>
+
+                            <!-- Botón Cargar Más (Optimización) -->
+                            <button v-if="shouldShowLoadMore(clientName, orders)" @click="loadMore(clientName)" class="w-full mt-6 py-3 bg-white border border-slate-200 text-slate-500 font-bold text-sm rounded-xl hover:bg-slate-50 hover:text-slate-700 transition shadow-sm flex items-center justify-center gap-2">
+                                <i data-lucide="arrow-down-circle" class="w-5 h-5"></i> Cargar más pedidos...
+                            </button>
                         </div>
                     </div>
-
                 </div>
             </section>
         </main>
 
-        <!-- MODAL AGREGAR PRODUCTO -->
-        <div v-if="modalOpen" class="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4" @click.self="modalOpen = false">
-            <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
-                <h3 class="text-xl font-bold text-gray-800 mb-4">Añadir Productos</h3>
-                <div class="space-y-4">
+        <!-- MODAL: AÑADIR PRODUCTO -->
+        <div v-if="modalOpen" class="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200" @click.self="modalOpen = false">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform transition-all scale-100">
+                <div class="flex justify-between items-center mb-5">
+                    <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="package-plus" class="w-6 h-6 text-blue-600"></i> Añadir Productos
+                    </h3>
+                    <button @click="modalOpen = false" class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-1.5 rounded-lg transition"><i data-lucide="x" class="w-6 h-6"></i></button>
+                </div>
+                <div class="space-y-5">
                     <div>
-                        <label class="block text-sm font-bold text-gray-500 mb-1">IDs x Cantidad (Ej: 353x5, 24x1)</label>
-                        <input v-model="modalInput" type="text" ref="modalInputRef" class="w-full border-2 border-gray-300 rounded-lg p-3 text-lg font-mono focus:border-blue-500 outline-none" @keyup.enter="addProducts">
+                        <label class="block text-sm font-bold text-slate-500 uppercase mb-1.5 ml-1">IDs x Cantidad (ej: 353x5, 24x1)</label>
+                        <input v-model="modalInput" type="text" ref="modalInputRef" class="w-full border-2 border-slate-200 rounded-xl p-3 text-lg font-mono focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all placeholder:text-slate-300" placeholder="Ej: 353x5, 102x1" @keyup.enter="addProducts">
                     </div>
-                    <label class="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-200 cursor-pointer">
-                        <input type="checkbox" v-model="modalApplyDiscount" class="w-5 h-5 text-green-600">
-                        <span class="font-bold text-gray-700">Aplicar -10% descuento</span>
+                    <label class="flex items-center gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-100 transition select-none">
+                        <input type="checkbox" v-model="modalApplyDiscount" class="w-5 h-5 rounded border-slate-300 text-green-600 focus:ring-green-500">
+                        <span class="font-bold text-slate-700">Aplicar -10% descuento</span>
                     </label>
                 </div>
-                <div class="mt-6 flex justify-end gap-3">
-                    <button @click="modalOpen = false" class="px-5 py-2.5 font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">Cancelar</button>
-                    <button @click="addProducts" class="px-5 py-2.5 font-bold text-white bg-green-600 rounded-lg hover:bg-green-700">Añadir</button>
+                <div class="mt-8 flex justify-end gap-3">
+                    <button @click="modalOpen = false" class="px-6 py-3 font-bold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition">Cancelar</button>
+                    <button @click="addProducts" class="px-6 py-3 font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-600/30 transition transform active:scale-95">Añadir</button>
                 </div>
             </div>
         </div>
@@ -299,7 +357,8 @@
                     
                     // UI
                     search: '',
-                    activeClient: null, // SOLO UNO ABIERTO A LA VEZ (Rendimiento clave)
+                    activeClient: null, // Solo 1 cliente abierto para rendimiento
+                    loadedCounts: {},   // Paginación manual por cliente
                     selectedOrders: [],
                     selectedPeticiones: [],
                     
@@ -314,11 +373,7 @@
                 }
             },
             computed: {
-                ordersArmando() { return this.rawPedidos.filter(p => !this.estadosPedidos[p.uid]?.recibido).length; },
-                ordersPreparado() { return this.rawPedidos.filter(p => this.estadosPedidos[p.uid]?.recibido).length; },
-                
                 filteredClients() {
-                    // Agrupar por usuario
                     const groups = {};
                     this.rawPedidos.forEach((p, index) => {
                         p.uid = p.id ? String(p.id) : `${p.user}-${index}`;
@@ -327,11 +382,11 @@
                         groups[name].push(p);
                     });
 
-                    // Ordenar por fecha dentro del grupo
+                    // Ordenar por fecha
                     for(const key in groups) groups[key].sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
 
-                    // Filtrar si hay busqueda
                     if (!this.search) return groups;
+                    
                     const q = this.search.toLowerCase();
                     const result = {};
                     for (const [name, orders] of Object.entries(groups)) {
@@ -359,7 +414,7 @@
                     localStorage.setItem('usedButtons', JSON.stringify(this.usedButtons));
                 },
                 
-                // DATA
+                // DATA LOAD
                 async loadAll() {
                     try {
                         const [resProd, resPed, resPet] = await Promise.all([
@@ -377,11 +432,25 @@
                     } catch (e) { console.error(e); }
                 },
 
-                // LOGICA UI CLIENTES (ACORDEON UNICO)
+                // LOGICA UI OPTIMIZADA
                 toggleClient(name) {
-                    // Si toco el mismo, lo cierro. Si toco otro, abro ese y cierro el anterior.
                     this.activeClient = this.activeClient === name ? null : name;
-                    nextTick(() => lucide.createIcons()); // Refrescar iconos al abrir
+                    // Resetear contador al abrir para cargar solo los primeros 12
+                    if (this.activeClient) this.loadedCounts[name] = 12;
+                    nextTick(() => lucide.createIcons());
+                },
+                shouldShowLoadMore(name, group) {
+                    const count = this.loadedCounts[name] || 12;
+                    return group.length > count;
+                },
+                loadMore(name) {
+                    const current = this.loadedCounts[name] || 12;
+                    this.loadedCounts[name] = current + 12;
+                },
+                getItemsSlice(name, group) {
+                    // Solo renderizamos hasta el límite actual para no saturar el DOM
+                    const limit = this.loadedCounts[name] || 12;
+                    return group.slice(0, limit);
                 },
 
                 // ESTADOS
@@ -394,7 +463,7 @@
                     this.saveStorage();
                 },
 
-                // VISTA ORIGINAL
+                // LOGICA VISTA
                 isOriginalView(uid) { return this.estadosPedidos[uid]?.viewOriginal || false; },
                 toggleOriginal(uid) {
                     const st = this.getEstado(uid);
@@ -422,11 +491,9 @@
                     } catch(e) { this.showMsg('Error PDF', 'error'); } 
                     finally { this.loadingOrders[pedido.uid] = false; }
                 },
-                // LOGICA PDF +10%
                 async previewPDF(pedido) { 
                     this.loadingOrders[pedido.uid] = true;
                     try {
-                        // Aumento del 10% al total visual (o item por item si lo prefieres, aqui es item por item)
                         const itemsModified = pedido.items.map(i => ({
                             ...i, precio_unitario: i.precio_unitario * 1.10, subtotal: i.subtotal * 1.10
                         }));
@@ -444,9 +511,8 @@
                     finally { this.loadingOrders[pedido.uid] = false; }
                 },
                 
-                // GUARDAR CAMBIOS (DELTA)
                 async guardarCambios(uid) {
-                    if(!confirm('¿Guardar cambios en BD?')) return;
+                    if(!confirm('¿Guardar cambios permanentemente?')) return;
                     const pedido = this.rawPedidos.find(p => p.uid === uid);
                     const estado = this.getEstado(uid);
 
@@ -460,8 +526,6 @@
                     newItems.forEach(i => deltaMap.set(i.id, (deltaMap.get(i.id)||0) + Number(i.cantidad))); 
                     
                     const stockUpdates = [];
-                    // Logica Clave: Si NO está recibido (Armando), permite devolver stock (negativos).
-                    // Si está recibido (Verde), NO devuelve stock (ignora negativos).
                     for(const [id, delta] of deltaMap.entries()) {
                          if(delta > 0) stockUpdates.push({id, cantidad: delta});
                          else if (delta < 0 && !estado.recibido) stockUpdates.push({id, cantidad: delta});
@@ -479,7 +543,6 @@
 
                 async eliminarPedido(pedido) {
                     const estado = this.getEstado(pedido.uid);
-                    // Solo devuelve stock si NO está recibido (Verde)
                     const msg = estado.recibido 
                         ? 'ESTÁ EN PREPARADO (VERDE). NO SE DEVOLVERÁ STOCK.' 
                         : 'ESTÁ EN ARMANDO (NARANJA). SE DEVOLVERÁ EL STOCK.';
@@ -491,11 +554,10 @@
                         body: JSON.stringify({ recibido: estado.recibido })
                     });
                     this.rawPedidos = this.rawPedidos.filter(p => p.uid !== pedido.uid);
-                    // Si el cliente se queda vacio, cerrar acordeon
                     if(this.filteredClients[pedido.user]?.length === 0) this.activeClient = null;
                 },
 
-                // EDICION RAPIDA
+                // EDICION
                 modItem(uid, idx, chg) {
                     const item = this.rawPedidos.find(p => p.uid === uid).items[idx];
                     item.cantidad = Math.max(1, Number(item.cantidad) + chg);
@@ -511,7 +573,7 @@
                     
                     const pedido = this.rawPedidos.find(p => p.uid === uid);
                     const precioMap = new Map(this.productos.map(p => [p.id, p.precio]));
-                    const mult = discount ? 1.10 * 0.90 : 1.10; // -10% sobre lista nueva
+                    const mult = discount ? 1.10 * 0.90 : 1.10; // -10%
                     
                     pedido.items.forEach(i => {
                         const base = precioMap.get(i.id);
@@ -523,7 +585,6 @@
                     this.showMsg('Precios Actualizados', 'success');
                 },
 
-                // ADD MODAL
                 openAddModal(uid) { this.modalPedidoId = uid; this.modalInput = ''; this.modalOpen = true; nextTick(()=>this.$refs.modalInputRef.focus()); },
                 addProducts() {
                     const pedido = this.rawPedidos.find(p => p.uid === this.modalPedidoId);
@@ -533,7 +594,7 @@
                         const p = this.productos.find(pr => pr.id == idStr);
                         if(p) {
                             let precio = p.precio * 1.10;
-                            if(this.modalApplyDiscount) precio *= 0.90; // -10%
+                            if(this.modalApplyDiscount) precio *= 0.90;
                             const qty = parseInt(qtyStr)||1;
                             const exist = pedido.items.find(i => i.id == p.id);
                             if(exist) {
@@ -579,18 +640,6 @@
                 },
 
                 // MASIVO
-                copiarFaltantesGlobal() {
-                    const pending = this.rawPedidos.filter(p => !this.getEstado(p.uid).recibido);
-                    const agg = {};
-                    pending.forEach(p => p.items.forEach(i => {
-                        if(!agg[i.id]) agg[i.id] = {name:i.nombre, qty:0};
-                        agg[i.id].qty += Number(i.cantidad);
-                    }));
-                    let txt = "FALTANTES ARMANDO:\n";
-                    Object.values(agg).forEach(v => txt += `${v.qty} ${v.name}\n`);
-                    navigator.clipboard.writeText(txt);
-                    this.showMsg('Lista Global Copiada', 'success');
-                },
                 async accionMasivaPedidos(mode) {
                     if(!this.selectedOrders.length) return;
                     if(!confirm(`¿Procesar ${this.selectedOrders.length} pedidos?`)) return;
