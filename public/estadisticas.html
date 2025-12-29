@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Funaz</title>
+  <title>Dashboard Funaz - Master Analytics</title>
   
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
@@ -11,282 +11,420 @@
 
   <style>
     :root {
+      /* Paleta de Colores Corporativa y Semántica */
       --primary: #2e7d32;
       --primary-dark: #1b5e20;
       --primary-light: #4caf50;
       --accent: #e8f5e9;
-      --bg: #f0f2f5;
-      --text: #374151;
-      --text-light: #6b7280;
-      --card-bg: #ffffff;
-      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      --radius: 16px;
+      
+      --bg-body: #f0f2f5;
+      --bg-card: #ffffff;
+      --text-main: #111827;
+      --text-muted: #6b7280;
+      
+      /* Estados */
       --success: #10b981;
+      --warning: #f59e0b;
       --danger: #ef4444;
+      --info: #3b82f6;
+      --purple: #8b5cf6;
+
+      /* UI */
+      --radius: 16px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     }
     
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      padding-bottom: 3em;
+      background: var(--bg-body);
+      color: var(--text-main);
+      padding-bottom: 4rem;
     }
 
-    /* --- HEADER --- */
+    /* --- HEADER PREMIUM --- */
     header {
-      background: var(--primary);
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       color: white;
-      padding: 1rem 2rem;
+      padding: 1.2rem 2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 4px 20px rgba(46, 125, 50, 0.25);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
     
-    header h1 { margin: 0; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
+    header h1 { 
+      margin: 0; 
+      font-size: 1.5rem; 
+      font-weight: 700; 
+      display: flex; 
+      align-items: center; 
+      gap: 12px; 
+      letter-spacing: 0.5px;
+    }
     
-    .header-actions { display: flex; gap: 1rem; }
+    .header-btns { display: flex; gap: 10px; }
 
     button.btn-glass {
-      background: rgba(255, 255, 255, 0.2);
-      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.25);
       color: white;
       padding: 8px 16px;
       border-radius: 8px;
       cursor: pointer;
       font-weight: 600;
+      font-size: 0.9rem;
       display: flex;
       align-items: center;
-      gap: 5px;
-      transition: all 0.2s;
+      gap: 8px;
+      transition: all 0.2s ease;
       backdrop-filter: blur(4px);
     }
-    button.btn-glass:hover { background: rgba(255, 255, 255, 0.3); transform: translateY(-1px); }
+    button.btn-glass:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
 
-    /* --- LAYOUT --- */
+    /* --- CONTENEDOR PRINCIPAL --- */
     main {
-      max-width: 1400px;
+      max-width: 1500px;
       margin: 2rem auto;
       padding: 0 1.5rem;
     }
 
-    /* --- FILTROS --- */
-    .filter-container {
-      background: var(--card-bg);
+    /* --- BARRA DE FILTROS --- */
+    .filter-bar {
+      background: var(--bg-card);
       padding: 1rem 1.5rem;
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      margin-bottom: 2rem;
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
       flex-wrap: wrap;
     }
+    
+    .filter-group { display: flex; align-items: center; gap: 10px; }
+    .filter-label { font-weight: 600; color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; }
     
     select {
       padding: 10px 15px;
       border-radius: 8px;
-      border: 1px solid #d1d5db;
+      border: 1px solid #e5e7eb;
       background: #f9fafb;
       font-size: 0.95rem;
-      color: var(--text);
+      color: var(--text-main);
       cursor: pointer;
       outline: none;
+      transition: border-color 0.2s;
     }
-    select:focus { border-color: var(--primary); ring: 2px solid var(--primary-light); }
+    select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--accent); }
 
-    /* --- TARJETAS KPI --- */
+    /* --- KPIs (TARJETAS DE MÉTRICAS) --- */
     .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 1.5rem;
       margin-bottom: 2rem;
     }
 
     .kpi-card {
-      background: var(--card-bg);
+      background: var(--bg-card);
       padding: 1.5rem;
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       position: relative;
       overflow: hidden;
-      transition: transform 0.2s;
+      border-left: 5px solid transparent;
+      transition: transform 0.2s, box-shadow 0.2s;
     }
-    .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+    .kpi-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+    
+    .kpi-card.revenue { border-color: var(--success); }
+    .kpi-card.orders { border-color: var(--warning); }
+    .kpi-card.ticket { border-color: var(--info); }
+    .kpi-card.projection { border-color: var(--purple); background: linear-gradient(to right, #fff, #f3e8ff); }
 
-    .kpi-icon {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      background: var(--accent);
-      color: var(--primary);
-      padding: 8px;
-      border-radius: 12px;
-      display: flex;
+    .kpi-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px; }
+    .kpi-title { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .kpi-icon { background: #f3f4f6; padding: 8px; border-radius: 10px; color: var(--text-muted); }
+    
+    .kpi-value { font-size: 2.2rem; font-weight: 800; color: var(--text-main); line-height: 1.2; }
+    
+    .kpi-footer { margin-top: 12px; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: var(--text-muted); }
+    
+    .trend-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: 20px; font-weight: 700; font-size: 0.8rem;
     }
-    
-    .kpi-label { font-size: 0.85rem; color: var(--text-light); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-    .kpi-value { font-size: 2rem; font-weight: 700; color: var(--text); margin: 0.5rem 0; }
-    
-    .kpi-trend { font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 4px; }
-    .trend-up { color: var(--success); }
-    .trend-down { color: var(--danger); }
-    .trend-neutral { color: var(--text-light); }
+    .trend-up { background: #dcfce7; color: #166534; }
+    .trend-down { background: #fee2e2; color: #991b1b; }
 
-    /* --- GRÁFICOS --- */
-    .charts-grid {
+    /* --- LAYOUT DE GRÁFICOS --- */
+    .charts-section {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+      grid-template-columns: repeat(2, 1fr); /* 2 columnas por defecto */
       gap: 1.5rem;
       margin-bottom: 2rem;
     }
-
-    .chart-card {
-      background: var(--card-bg);
+    
+    .chart-container {
+      background: var(--bg-card);
       padding: 1.5rem;
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      height: 400px;
       display: flex;
       flex-direction: column;
+      height: 420px; /* Altura fija para uniformidad */
     }
+    
+    .chart-header { margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f3f4f6; padding-bottom: 10px; }
+    .chart-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px; margin: 0; }
+    .chart-body { flex: 1; position: relative; min-height: 0; }
 
-    .chart-card h3 { margin: 0 0 1rem 0; color: var(--text); font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center; }
-    .chart-wrapper { flex: 1; position: relative; min-height: 0; }
+    /* --- ALERTAS --- */
+    .alert-banner {
+      background: #fef2f2; border: 1px solid #fecaca; color: #991b1b;
+      padding: 1rem 1.5rem; border-radius: var(--radius);
+      margin-bottom: 2rem; display: none; /* Oculto por defecto */
+      animation: fadeIn 0.5s ease;
+    }
+    .alert-banner.active { display: block; }
+    .alert-title { display: flex; align-items: center; gap: 8px; font-weight: 700; margin-bottom: 0.5rem; font-size: 1.1rem; }
+    .alert-list { margin: 0; padding-left: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 5px; }
+    
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* --- TABLAS --- */
-    .table-section {
-      background: var(--card-bg);
+    /* --- TABLA MAESTRA --- */
+    .table-card {
+      background: var(--bg-card);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       overflow: hidden;
       margin-bottom: 2rem;
     }
-    .table-header {
+    
+    .table-toolbar {
       padding: 1.5rem;
+      background: #fff;
       border-bottom: 1px solid #e5e7eb;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
     }
-    .table-header h3 { margin: 0; }
-
-    .table-scroll { overflow-x: auto; max-height: 500px; }
     
-    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
-    th { background: #f9fafb; text-align: left; padding: 1rem; font-weight: 600; color: var(--text-light); position: sticky; top: 0; }
-    td { padding: 1rem; border-bottom: 1px solid #f3f4f6; color: var(--text); }
-    tr:last-child td { border-bottom: none; }
+    .search-box {
+      position: relative;
+      width: 100%;
+      max-width: 300px;
+    }
+    .search-box span { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+    .search-box input {
+      width: 100%; padding: 10px 10px 10px 40px;
+      border-radius: 8px; border: 1px solid #e5e7eb;
+      outline: none; transition: all 0.2s;
+    }
+    .search-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--accent); }
+
+    .table-responsive { overflow-x: auto; max-height: 600px; }
+    
+    table { width: 100%; border-collapse: collapse; min-width: 700px; }
+    th {
+      background: #f8fafc; text-align: left; padding: 1rem;
+      font-weight: 600; color: var(--text-muted); font-size: 0.9rem;
+      position: sticky; top: 0; z-index: 10;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    td { padding: 1rem; border-bottom: 1px solid #f3f4f6; color: var(--text-main); font-size: 0.95rem; vertical-align: middle; }
     tr:hover { background: #f9fafb; }
     
-    .rank-badge {
-      background: var(--primary); color: white;
-      width: 24px; height: 24px; border-radius: 50%;
-      display: inline-flex; align-items: center; justify-content: center;
-      font-size: 0.8rem; font-weight: bold;
+    .status-badge {
+      padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
     }
+    .status-ok { background: var(--accent); color: var(--primary-dark); }
+    .status-low { background: #ffedd5; color: #c2410c; }
+    .status-out { background: #fee2e2; color: #991b1b; }
 
-    @media (max-width: 768px) {
-      .charts-grid { grid-template-columns: 1fr; }
-      .header-actions { display: none; } /* En móvil simplificamos */
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .charts-section { grid-template-columns: 1fr; } /* 1 columna en tablets */
+    }
+    @media (max-width: 600px) {
+      .header-btns { display: none; } /* Simplificar en móvil */
+      .kpi-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
   <header>
-    <h1><span class="material-icons-round">analytics</span> Dashboard Funaz</h1>
-    <div class="header-actions">
-      <button class="btn-glass" onclick="exportarExcel()"><span class="material-icons-round">file_download</span> Exportar Mes</button>
-      <button class="btn-glass" onclick="location.href='admin.txt'"><span class="material-icons-round">arrow_back</span> Volver</button>
+    <h1><span class="material-icons-round">analytics</span> Funaz Analytics Pro</h1>
+    <div class="header-btns">
+      <button class="btn-glass" onclick="exportarExcel()">
+        <span class="material-icons-round">download</span> Exportar Reporte
+      </button>
+      <button class="btn-glass" onclick="location.href='admin.txt'">
+        <span class="material-icons-round">arrow_back</span> Volver
+      </button>
     </div>
   </header>
 
   <main>
-    <div class="filter-container">
-      <span class="material-icons-round" style="color:var(--primary)">filter_alt</span>
-      <label style="font-weight:600;">Período:</label>
+    
+    <div class="filter-bar">
+      <div class="filter-group">
+        <span class="material-icons-round" style="color:var(--primary)">filter_list_alt</span>
+        <span class="filter-label">Período de Análisis:</span>
+      </div>
       <select id="mesSelect" onchange="actualizarDashboard()"></select>
       <select id="anioSelect" onchange="actualizarDashboard()"></select>
       
-      <div style="flex:1;"></div>
-      <small style="color:var(--text-light)" id="lastUpdated">Actualizado: --:--</small>
+      <div style="flex:1"></div>
+      
+      <div style="text-align:right; font-size:0.85rem; color:var(--text-muted);">
+        Última sincronización<br>
+        <b id="lastSync">--:--</b>
+      </div>
     </div>
 
     <div class="kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-icon"><span class="material-icons-round">payments</span></div>
-        <div class="kpi-label">Ingresos Totales</div>
-        <div class="kpi-value" id="kpi-ingresos">$0</div>
-        <div class="kpi-trend" id="trend-ingresos">--</div>
+      <div class="kpi-card revenue">
+        <div class="kpi-header">
+          <span class="kpi-title">Ingresos Totales</span>
+          <div class="kpi-icon"><span class="material-icons-round">attach_money</span></div>
+        </div>
+        <div class="kpi-value" id="kpi-total">$0</div>
+        <div class="kpi-footer" id="trend-total">--</div>
       </div>
-      
-      <div class="kpi-card">
-        <div class="kpi-icon"><span class="material-icons-round">shopping_bag</span></div>
-        <div class="kpi-label">Pedidos Confirmados</div>
-        <div class="kpi-value" id="kpi-pedidos">0</div>
-        <div class="kpi-trend" id="trend-pedidos">--</div>
+
+      <div class="kpi-card projection">
+        <div class="kpi-header">
+          <span class="kpi-title">Proyección Cierre Mes</span>
+          <div class="kpi-icon"><span class="material-icons-round">query_stats</span></div>
+        </div>
+        <div class="kpi-value" id="kpi-projection">$0</div>
+        <div class="kpi-footer">
+          <span class="material-icons-round" style="font-size:1rem; color:var(--purple)">auto_awesome</span>
+          Basado en ritmo actual
+        </div>
       </div>
-      
-      <div class="kpi-card">
-        <div class="kpi-icon"><span class="material-icons-round">receipt_long</span></div>
-        <div class="kpi-label">Ticket Promedio</div>
+
+      <div class="kpi-card ticket">
+        <div class="kpi-header">
+          <span class="kpi-title">Ticket Promedio</span>
+          <div class="kpi-icon"><span class="material-icons-round">receipt</span></div>
+        </div>
         <div class="kpi-value" id="kpi-ticket">$0</div>
-        <div class="kpi-trend" id="trend-ticket">--</div>
+        <div class="kpi-footer" id="trend-ticket">--</div>
       </div>
 
-      <div class="kpi-card">
-        <div class="kpi-icon"><span class="material-icons-round">star</span></div>
-        <div class="kpi-label">Producto Estrella</div>
-        <div class="kpi-value" id="kpi-best-prod" style="font-size:1.3rem; margin-top:0.8rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">-</div>
-        <div style="font-size:0.85rem; color:var(--text-light);" id="kpi-best-prod-qty">0 u. vendidas</div>
+      <div class="kpi-card orders">
+        <div class="kpi-header">
+          <span class="kpi-title">Pedidos Totales</span>
+          <div class="kpi-icon"><span class="material-icons-round">shopping_cart</span></div>
+        </div>
+        <div class="kpi-value" id="kpi-orders">0</div>
+        <div class="kpi-footer" id="trend-orders">--</div>
       </div>
     </div>
 
-    <div class="charts-grid">
-      <div class="chart-card">
-        <h3>Ventas por Día <span class="material-icons-round" style="color:var(--primary)">show_chart</span></h3>
-        <div class="chart-wrapper">
-          <canvas id="chartVentasDia"></canvas>
+    <div class="charts-section">
+      <div class="chart-container">
+        <div class="chart-header">
+          <h3 class="chart-title"><span class="material-icons-round" style="color:var(--primary)">show_chart</span> Evolución de Ventas Diaria</h3>
+        </div>
+        <div class="chart-body">
+          <canvas id="chartDaily"></canvas>
         </div>
       </div>
-      <div class="chart-card">
-        <h3>Horario de Compras <span class="material-icons-round" style="color:var(--primary)">schedule</span></h3>
-        <div class="chart-wrapper">
-          <canvas id="chartHorarios"></canvas>
+      <div class="chart-container">
+        <div class="chart-header">
+          <h3 class="chart-title"><span class="material-icons-round" style="color:var(--warning)">calendar_view_week</span> Análisis Semanal (Día Caliente)</h3>
         </div>
-      </div>
-    </div>
-
-    <div class="charts-grid">
-      <div class="chart-card">
-        <h3>Top 10 Productos Más Vendidos <span class="material-icons-round" style="color:var(--primary)">inventory_2</span></h3>
-        <div class="chart-wrapper">
-          <canvas id="chartTopProductos"></canvas>
-        </div>
-      </div>
-      <div class="chart-card">
-        <h3>Mejores Clientes (Volumen $) <span class="material-icons-round" style="color:var(--primary)">groups</span></h3>
-        <div class="chart-wrapper">
-          <canvas id="chartClientes"></canvas>
+        <div class="chart-body">
+          <canvas id="chartWeekly"></canvas>
         </div>
       </div>
     </div>
 
-    <div class="table-section">
-      <div class="table-header">
-        <h3>🏆 Ranking Detallado de Productos</h3>
+    <div class="charts-section">
+      <div class="chart-container">
+        <div class="chart-header">
+          <h3 class="chart-title"><span class="material-icons-round" style="color:var(--info)">inventory_2</span> Top Productos (Cantidad Vendida)</h3>
+        </div>
+        <div class="chart-body">
+          <canvas id="chartTopQty"></canvas>
+        </div>
       </div>
-      <div class="table-scroll">
-        <table id="tablaProductos">
+      
+      <div class="chart-container">
+        <div class="chart-header">
+          <h3 class="chart-title"><span class="material-icons-round" style="color:var(--success)">monetization_on</span> Top Productos (Ingresos Generados)</h3>
+        </div>
+        <div class="chart-body">
+          <canvas id="chartTopMoney"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="charts-section">
+      <div class="chart-container">
+        <div class="chart-header">
+          <h3 class="chart-title"><span class="material-icons-round" style="color:var(--purple)">groups</span> Top Clientes</h3>
+        </div>
+        <div class="chart-body">
+          <canvas id="chartClients"></canvas>
+        </div>
+      </div>
+      
+      <div class="chart-container">
+        <div class="chart-header">
+          <h3 class="chart-title"><span class="material-icons-round" style="color:var(--danger)">pie_chart</span> Estado del Stock</h3>
+        </div>
+        <div class="chart-body">
+          <canvas id="chartStock"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div id="churnAlert" class="alert-banner">
+      <div class="alert-title">
+        <span class="material-icons-round">warning_amber</span>
+        Alerta de Retención: Clientes en riesgo
+      </div>
+      <p style="margin: 0 0 10px 0; font-size:0.9rem;">Los siguientes clientes compraban habitualmente pero hace más de 30 días que no realizan pedidos:</p>
+      <div id="churnList" class="alert-list"></div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-toolbar">
+        <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+          <span class="material-icons-round" style="color:var(--primary)">table_view</span> 
+          Desglose de Productos
+        </h3>
+        <div class="search-box">
+          <span class="material-icons-round">search</span>
+          <input type="text" id="searchInput" placeholder="Buscar producto..." onkeyup="filterTable()">
+        </div>
+      </div>
+      
+      <div class="table-responsive">
+        <table id="masterTable">
           <thead>
             <tr>
-              <th width="50">#</th>
-              <th>Producto</th>
+              <th width="40%">Producto</th>
               <th>Cant. Vendida</th>
-              <th>Total Generado</th>
+              <th>Ingresos ($)</th>
+              <th>Precio Unit.</th>
               <th>Stock Actual</th>
+              <th>Estado</th>
             </tr>
           </thead>
           <tbody>
@@ -294,370 +432,421 @@
         </table>
       </div>
     </div>
+    
+    <details style="margin-top: 1rem; color: var(--text-muted); cursor: pointer;">
+      <summary style="font-weight: 600;">ver productos sin movimiento este mes ("Huesos")</summary>
+      <div style="margin-top: 1rem; padding: 1rem; background: #fff; border-radius: var(--radius);">
+        <ul id="boneProductsList" style="column-count: 3; font-size: 0.85rem;"></ul>
+      </div>
+    </details>
 
   </main>
 
   <script>
-    // --- Configuración ---
-    const apiBase = 'https://distribuidorafunaz-a2o6.onrender.com/api';
-    let rawPedidos = [];
-    let rawProductos = [];
+    // --- CONFIGURACIÓN GLOBAL ---
+    const API_BASE = 'https://distribuidorafunaz-a2o6.onrender.com/api';
+    const moneyFmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 });
     
-    // Instancias de gráficos
-    let charts = {};
+    // Almacén de datos
+    let dataPedidos = [];
+    let dataProductos = [];
+    let chartInstances = {}; // Para destruir gráficos antes de redibujar
 
-    // Formateador $
-    const fmtMoney = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 });
-
-    // --- Init ---
+    // --- INICIALIZACIÓN ---
     window.addEventListener('DOMContentLoaded', async () => {
-      // 1. Cargar Fechas
-      setupDateSelectors();
-      
-      // 2. Cargar Datos
-      await loadData();
-      
-      // 3. Render Inicial
-      actualizarDashboard();
+      initDateSelectors();
+      await fetchData();
+      updateDashboard();
     });
 
-    // --- Lógica de Datos ---
-    async function loadData() {
+    // --- CARGA DE DATOS ---
+    async function fetchData() {
       try {
         const [resPed, resProd] = await Promise.all([
-          fetch(`${apiBase}/pedidos`),
-          fetch(`${apiBase}/productos`)
+          fetch(`${API_BASE}/pedidos`),
+          fetch(`${API_BASE}/productos`)
         ]);
-        rawPedidos = await resPed.json();
-        rawProductos = await resProd.json();
         
-        document.getElementById('lastUpdated').textContent = 'Actualizado: ' + new Date().toLocaleTimeString();
-      } catch (e) {
-        console.error(e);
-        alert('Error cargando datos. Revisa la consola.');
+        dataPedidos = await resPed.json();
+        dataProductos = await resProd.json();
+        
+        document.getElementById('lastSync').textContent = new Date().toLocaleTimeString().slice(0,5);
+        
+        // Ejecutar análisis que no dependen del filtro de mes (Ej: Stock actual)
+        analyzeChurn();
+      } catch (err) {
+        console.error(err);
+        alert('Error conectando con el servidor. Revisa la consola.');
       }
     }
 
-    function setupDateSelectors() {
-      const hoy = new Date();
+    function initDateSelectors() {
+      const today = new Date();
       const selMes = document.getElementById('mesSelect');
       const selAnio = document.getElementById('anioSelect');
-      
-      // Meses
       const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+      
       meses.forEach((m, i) => {
-        const op = document.createElement('option');
-        op.value = i;
-        op.textContent = m;
-        if(i === hoy.getMonth()) op.selected = true;
-        selMes.appendChild(op);
+        const opt = document.createElement('option');
+        opt.value = i; opt.text = m;
+        if(i === today.getMonth()) opt.selected = true;
+        selMes.add(opt);
       });
-
-      // Años (Actual y anterior)
-      const anio = hoy.getFullYear();
-      [anio, anio-1].forEach(a => {
-        const op = document.createElement('option');
-        op.value = a;
-        op.textContent = a;
-        selAnio.appendChild(op);
-      });
-    }
-
-    // --- Procesamiento Principal ---
-    function actualizarDashboard() {
-      const mes = parseInt(document.getElementById('mesSelect').value);
-      const anio = parseInt(document.getElementById('anioSelect').value);
-
-      // 1. Filtrar Pedidos del Mes Actual
-      const pedidosMes = rawPedidos.filter(p => {
-        const d = new Date(p.fecha);
-        return d.getMonth() === mes && d.getFullYear() === anio;
-      });
-
-      // 2. Filtrar Pedidos del Mes Anterior (Comparativa)
-      const fechaAnt = new Date(anio, mes - 1, 1);
-      const pedidosMesAnt = rawPedidos.filter(p => {
-        const d = new Date(p.fecha);
-        return d.getMonth() === fechaAnt.getMonth() && d.getFullYear() === fechaAnt.getFullYear();
-      });
-
-      // 3. Calcular KPIs
-      renderKPIs(pedidosMes, pedidosMesAnt);
-
-      // 4. Renderizar Gráficos
-      renderChartVentasDia(pedidosMes, mes, anio);
-      renderChartHorarios(pedidosMes);
-      renderChartTopProductos(pedidosMes);
-      renderChartClientes(pedidosMes);
-
-      // 5. Renderizar Tabla
-      renderTablaProductos(pedidosMes);
-    }
-
-    // --- KPIs ---
-    function renderKPIs(actuales, anteriores) {
-      const calcTotal = (arr) => arr.reduce((acc, p) => acc + (Number(p.total)||0), 0);
       
-      const totalAct = calcTotal(actuales);
-      const totalAnt = calcTotal(anteriores);
-      const countAct = actuales.length;
-      const countAnt = anteriores.length;
-      const ticketAct = countAct ? totalAct / countAct : 0;
-      const ticketAnt = countAnt ? totalAnt / countAnt : 0;
-
-      // Render Values
-      document.getElementById('kpi-ingresos').textContent = fmtMoney.format(totalAct);
-      document.getElementById('kpi-pedidos').textContent = countAct;
-      document.getElementById('kpi-ticket').textContent = fmtMoney.format(ticketAct);
-
-      // Render Trends
-      renderTrend('trend-ingresos', totalAct, totalAnt, true);
-      renderTrend('trend-pedidos', countAct, countAnt, false);
-      renderTrend('trend-ticket', ticketAct, ticketAnt, true);
-
-      // Producto Estrella (Calculo rápido)
-      const prodCount = {};
-      actuales.forEach(p => {
-        const items = Array.isArray(p.items)?p.items:JSON.parse(p.items||'[]');
-        items.forEach(i => prodCount[i.nombre] = (prodCount[i.nombre]||0) + Number(i.cantidad));
+      [today.getFullYear(), today.getFullYear()-1].forEach(y => {
+        const opt = document.createElement('option');
+        opt.value = y; opt.text = y;
+        selAnio.add(opt);
       });
-      let bestName = '-', bestQty = 0;
-      Object.entries(prodCount).forEach(([n, q]) => { if(q > bestQty){ bestQty=q; bestName=n; }});
-      
-      document.getElementById('kpi-best-prod').textContent = bestName;
-      document.getElementById('kpi-best-prod-qty').textContent = bestQty + ' u. vendidas';
     }
 
-    function renderTrend(id, valAct, valAnt, isMoney) {
-      const el = document.getElementById(id);
-      if(valAnt === 0) {
-        el.innerHTML = '<span class="trend-neutral">Sin datos previos</span>';
-        return;
+    // --- NÚCLEO DEL DASHBOARD ---
+    function updateDashboard() {
+      const selectedMonth = parseInt(document.getElementById('mesSelect').value);
+      const selectedYear = parseInt(document.getElementById('anioSelect').value);
+
+      // 1. Filtrar Pedidos (Mes Actual vs Mes Anterior)
+      const currentOrders = filterOrders(selectedMonth, selectedYear);
+      const prevDate = new Date(selectedYear, selectedMonth - 1, 1);
+      const prevOrders = filterOrders(prevDate.getMonth(), prevDate.getFullYear());
+
+      // 2. Calcular KPIs
+      renderKPIs(currentOrders, prevOrders, selectedMonth, selectedYear);
+
+      // 3. Renderizar Gráficos
+      renderChartDaily(currentOrders, selectedMonth, selectedYear);
+      renderChartWeekly(currentOrders);
+      renderChartTopQty(currentOrders);
+      renderChartTopMoney(currentOrders); // EL NUEVO
+      renderChartClients(currentOrders);
+      renderChartStock(); // Basado en stock actual (dataProductos)
+
+      // 4. Tablas
+      renderMasterTable(currentOrders);
+      renderBoneProducts(currentOrders);
+    }
+
+    function filterOrders(month, year) {
+      return dataPedidos.filter(p => {
+        const d = new Date(p.fecha);
+        return d.getMonth() === month && d.getFullYear() === year;
+      });
+    }
+
+    // --- LÓGICA DE KPIs ---
+    function renderKPIs(curr, prev, mesIdx, year) {
+      const sumTotal = (arr) => arr.reduce((acc, p) => acc + (Number(p.total)||0), 0);
+      
+      const totalCurr = sumTotal(curr);
+      const totalPrev = sumTotal(prev);
+      const countCurr = curr.length;
+      const countPrev = prev.length;
+      const ticketCurr = countCurr ? totalCurr / countCurr : 0;
+      const ticketPrev = countPrev ? totalPrev / countPrev : 0;
+
+      // Render
+      document.getElementById('kpi-total').textContent = moneyFmt.format(totalCurr);
+      renderTrendBadge('trend-total', totalCurr, totalPrev);
+      
+      document.getElementById('kpi-orders').textContent = countCurr;
+      renderTrendBadge('trend-orders', countCurr, countPrev, false);
+      
+      document.getElementById('kpi-ticket').textContent = moneyFmt.format(ticketCurr);
+      renderTrendBadge('trend-ticket', ticketCurr, ticketPrev);
+
+      // Proyección (Solo si es mes en curso)
+      const now = new Date();
+      if (mesIdx === now.getMonth() && year === now.getFullYear()) {
+        const day = now.getDate();
+        const daysInMonth = new Date(year, mesIdx + 1, 0).getDate();
+        if(day > 0) {
+          const projection = (totalCurr / day) * daysInMonth;
+          document.getElementById('kpi-projection').textContent = moneyFmt.format(projection);
+        }
+      } else {
+        document.getElementById('kpi-projection').textContent = '---';
       }
-      const diff = ((valAct - valAnt) / valAnt) * 100;
-      const icon = diff >= 0 ? 'trending_up' : 'trending_down';
-      const colorClass = diff >= 0 ? 'trend-up' : 'trend-down';
-      const sign = diff >= 0 ? '+' : '';
-      
-      el.innerHTML = `<span class="${colorClass}"><span class="material-icons-round" style="font-size:1.1em">${icon}</span> ${sign}${diff.toFixed(1)}%</span> <span style="color:#aaa; font-weight:400; font-size:0.9em">vs mes anterior</span>`;
     }
 
-    // --- Gráficos ---
-    function destroyChart(id) { if(charts[id]) charts[id].destroy(); }
+    function renderTrendBadge(elemId, curr, prev, isMoney=true) {
+      const el = document.getElementById(elemId);
+      if(prev === 0) { el.innerHTML = `<span style="font-size:0.8rem">Sin datos previos</span>`; return; }
+      
+      const pct = ((curr - prev) / prev) * 100;
+      const isUp = pct >= 0;
+      const cls = isUp ? 'trend-up' : 'trend-down';
+      const icon = isUp ? 'north_east' : 'south_east';
+      
+      el.innerHTML = `
+        <span class="trend-badge ${cls}">
+          <span class="material-icons-round" style="font-size:12px;">${icon}</span>
+          ${Math.abs(pct).toFixed(1)}%
+        </span>
+        <span style="margin-left:5px;">vs mes ant.</span>
+      `;
+    }
 
-    function renderChartVentasDia(pedidos, mes, anio) {
-      const diasMes = new Date(anio, mes + 1, 0).getDate();
-      const labels = Array.from({length: diasMes}, (_, i) => i + 1);
-      const data = new Array(diasMes).fill(0);
+    // --- LÓGICA GRÁFICOS (Chart.js) ---
+    function createChart(id, type, data, options) {
+      if(chartInstances[id]) chartInstances[id].destroy();
+      const ctx = document.getElementById(id).getContext('2d');
+      chartInstances[id] = new Chart(ctx, { type, data, options });
+    }
 
-      pedidos.forEach(p => {
+    // 1. Linea Diario
+    function renderChartDaily(orders, mes, anio) {
+      const daysInMonth = new Date(anio, mes + 1, 0).getDate();
+      const labels = Array.from({length: daysInMonth}, (_, i) => i + 1);
+      const data = new Array(daysInMonth).fill(0);
+      
+      orders.forEach(p => {
         const d = new Date(p.fecha).getDate();
         data[d-1] += Number(p.total);
       });
 
-      destroyChart('ventasDia');
-      const ctx = document.getElementById('chartVentasDia').getContext('2d');
-      
-      // Crear gradiente
-      let gradient = ctx.createLinearGradient(0, 0, 0, 400);
-      gradient.addColorStop(0, 'rgba(46, 125, 50, 0.5)');   
+      const ctx = document.getElementById('chartDaily').getContext('2d');
+      // Gradiente verde
+      const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+      gradient.addColorStop(0, 'rgba(46, 125, 50, 0.4)');
       gradient.addColorStop(1, 'rgba(46, 125, 50, 0.0)');
 
-      charts['ventasDia'] = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'Ventas ($)',
-            data: data,
-            borderColor: '#2e7d32',
-            backgroundColor: gradient,
-            fill: true,
-            tension: 0.4,
-            pointRadius: 3,
-            pointHoverRadius: 6
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: {display: false} },
-          scales: {
-            y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
-            x: { grid: { display: false } }
-          }
-        }
-      });
+      createChart('chartDaily', 'line', {
+        labels,
+        datasets: [{
+          label: 'Ventas ($)',
+          data,
+          borderColor: '#2e7d32',
+          backgroundColor: gradient,
+          fill: true,
+          tension: 0.3,
+          pointRadius: 2
+        }]
+      }, { responsive: true, maintainAspectRatio: false, plugins: {legend: {display:false}} });
     }
 
-    function renderChartHorarios(pedidos) {
-      const data = new Array(24).fill(0);
-      pedidos.forEach(p => {
-        const h = new Date(p.fecha).getHours();
-        data[h]++;
-      });
+    // 2. Barras Semanal
+    function renderChartWeekly(orders) {
+      const dias = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+      const data = new Array(7).fill(0);
+      orders.forEach(p => { data[new Date(p.fecha).getDay()] += Number(p.total); });
       
-      destroyChart('horarios');
-      const ctx = document.getElementById('chartHorarios').getContext('2d');
-      charts['horarios'] = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: Array.from({length:24}, (_,i)=>`${i}hs`),
-          datasets: [{
-            label: 'Pedidos',
-            data: data,
-            backgroundColor: '#f57c00',
-            borderRadius: 4
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: {display: false} },
-          scales: { y: { beginAtZero: true } }
-        }
-      });
+      createChart('chartWeekly', 'bar', {
+        labels: dias,
+        datasets: [{
+          label: 'Ventas Promedio',
+          data,
+          backgroundColor: '#f59e0b',
+          borderRadius: 6
+        }]
+      }, { responsive: true, maintainAspectRatio: false, plugins: {legend: {display:false}} });
     }
 
-    function renderChartTopProductos(pedidos) {
+    // 3. Top Productos Qty (Horizontal)
+    function renderChartTopQty(orders) {
       const map = {};
-      pedidos.forEach(p => {
-        const items = Array.isArray(p.items)?p.items:JSON.parse(p.items||'[]');
+      orders.forEach(p => {
+        const items = JSON.parse(typeof p.items === 'string' ? p.items : JSON.stringify(p.items));
         items.forEach(i => map[i.nombre] = (map[i.nombre]||0) + Number(i.cantidad));
       });
-
       const sorted = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0, 10);
       
-      destroyChart('topProd');
-      const ctx = document.getElementById('chartTopProductos').getContext('2d');
-      charts['topProd'] = new Chart(ctx, {
-        type: 'bar',
-        indexAxis: 'y',
-        data: {
-          labels: sorted.map(x=>x[0]),
-          datasets: [{
-            label: 'Unidades',
-            data: sorted.map(x=>x[1]),
-            backgroundColor: '#2e7d32',
-            borderRadius: 4
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: {display: false} }
-        }
-      });
+      createChart('chartTopQty', 'bar', {
+        labels: sorted.map(x=>x[0]),
+        datasets: [{
+          label: 'Unidades',
+          data: sorted.map(x=>x[1]),
+          backgroundColor: '#3b82f6',
+          borderRadius: 4
+        }]
+      }, { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: {legend: {display:false}} });
     }
 
-    function renderChartClientes(pedidos) {
+    // 4. Top Productos $$$ (Horizontal - NUEVO)
+    function renderChartTopMoney(orders) {
       const map = {};
-      pedidos.forEach(p => {
-        const name = p.nombre_negocio || p.user || 'Desconocido';
+      orders.forEach(p => {
+        const items = JSON.parse(typeof p.items === 'string' ? p.items : JSON.stringify(p.items));
+        items.forEach(i => {
+           // Calcular plata generada por producto
+           const subtotal = Number(i.subtotal) || (Number(i.cantidad) * Number(i.precio_unitario));
+           map[i.nombre] = (map[i.nombre]||0) + subtotal;
+        });
+      });
+      // Ordenar por Dinero Descendente
+      const sorted = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0, 10);
+      
+      createChart('chartTopMoney', 'bar', {
+        labels: sorted.map(x=>x[0]),
+        datasets: [{
+          label: 'Ingresos ($)',
+          data: sorted.map(x=>x[1]),
+          backgroundColor: '#10b981', // Verde Success
+          borderRadius: 4
+        }]
+      }, { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: {legend: {display:false}} });
+    }
+
+    // 5. Clientes
+    function renderChartClients(orders) {
+      const map = {};
+      orders.forEach(p => {
+        const name = p.nombre_negocio || p.user || 'Anónimo';
         map[name] = (map[name]||0) + Number(p.total);
       });
-      
       const sorted = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0, 5);
       
-      destroyChart('clientes');
-      const ctx = document.getElementById('chartClientes').getContext('2d');
-      charts['clientes'] = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: sorted.map(x=>x[0]),
-          datasets: [{
-            data: sorted.map(x=>x[1]),
-            backgroundColor: ['#2e7d32', '#43a047', '#66bb6a', '#81c784', '#a5d6a7'],
-            borderWidth: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          cutout: '70%',
-          plugins: { legend: {position: 'right'} }
-        }
-      });
+      createChart('chartClients', 'doughnut', {
+        labels: sorted.map(x=>x[0]),
+        datasets: [{
+          data: sorted.map(x=>x[1]),
+          backgroundColor: ['#8b5cf6','#a78bfa','#c4b5fd','#ddd6fe','#ede9fe'],
+          borderWidth: 0
+        }]
+      }, { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: {legend: {position:'right'}} });
     }
 
-    // --- Tabla Detallada ---
-    function renderTablaProductos(pedidos) {
-      const map = {};
+    // 6. Stock (NUEVO)
+    function renderChartStock() {
+      let ok=0, low=0, out=0;
+      dataProductos.forEach(p => {
+        const s = Number(p.stock)||0;
+        if(s <= 0) out++;
+        else if(s < 10) low++;
+        else ok++;
+      });
       
-      // Agrupar ventas
-      pedidos.forEach(p => {
-        const items = Array.isArray(p.items)?p.items:JSON.parse(p.items||'[]');
+      createChart('chartStock', 'pie', {
+        labels: ['Normal', 'Bajo (<10)', 'Agotado'],
+        datasets: [{
+          data: [ok, low, out],
+          backgroundColor: ['#e8f5e9', '#ffedd5', '#fee2e2'],
+          borderColor: ['#2e7d32', '#f59e0b', '#ef4444'],
+          borderWidth: 1
+        }]
+      }, { responsive: true, maintainAspectRatio: false, plugins: {legend: {position:'right'}} });
+    }
+
+    // --- ANÁLISIS CHURN (Riesgo) ---
+    function analyzeChurn() {
+      const mapLastBuy = {};
+      const limitDate = new Date();
+      limitDate.setDate(limitDate.getDate() - 30); // 30 días atrás
+      
+      dataPedidos.forEach(p => {
+        const name = p.nombre_negocio || p.user;
+        const d = new Date(p.fecha);
+        if(!name) return;
+        if(!mapLastBuy[name] || d > mapLastBuy[name]) mapLastBuy[name] = d;
+      });
+
+      const risky = [];
+      Object.entries(mapLastBuy).forEach(([user, date]) => {
+        if(date < limitDate) {
+          const days = Math.floor((new Date() - date)/(1000*60*60*24));
+          risky.push({ user, days });
+        }
+      });
+      risky.sort((a,b) => b.days - a.days);
+
+      const alertBox = document.getElementById('churnAlert');
+      const list = document.getElementById('churnList');
+      list.innerHTML = '';
+
+      if(risky.length > 0) {
+        alertBox.classList.add('active');
+        risky.slice(0, 8).forEach(r => {
+          const div = document.createElement('div');
+          div.style.background = '#fff'; 
+          div.style.padding = '5px 10px'; 
+          div.style.borderRadius = '6px';
+          div.style.fontSize = '0.85rem';
+          div.innerHTML = `<b>${r.user}</b> <span style="color:#ef4444">(${r.days} días)</span>`;
+          list.appendChild(div);
+        });
+      }
+    }
+
+    // --- TABLAS ---
+    function renderMasterTable(orders) {
+      const map = {};
+      orders.forEach(p => {
+        const items = JSON.parse(typeof p.items === 'string' ? p.items : JSON.stringify(p.items));
         items.forEach(i => {
-          if(!map[i.id]) map[i.id] = { nombre: i.nombre, cant: 0, total: 0 };
+          if(!map[i.id]) map[i.id] = { nombre: i.nombre, cant: 0, money: 0 };
           map[i.id].cant += Number(i.cantidad);
-          map[i.id].total += Number(i.subtotal);
+          map[i.id].money += (Number(i.subtotal) || (Number(i.cantidad)*Number(i.precio_unitario)));
         });
       });
 
-      // Convertir a array y cruzar con stock real
-      const list = Object.values(map).map(item => {
-        // Buscamos info fresca del producto para el stock
-        const prodReal = rawProductos.find(p => p.nombre === item.nombre) || {}; 
-        // Nota: usamos nombre match porque a veces los IDs cambian si borran/crean, 
-        // pero idealmente usariamos ID. Si tu ID es consistente, usa: rawProductos.find(p=>p.id == item.id)
-        
+      // Convertir a array y mezclar con stock actual
+      const list = Object.values(map).map(i => {
+        const prodReal = dataProductos.find(p => p.nombre === i.nombre) || { stock: 0, precio: 0 };
         return {
-          ...item,
-          stock: prodReal.stock || 0
+          ...i,
+          stock: Number(prodReal.stock)||0,
+          precio: Number(prodReal.precio)||0
         };
-      });
+      }).sort((a,b) => b.money - a.money); // Ordenar por Plata Generada
 
-      list.sort((a,b) => b.cant - a.cant); // Ordenar por mas vendido
-
-      const tbody = document.querySelector('#tablaProductos tbody');
+      const tbody = document.querySelector('#masterTable tbody');
       tbody.innerHTML = '';
       
-      list.forEach((p, idx) => {
+      list.forEach(p => {
+        let status = `<span class="status-badge status-ok">OK</span>`;
+        if(p.stock <= 0) status = `<span class="status-badge status-out">AGOTADO</span>`;
+        else if(p.stock < 10) status = `<span class="status-badge status-low">BAJO</span>`;
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td><span class="rank-badge">${idx+1}</span></td>
-          <td>${p.nombre}</td>
-          <td><b>${p.cant}</b></td>
-          <td>${fmtMoney.format(p.total)}</td>
+          <td><b>${p.nombre}</b></td>
+          <td>${p.cant}</td>
+          <td>${moneyFmt.format(p.money)}</td>
+          <td>${moneyFmt.format(p.precio)}</td>
           <td>${p.stock}</td>
+          <td>${status}</td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    // --- Exportar Excel ---
-    function exportarExcel() {
-      const mes = document.getElementById('mesSelect').options[document.getElementById('mesSelect').selectedIndex].text;
-      const anio = document.getElementById('anioSelect').value;
-      
-      // 1. Datos Resumen
-      const ws_data = [
-        ["Reporte de Ventas - Distribuidora Funaz"],
-        ["Período", `${mes} ${anio}`],
-        ["Generado", new Date().toLocaleString()],
-        [],
-        ["Detalle de Productos Vendidos"],
-        ["Ranking", "Producto", "Cantidad Vendida", "Total ($)", "Stock Actual"]
-      ];
-
-      // Sacar datos de la tabla actual
-      const rows = document.querySelectorAll('#tablaProductos tbody tr');
-      rows.forEach(r => {
-        const cols = r.querySelectorAll('td');
-        ws_data.push([
-          cols[0].innerText, // Rank
-          cols[1].innerText, // Nombre
-          cols[2].innerText, // Cant
-          cols[3].innerText, // Total
-          cols[4].innerText  // Stock
-        ]);
+    function renderBoneProducts(orders) {
+      // Productos que NO se vendieron en este periodo
+      // 1. Obtener todos los IDs vendidos
+      const vendidosSet = new Set();
+      orders.forEach(p => {
+        const items = JSON.parse(typeof p.items === 'string' ? p.items : JSON.stringify(p.items));
+        items.forEach(i => vendidosSet.add(i.nombre)); // Usamos nombre como clave
       });
 
-      const ws = XLSX.utils.aoa_to_sheet(ws_data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Ventas");
+      // 2. Filtrar catalogo global
+      const bones = dataProductos.filter(p => !vendidosSet.has(p.nombre));
       
-      XLSX.writeFile(wb, `Reporte_Funaz_${mes}_${anio}.xlsx`);
+      const ul = document.getElementById('boneProductsList');
+      ul.innerHTML = '';
+      if(bones.length === 0) {
+        ul.innerHTML = '<li>¡Increíble! Has vendido todo tu catálogo.</li>';
+        return;
+      }
+      
+      bones.forEach(b => {
+        const li = document.createElement('li');
+        li.textContent = `${b.nombre} (Stock: ${b.stock})`;
+        ul.appendChild(li);
+      });
+    }
+
+    function filterTable() {
+      const term = document.getElementById('searchInput').value.toLowerCase();
+      const rows = document.querySelectorAll('#masterTable tbody tr');
+      rows.forEach(r => {
+        const txt = r.innerText.toLowerCase();
+        r.style.display = txt.includes(term) ? '' : 'none';
+      });
+    }
+
+    function exportarExcel() {
+      const wb = XLSX.utils.table_to_book(document.getElementById('masterTable'), {sheet: "Ventas"});
+      XLSX.writeFile(wb, 'Reporte_Ventas_Funaz.xlsx');
     }
   </script>
 </body>
