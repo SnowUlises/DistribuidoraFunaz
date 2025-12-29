@@ -3,481 +3,661 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Estadísticas - Distribuidora Funaz</title>
+  <title>Dashboard Funaz</title>
+  
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+
   <style>
     :root {
       --primary: #2e7d32;
+      --primary-dark: #1b5e20;
       --primary-light: #4caf50;
-      --bg: #f8f9fa;
-      --text: #2c3e50;
+      --accent: #e8f5e9;
+      --bg: #f0f2f5;
+      --text: #374151;
+      --text-light: #6b7280;
       --card-bg: #ffffff;
-      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      --radius: 12px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --radius: 16px;
+      --success: #10b981;
+      --danger: #ef4444;
     }
     
     body {
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       margin: 0;
       background: var(--bg);
       color: var(--text);
-      padding-bottom: 2em;
+      padding-bottom: 3em;
     }
 
+    /* --- HEADER --- */
     header {
       background: var(--primary);
       color: white;
-      text-align: center;
-      padding: 1.5em 0;
-      font-size: 1.8em;
-      font-weight: 600;
-      box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2);
-      margin-bottom: 2em;
-    }
-
-    main {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 1.5em;
-    }
-
-    .top-controls {
+      padding: 1rem 2rem;
       display: flex;
       justify-content: space-between;
-      margin-bottom: 2em;
+      align-items: center;
+      box-shadow: 0 4px 20px rgba(46, 125, 50, 0.25);
     }
+    
+    header h1 { margin: 0; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
+    
+    .header-actions { display: flex; gap: 1rem; }
 
-    button.btn-volver {
-      background: transparent;
-      color: var(--primary);
-      border: 2px solid var(--primary);
+    button.btn-glass {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      padding: 8px 16px;
       border-radius: 8px;
-      padding: 10px 20px;
-      font-weight: 600;
       cursor: pointer;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 5px;
       transition: all 0.2s;
+      backdrop-filter: blur(4px);
     }
-    button.btn-volver:hover {
-      background: var(--primary);
-      color: #fff;
+    button.btn-glass:hover { background: rgba(255, 255, 255, 0.3); transform: translateY(-1px); }
+
+    /* --- LAYOUT --- */
+    main {
+      max-width: 1400px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
     }
 
-    /* --- TARJETAS KPI (Resumen) --- */
-    .kpi-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1.5em;
-        margin-bottom: 2em;
-    }
-
-    .kpi-card {
-        background: var(--card-bg);
-        padding: 1.5em;
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        text-align: center;
-        border-bottom: 4px solid var(--primary);
-    }
-    
-    .kpi-value {
-        font-size: 2em;
-        font-weight: bold;
-        color: var(--primary);
-        margin: 10px 0;
-    }
-    
-    .kpi-label {
-        color: #666;
-        font-size: 0.9em;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    /* --- GRÁFICOS --- */
-    .charts-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-        gap: 2em;
-        margin-bottom: 2em;
-    }
-
-    .chart-container {
-        background: white;
-        padding: 1.5em;
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-    }
-    
-    h2 {
-        color: var(--primary);
-        border-bottom: 2px solid #e0e0e0;
-        padding-bottom: 10px;
-        margin-top: 0;
-    }
-
-    /* --- TABLAS --- */
-    .table-container {
-        background: white;
-        padding: 1.5em;
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        overflow-x: auto;
-    }
-
-    table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    
-    th, td {
-        padding: 12px 15px;
-        text-align: left;
-        border-bottom: 1px solid #ddd;
-    }
-    
-    th {
-        background-color: var(--primary);
-        color: white;
-    }
-    
-    tr:hover { background-color: #f1f1f1; }
-
-    /* Utilidad para filtros de fecha */
-    .filter-bar {
-        background: white;
-        padding: 1em;
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        margin-bottom: 2em;
-        display: flex;
-        gap: 1em;
-        align-items: center;
+    /* --- FILTROS --- */
+    .filter-container {
+      background: var(--card-bg);
+      padding: 1rem 1.5rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
     }
     
     select {
-        padding: 8px;
-        border-radius: 6px;
-        border: 1px solid #ccc;
-        font-size: 1em;
+      padding: 10px 15px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      font-size: 0.95rem;
+      color: var(--text);
+      cursor: pointer;
+      outline: none;
+    }
+    select:focus { border-color: var(--primary); ring: 2px solid var(--primary-light); }
+
+    /* --- TARJETAS KPI --- */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .kpi-card {
+      background: var(--card-bg);
+      padding: 1.5rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s;
+    }
+    .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+
+    .kpi-icon {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: var(--accent);
+      color: var(--primary);
+      padding: 8px;
+      border-radius: 12px;
+      display: flex;
+    }
+    
+    .kpi-label { font-size: 0.85rem; color: var(--text-light); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .kpi-value { font-size: 2rem; font-weight: 700; color: var(--text); margin: 0.5rem 0; }
+    
+    .kpi-trend { font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+    .trend-up { color: var(--success); }
+    .trend-down { color: var(--danger); }
+    .trend-neutral { color: var(--text-light); }
+
+    /* --- GRÁFICOS --- */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .chart-card {
+      background: var(--card-bg);
+      padding: 1.5rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      height: 400px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-card h3 { margin: 0 0 1rem 0; color: var(--text); font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center; }
+    .chart-wrapper { flex: 1; position: relative; min-height: 0; }
+
+    /* --- TABLAS --- */
+    .table-section {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+    .table-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .table-header h3 { margin: 0; }
+
+    .table-scroll { overflow-x: auto; max-height: 500px; }
+    
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+    th { background: #f9fafb; text-align: left; padding: 1rem; font-weight: 600; color: var(--text-light); position: sticky; top: 0; }
+    td { padding: 1rem; border-bottom: 1px solid #f3f4f6; color: var(--text); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover { background: #f9fafb; }
+    
+    .rank-badge {
+      background: var(--primary); color: white;
+      width: 24px; height: 24px; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; font-weight: bold;
+    }
+
+    @media (max-width: 768px) {
+      .charts-grid { grid-template-columns: 1fr; }
+      .header-actions { display: none; } /* En móvil simplificamos */
     }
   </style>
 </head>
 <body>
 
-  <header>📊 Estadísticas y Métricas</header>
+  <header>
+    <h1><span class="material-icons-round">analytics</span> Dashboard Funaz</h1>
+    <div class="header-actions">
+      <button class="btn-glass" onclick="exportarExcel()"><span class="material-icons-round">file_download</span> Exportar Mes</button>
+      <button class="btn-glass" onclick="location.href='admin.txt'"><span class="material-icons-round">arrow_back</span> Volver</button>
+    </div>
+  </header>
 
   <main>
-    <div class="top-controls">
-      <button class="btn-volver" onclick="location.href='admin.txt'">← Volver al Admin</button> </div>
-
-    <div class="filter-bar">
-        <strong>Filtrar por:</strong>
-        <select id="mesSelect" onchange="cargarDatos()">
-            </select>
+    <div class="filter-container">
+      <span class="material-icons-round" style="color:var(--primary)">filter_alt</span>
+      <label style="font-weight:600;">Período:</label>
+      <select id="mesSelect" onchange="actualizarDashboard()"></select>
+      <select id="anioSelect" onchange="actualizarDashboard()"></select>
+      
+      <div style="flex:1;"></div>
+      <small style="color:var(--text-light)" id="lastUpdated">Actualizado: --:--</small>
     </div>
 
     <div class="kpi-grid">
-        <div class="kpi-card">
-            <div class="kpi-label">Ventas Totales</div>
-            <div class="kpi-value" id="kpi-total">$0</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Pedidos Realizados</div>
-            <div class="kpi-value" id="kpi-pedidos">0</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Ticket Promedio</div>
-            <div class="kpi-value" id="kpi-ticket">$0</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Producto Estrella</div>
-            <div class="kpi-value" id="kpi-top-prod" style="font-size: 1.2em;">-</div>
-        </div>
+      <div class="kpi-card">
+        <div class="kpi-icon"><span class="material-icons-round">payments</span></div>
+        <div class="kpi-label">Ingresos Totales</div>
+        <div class="kpi-value" id="kpi-ingresos">$0</div>
+        <div class="kpi-trend" id="trend-ingresos">--</div>
+      </div>
+      
+      <div class="kpi-card">
+        <div class="kpi-icon"><span class="material-icons-round">shopping_bag</span></div>
+        <div class="kpi-label">Pedidos Confirmados</div>
+        <div class="kpi-value" id="kpi-pedidos">0</div>
+        <div class="kpi-trend" id="trend-pedidos">--</div>
+      </div>
+      
+      <div class="kpi-card">
+        <div class="kpi-icon"><span class="material-icons-round">receipt_long</span></div>
+        <div class="kpi-label">Ticket Promedio</div>
+        <div class="kpi-value" id="kpi-ticket">$0</div>
+        <div class="kpi-trend" id="trend-ticket">--</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon"><span class="material-icons-round">star</span></div>
+        <div class="kpi-label">Producto Estrella</div>
+        <div class="kpi-value" id="kpi-best-prod" style="font-size:1.3rem; margin-top:0.8rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">-</div>
+        <div style="font-size:0.85rem; color:var(--text-light);" id="kpi-best-prod-qty">0 u. vendidas</div>
+      </div>
     </div>
 
     <div class="charts-grid">
-        <div class="chart-container">
-            <h2>📈 Ventas por Día</h2>
-            <canvas id="chartVentasDia"></canvas>
+      <div class="chart-card">
+        <h3>Ventas por Día <span class="material-icons-round" style="color:var(--primary)">show_chart</span></h3>
+        <div class="chart-wrapper">
+          <canvas id="chartVentasDia"></canvas>
         </div>
-        <div class="chart-container">
-            <h2>🏆 Top 5 Productos (Unidades)</h2>
-            <canvas id="chartTopProductos"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Horario de Compras <span class="material-icons-round" style="color:var(--primary)">schedule</span></h3>
+        <div class="chart-wrapper">
+          <canvas id="chartHorarios"></canvas>
         </div>
+      </div>
     </div>
 
     <div class="charts-grid">
-        <div class="chart-container">
-            <h2>🏢 Mejores Clientes</h2>
-            <canvas id="chartTopClientes"></canvas>
+      <div class="chart-card">
+        <h3>Top 10 Productos Más Vendidos <span class="material-icons-round" style="color:var(--primary)">inventory_2</span></h3>
+        <div class="chart-wrapper">
+          <canvas id="chartTopProductos"></canvas>
         </div>
-        <div class="chart-container">
-            <h2>📦 Valor Stock vs Ventas</h2>
-            <canvas id="chartStockRatio"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Mejores Clientes (Volumen $) <span class="material-icons-round" style="color:var(--primary)">groups</span></h3>
+        <div class="chart-wrapper">
+          <canvas id="chartClientes"></canvas>
         </div>
+      </div>
     </div>
 
-    <div class="table-container">
-        <h2>⚠️ Alerta de Stock Bajo (Menos de 10 u.)</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Producto</th>
-                    <th>Stock Actual</th>
-                    <th>Precio Unit.</th>
-                    <th>Estado</th>
-                </tr>
-            </thead>
-            <tbody id="tablaStockBajo">
-                </tbody>
+    <div class="table-section">
+      <div class="table-header">
+        <h3>🏆 Ranking Detallado de Productos</h3>
+      </div>
+      <div class="table-scroll">
+        <table id="tablaProductos">
+          <thead>
+            <tr>
+              <th width="50">#</th>
+              <th>Producto</th>
+              <th>Cant. Vendida</th>
+              <th>Total Generado</th>
+              <th>Stock Actual</th>
+            </tr>
+          </thead>
+          <tbody>
+            </tbody>
         </table>
+      </div>
     </div>
 
   </main>
 
   <script>
+    // --- Configuración ---
     const apiBase = 'https://distribuidorafunaz-a2o6.onrender.com/api';
-    let chartVentas, chartProductos, chartClientes, chartStock;
-    let allPedidos = [];
-    let allProductos = [];
+    let rawPedidos = [];
+    let rawProductos = [];
+    
+    // Instancias de gráficos
+    let charts = {};
 
-    // Formateador de dinero
-    const moneyFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
+    // Formateador $
+    const fmtMoney = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 });
 
-    // Inicializar
+    // --- Init ---
     window.addEventListener('DOMContentLoaded', async () => {
-        await fetchData();
-        setupFilters();
-        procesarDatos(); // Procesa con el mes actual por defecto
+      // 1. Cargar Fechas
+      setupDateSelectors();
+      
+      // 2. Cargar Datos
+      await loadData();
+      
+      // 3. Render Inicial
+      actualizarDashboard();
     });
 
-    async function fetchData() {
-        try {
-            // Cargar Pedidos y Productos en paralelo
-            const [resPedidos, resProductos] = await Promise.all([
-                fetch(`${apiBase}/pedidos`),
-                fetch(`${apiBase}/productos`)
-            ]);
+    // --- Lógica de Datos ---
+    async function loadData() {
+      try {
+        const [resPed, resProd] = await Promise.all([
+          fetch(`${apiBase}/pedidos`),
+          fetch(`${apiBase}/productos`)
+        ]);
+        rawPedidos = await resPed.json();
+        rawProductos = await resProd.json();
+        
+        document.getElementById('lastUpdated').textContent = 'Actualizado: ' + new Date().toLocaleTimeString();
+      } catch (e) {
+        console.error(e);
+        alert('Error cargando datos. Revisa la consola.');
+      }
+    }
 
-            allPedidos = await resPedidos.json();
-            allProductos = await resProductos.json();
+    function setupDateSelectors() {
+      const hoy = new Date();
+      const selMes = document.getElementById('mesSelect');
+      const selAnio = document.getElementById('anioSelect');
+      
+      // Meses
+      const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+      meses.forEach((m, i) => {
+        const op = document.createElement('option');
+        op.value = i;
+        op.textContent = m;
+        if(i === hoy.getMonth()) op.selected = true;
+        selMes.appendChild(op);
+      });
 
-        } catch (error) {
-            console.error("Error cargando datos:", error);
-            alert("Error cargando datos del servidor.");
+      // Años (Actual y anterior)
+      const anio = hoy.getFullYear();
+      [anio, anio-1].forEach(a => {
+        const op = document.createElement('option');
+        op.value = a;
+        op.textContent = a;
+        selAnio.appendChild(op);
+      });
+    }
+
+    // --- Procesamiento Principal ---
+    function actualizarDashboard() {
+      const mes = parseInt(document.getElementById('mesSelect').value);
+      const anio = parseInt(document.getElementById('anioSelect').value);
+
+      // 1. Filtrar Pedidos del Mes Actual
+      const pedidosMes = rawPedidos.filter(p => {
+        const d = new Date(p.fecha);
+        return d.getMonth() === mes && d.getFullYear() === anio;
+      });
+
+      // 2. Filtrar Pedidos del Mes Anterior (Comparativa)
+      const fechaAnt = new Date(anio, mes - 1, 1);
+      const pedidosMesAnt = rawPedidos.filter(p => {
+        const d = new Date(p.fecha);
+        return d.getMonth() === fechaAnt.getMonth() && d.getFullYear() === fechaAnt.getFullYear();
+      });
+
+      // 3. Calcular KPIs
+      renderKPIs(pedidosMes, pedidosMesAnt);
+
+      // 4. Renderizar Gráficos
+      renderChartVentasDia(pedidosMes, mes, anio);
+      renderChartHorarios(pedidosMes);
+      renderChartTopProductos(pedidosMes);
+      renderChartClientes(pedidosMes);
+
+      // 5. Renderizar Tabla
+      renderTablaProductos(pedidosMes);
+    }
+
+    // --- KPIs ---
+    function renderKPIs(actuales, anteriores) {
+      const calcTotal = (arr) => arr.reduce((acc, p) => acc + (Number(p.total)||0), 0);
+      
+      const totalAct = calcTotal(actuales);
+      const totalAnt = calcTotal(anteriores);
+      const countAct = actuales.length;
+      const countAnt = anteriores.length;
+      const ticketAct = countAct ? totalAct / countAct : 0;
+      const ticketAnt = countAnt ? totalAnt / countAnt : 0;
+
+      // Render Values
+      document.getElementById('kpi-ingresos').textContent = fmtMoney.format(totalAct);
+      document.getElementById('kpi-pedidos').textContent = countAct;
+      document.getElementById('kpi-ticket').textContent = fmtMoney.format(ticketAct);
+
+      // Render Trends
+      renderTrend('trend-ingresos', totalAct, totalAnt, true);
+      renderTrend('trend-pedidos', countAct, countAnt, false);
+      renderTrend('trend-ticket', ticketAct, ticketAnt, true);
+
+      // Producto Estrella (Calculo rápido)
+      const prodCount = {};
+      actuales.forEach(p => {
+        const items = Array.isArray(p.items)?p.items:JSON.parse(p.items||'[]');
+        items.forEach(i => prodCount[i.nombre] = (prodCount[i.nombre]||0) + Number(i.cantidad));
+      });
+      let bestName = '-', bestQty = 0;
+      Object.entries(prodCount).forEach(([n, q]) => { if(q > bestQty){ bestQty=q; bestName=n; }});
+      
+      document.getElementById('kpi-best-prod').textContent = bestName;
+      document.getElementById('kpi-best-prod-qty').textContent = bestQty + ' u. vendidas';
+    }
+
+    function renderTrend(id, valAct, valAnt, isMoney) {
+      const el = document.getElementById(id);
+      if(valAnt === 0) {
+        el.innerHTML = '<span class="trend-neutral">Sin datos previos</span>';
+        return;
+      }
+      const diff = ((valAct - valAnt) / valAnt) * 100;
+      const icon = diff >= 0 ? 'trending_up' : 'trending_down';
+      const colorClass = diff >= 0 ? 'trend-up' : 'trend-down';
+      const sign = diff >= 0 ? '+' : '';
+      
+      el.innerHTML = `<span class="${colorClass}"><span class="material-icons-round" style="font-size:1.1em">${icon}</span> ${sign}${diff.toFixed(1)}%</span> <span style="color:#aaa; font-weight:400; font-size:0.9em">vs mes anterior</span>`;
+    }
+
+    // --- Gráficos ---
+    function destroyChart(id) { if(charts[id]) charts[id].destroy(); }
+
+    function renderChartVentasDia(pedidos, mes, anio) {
+      const diasMes = new Date(anio, mes + 1, 0).getDate();
+      const labels = Array.from({length: diasMes}, (_, i) => i + 1);
+      const data = new Array(diasMes).fill(0);
+
+      pedidos.forEach(p => {
+        const d = new Date(p.fecha).getDate();
+        data[d-1] += Number(p.total);
+      });
+
+      destroyChart('ventasDia');
+      const ctx = document.getElementById('chartVentasDia').getContext('2d');
+      
+      // Crear gradiente
+      let gradient = ctx.createLinearGradient(0, 0, 0, 400);
+      gradient.addColorStop(0, 'rgba(46, 125, 50, 0.5)');   
+      gradient.addColorStop(1, 'rgba(46, 125, 50, 0.0)');
+
+      charts['ventasDia'] = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Ventas ($)',
+            data: data,
+            borderColor: '#2e7d32',
+            backgroundColor: gradient,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 3,
+            pointHoverRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: {display: false} },
+          scales: {
+            y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
+            x: { grid: { display: false } }
+          }
         }
+      });
     }
 
-    function setupFilters() {
-        const select = document.getElementById('mesSelect');
-        const meses = [
-            "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-            "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-        ];
+    function renderChartHorarios(pedidos) {
+      const data = new Array(24).fill(0);
+      pedidos.forEach(p => {
+        const h = new Date(p.fecha).getHours();
+        data[h]++;
+      });
+      
+      destroyChart('horarios');
+      const ctx = document.getElementById('chartHorarios').getContext('2d');
+      charts['horarios'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: Array.from({length:24}, (_,i)=>`${i}hs`),
+          datasets: [{
+            label: 'Pedidos',
+            data: data,
+            backgroundColor: '#f57c00',
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: {display: false} },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+
+    function renderChartTopProductos(pedidos) {
+      const map = {};
+      pedidos.forEach(p => {
+        const items = Array.isArray(p.items)?p.items:JSON.parse(p.items||'[]');
+        items.forEach(i => map[i.nombre] = (map[i.nombre]||0) + Number(i.cantidad));
+      });
+
+      const sorted = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0, 10);
+      
+      destroyChart('topProd');
+      const ctx = document.getElementById('chartTopProductos').getContext('2d');
+      charts['topProd'] = new Chart(ctx, {
+        type: 'bar',
+        indexAxis: 'y',
+        data: {
+          labels: sorted.map(x=>x[0]),
+          datasets: [{
+            label: 'Unidades',
+            data: sorted.map(x=>x[1]),
+            backgroundColor: '#2e7d32',
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: {display: false} }
+        }
+      });
+    }
+
+    function renderChartClientes(pedidos) {
+      const map = {};
+      pedidos.forEach(p => {
+        const name = p.nombre_negocio || p.user || 'Desconocido';
+        map[name] = (map[name]||0) + Number(p.total);
+      });
+      
+      const sorted = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0, 5);
+      
+      destroyChart('clientes');
+      const ctx = document.getElementById('chartClientes').getContext('2d');
+      charts['clientes'] = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: sorted.map(x=>x[0]),
+          datasets: [{
+            data: sorted.map(x=>x[1]),
+            backgroundColor: ['#2e7d32', '#43a047', '#66bb6a', '#81c784', '#a5d6a7'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '70%',
+          plugins: { legend: {position: 'right'} }
+        }
+      });
+    }
+
+    // --- Tabla Detallada ---
+    function renderTablaProductos(pedidos) {
+      const map = {};
+      
+      // Agrupar ventas
+      pedidos.forEach(p => {
+        const items = Array.isArray(p.items)?p.items:JSON.parse(p.items||'[]');
+        items.forEach(i => {
+          if(!map[i.id]) map[i.id] = { nombre: i.nombre, cant: 0, total: 0 };
+          map[i.id].cant += Number(i.cantidad);
+          map[i.id].total += Number(i.subtotal);
+        });
+      });
+
+      // Convertir a array y cruzar con stock real
+      const list = Object.values(map).map(item => {
+        // Buscamos info fresca del producto para el stock
+        const prodReal = rawProductos.find(p => p.nombre === item.nombre) || {}; 
+        // Nota: usamos nombre match porque a veces los IDs cambian si borran/crean, 
+        // pero idealmente usariamos ID. Si tu ID es consistente, usa: rawProductos.find(p=>p.id == item.id)
         
-        const hoy = new Date();
-        const mesActual = hoy.getMonth(); // 0-11
-        
-        // Llenar select con meses (simple, año actual)
-        meses.forEach((m, i) => {
-            const option = document.createElement('option');
-            option.value = i;
-            option.textContent = m + " " + hoy.getFullYear();
-            if(i === mesActual) option.selected = true;
-            select.appendChild(option);
-        });
+        return {
+          ...item,
+          stock: prodReal.stock || 0
+        };
+      });
+
+      list.sort((a,b) => b.cant - a.cant); // Ordenar por mas vendido
+
+      const tbody = document.querySelector('#tablaProductos tbody');
+      tbody.innerHTML = '';
+      
+      list.forEach((p, idx) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><span class="rank-badge">${idx+1}</span></td>
+          <td>${p.nombre}</td>
+          <td><b>${p.cant}</b></td>
+          <td>${fmtMoney.format(p.total)}</td>
+          <td>${p.stock}</td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
 
-    function procesarDatos() {
-        const mesSeleccionado = parseInt(document.getElementById('mesSelect').value);
-        const anioActual = new Date().getFullYear();
+    // --- Exportar Excel ---
+    function exportarExcel() {
+      const mes = document.getElementById('mesSelect').options[document.getElementById('mesSelect').selectedIndex].text;
+      const anio = document.getElementById('anioSelect').value;
+      
+      // 1. Datos Resumen
+      const ws_data = [
+        ["Reporte de Ventas - Distribuidora Funaz"],
+        ["Período", `${mes} ${anio}`],
+        ["Generado", new Date().toLocaleString()],
+        [],
+        ["Detalle de Productos Vendidos"],
+        ["Ranking", "Producto", "Cantidad Vendida", "Total ($)", "Stock Actual"]
+      ];
 
-        // 1. Filtrar pedidos por mes y año
-        const pedidosFiltrados = allPedidos.filter(p => {
-            const fecha = new Date(p.fecha);
-            return fecha.getMonth() === mesSeleccionado && fecha.getFullYear() === anioActual;
-        });
+      // Sacar datos de la tabla actual
+      const rows = document.querySelectorAll('#tablaProductos tbody tr');
+      rows.forEach(r => {
+        const cols = r.querySelectorAll('td');
+        ws_data.push([
+          cols[0].innerText, // Rank
+          cols[1].innerText, // Nombre
+          cols[2].innerText, // Cant
+          cols[3].innerText, // Total
+          cols[4].innerText  // Stock
+        ]);
+      });
 
-        actualizarKPIs(pedidosFiltrados);
-        actualizarGraficoVentasDia(pedidosFiltrados, mesSeleccionado, anioActual);
-        actualizarGraficoTopProductos(pedidosFiltrados);
-        actualizarGraficoClientes(pedidosFiltrados);
-        actualizarGraficoStock();
-        actualizarTablaStockBajo();
-    }
-
-    function actualizarKPIs(pedidos) {
-        const totalVentas = pedidos.reduce((sum, p) => sum + (Number(p.total) || 0), 0);
-        const cantidadPedidos = pedidos.length;
-        const ticketPromedio = cantidadPedidos > 0 ? totalVentas / cantidadPedidos : 0;
-
-        // Calcular Top Producto General
-        const conteoProductos = {};
-        pedidos.forEach(p => {
-            const items = Array.isArray(p.items) ? p.items : JSON.parse(p.items || '[]');
-            items.forEach(item => {
-                conteoProductos[item.nombre] = (conteoProductos[item.nombre] || 0) + Number(item.cantidad);
-            });
-        });
-        
-        let topProd = '-';
-        let maxVendidos = 0;
-        Object.entries(conteoProductos).forEach(([nombre, cant]) => {
-            if(cant > maxVendidos) {
-                maxVendidos = cant;
-                topProd = nombre;
-            }
-        });
-
-        // Render
-        document.getElementById('kpi-total').textContent = moneyFormatter.format(totalVentas);
-        document.getElementById('kpi-pedidos').textContent = cantidadPedidos;
-        document.getElementById('kpi-ticket').textContent = moneyFormatter.format(ticketPromedio);
-        document.getElementById('kpi-top-prod').textContent = topProd.length > 15 ? topProd.substring(0,15)+'...' : topProd;
-    }
-
-    function actualizarGraficoVentasDia(pedidos, mes, anio) {
-        // Crear array de días del mes (1 al 31)
-        const diasEnMes = new Date(anio, mes + 1, 0).getDate();
-        const labels = Array.from({length: diasEnMes}, (_, i) => i + 1);
-        const dataVentas = new Array(diasEnMes).fill(0);
-
-        pedidos.forEach(p => {
-            const dia = new Date(p.fecha).getDate();
-            dataVentas[dia - 1] += Number(p.total) || 0;
-        });
-
-        const ctx = document.getElementById('chartVentasDia').getContext('2d');
-        if(chartVentas) chartVentas.destroy();
-
-        chartVentas = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Ventas Diarias ($)',
-                    data: dataVentas,
-                    borderColor: '#2e7d32',
-                    backgroundColor: 'rgba(46, 125, 50, 0.1)',
-                    fill: true,
-                    tension: 0.3
-                }]
-            },
-            options: { responsive: true, scales: { y: { beginAtZero: true } } }
-        });
-    }
-
-    function actualizarGraficoTopProductos(pedidos) {
-        const conteo = {};
-        pedidos.forEach(p => {
-            const items = Array.isArray(p.items) ? p.items : JSON.parse(p.items || '[]');
-            items.forEach(item => {
-                conteo[item.nombre] = (conteo[item.nombre] || 0) + Number(item.cantidad);
-            });
-        });
-
-        // Ordenar y tomar Top 5
-        const sorted = Object.entries(conteo).sort((a,b) => b[1] - a[1]).slice(0, 5);
-        
-        const ctx = document.getElementById('chartTopProductos').getContext('2d');
-        if(chartProductos) chartProductos.destroy();
-
-        chartProductos = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: sorted.map(x => x[0]),
-                datasets: [{
-                    label: 'Unidades Vendidas',
-                    data: sorted.map(x => x[1]),
-                    backgroundColor: [
-                        '#2e7d32', '#43a047', '#66bb6a', '#81c784', '#a5d6a7'
-                    ]
-                }]
-            },
-            options: { indexAxis: 'y', responsive: true }
-        });
-    }
-
-    function actualizarGraficoClientes(pedidos) {
-        const clientes = {};
-        pedidos.forEach(p => {
-            // Prioridad: Nombre Negocio > Usuario
-            const nombre = p.nombre_negocio || p.user || 'Desconocido';
-            clientes[nombre] = (clientes[nombre] || 0) + (Number(p.total) || 0);
-        });
-
-        const sorted = Object.entries(clientes).sort((a,b) => b[1] - a[1]).slice(0, 5);
-
-        const ctx = document.getElementById('chartTopClientes').getContext('2d');
-        if(chartClientes) chartClientes.destroy();
-
-        chartClientes = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: sorted.map(x => x[0]),
-                datasets: [{
-                    data: sorted.map(x => x[1]),
-                    backgroundColor: ['#f57f17', '#fbc02d', '#fff176', '#ff9800', '#ffcc80']
-                }]
-            }
-        });
-    }
-
-    function actualizarGraficoStock() {
-        // Este no depende de las ventas, sino del stock actual
-        // Calculamos Valor total del inventario vs productos sin stock
-        let valorInventario = 0;
-        let itemsSinStock = 0;
-        let itemsConStock = 0;
-
-        allProductos.forEach(p => {
-            const stock = Number(p.stock) || 0;
-            const precio = Number(p.precio) || 0;
-            if (stock <= 0) itemsSinStock++;
-            else itemsConStock++;
-            valorInventario += (stock * precio);
-        });
-
-        const ctx = document.getElementById('chartStockRatio').getContext('2d');
-        if(chartStock) chartStock.destroy();
-
-        chartStock = new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: ['Con Stock', 'Sin Stock'],
-                datasets: [{
-                    data: [itemsConStock, itemsSinStock],
-                    backgroundColor: ['#2e7d32', '#d32f2f']
-                }]
-            },
-            options: {
-                plugins: {
-                    title: { display: true, text: `Valor Inventario: ${moneyFormatter.format(valorInventario)}` }
-                }
-            }
-        });
-    }
-
-    function actualizarTablaStockBajo() {
-        const tbody = document.getElementById('tablaStockBajo');
-        tbody.innerHTML = '';
-        
-        // Filtramos productos con stock < 10
-        const bajoStock = allProductos.filter(p => (Number(p.stock)||0) < 10).sort((a,b) => Number(a.stock) - Number(b.stock));
-
-        bajoStock.forEach(p => {
-            const tr = document.createElement('tr');
-            const stock = Number(p.stock)||0;
-            const colorStock = stock <= 0 ? 'color:#d32f2f; font-weight:bold;' : 'color:#f57c00;';
-            
-            tr.innerHTML = `
-                <td>${p.nombre}</td>
-                <td style="${colorStock}">${stock}</td>
-                <td>${moneyFormatter.format(p.precio)}</td>
-                <td>${stock === 0 ? 'AGOTADO' : 'Bajo'}</td>
-            `;
-            tbody.appendChild(tr);
-        });
+      const ws = XLSX.utils.aoa_to_sheet(ws_data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Ventas");
+      
+      XLSX.writeFile(wb, `Reporte_Funaz_${mes}_${anio}.xlsx`);
     }
   </script>
 </body>
