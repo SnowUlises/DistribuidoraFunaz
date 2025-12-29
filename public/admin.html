@@ -9,14 +9,22 @@
       --primary: #2e7d32;
       --primary-light: #4caf50;
       --accent: #e8f5e9;
-      --bg: #f8f9fa;
+      --bg: #f0f2f5;
       --text: #2c3e50;
       --card-bg: #ffffff;
-      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow: 0 2px 8px rgba(0,0,0,0.08);
       --radius: 12px;
       --danger: #d32f2f;
       --warning: #f57c00;
       --info: #0288d1;
+      
+      /* Colores de Estado */
+      --state-armando-bg: #fff3e0;
+      --state-armando-border: #ffb74d;
+      --state-armando-text: #ef6c00;
+      --state-preparado-bg: #f1f8e9;
+      --state-preparado-border: #76ff03;
+      --state-preparado-text: #2e7d32;
     }
     
     body {
@@ -24,7 +32,7 @@
       margin: 0;
       background: var(--bg);
       color: var(--text);
-      padding-bottom: 4em;
+      padding-bottom: 6em;
     }
 
     /* --- Header --- */
@@ -35,13 +43,12 @@
       padding: 1.5em 0;
       font-size: 1.8em;
       font-weight: 600;
-      letter-spacing: 0.5px;
       box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2);
       margin-bottom: 2em;
     }
 
     main {
-      max-width: 1400px;
+      max-width: 95%;
       margin: 0 auto;
       padding: 0 1.5em;
     }
@@ -56,7 +63,6 @@
       margin-bottom: 2em;
     }
 
-    /* Buscador */
     .search-container {
       flex: 1;
       max-width: 400px;
@@ -71,9 +77,7 @@
       outline: none;
       transition: border-color 0.3s;
     }
-    .search-input:focus {
-      border-color: var(--primary);
-    }
+    .search-input:focus { border-color: var(--primary); }
 
     button.btn-volver {
       background: transparent;
@@ -85,10 +89,7 @@
       cursor: pointer;
       transition: all 0.2s;
     }
-    button.btn-volver:hover {
-      background: var(--primary);
-      color: #fff;
-    }
+    button.btn-volver:hover { background: var(--primary); color: #fff; }
 
     #mensajeError {
       text-align: center;
@@ -100,10 +101,9 @@
       border: 1px solid #ffcdd2;
       display: none;
     }
-    #mensajeError:not(:empty) { display: block;
-    }
+    #mensajeError:not(:empty) { display: block; }
 
-    /* --- Toolbar de Agrupación --- */
+    /* --- Toolbar Flotante --- */
     #groupToolbar {
       position: fixed;
       bottom: 20px;
@@ -122,11 +122,7 @@
       pointer-events: none;
       transition: opacity 0.3s, transform 0.3s;
     }
-    #groupToolbar.visible {
-      opacity: 1;
-      pointer-events: all;
-      transform: translateX(-50%) translateY(0);
-    }
+    #groupToolbar.visible { opacity: 1; pointer-events: all; transform: translateX(-50%) translateY(0); }
     #groupToolbar span { font-weight: 600; }
     #groupToolbar button {
       background: var(--primary);
@@ -134,320 +130,195 @@
       border: none;
       padding: 8px 16px;
       border-radius: 20px;
+      cursor: pointer;
     }
-    #groupToolbar button.cancel { background: #666;
-    }
-    /* Estilos nuevos para botones masivos en toolbar */
-    #groupToolbar button.bulk-cloud { background: var(--primary-light); color: #fff; display: none; }
-    #groupToolbar button.bulk-pdf { background: var(--warning); color: #fff; display: none; }
-    #btnGroupAction { display: none; } /* Oculto por defecto hasta que se seleccione usuarios */
+    #groupToolbar button.cancel { background: #666; }
+    #groupToolbar button.bulk-cloud { background: var(--primary-light); display: none; }
+    #groupToolbar button.bulk-pdf { background: var(--warning); display: none; }
+    #btnGroupAction { display: none; }
 
     /* --- Checkboxes --- */
-    .user-select-check {
-      transform: scale(1.5);
-      margin-right: 15px;
+    .user-select-check, .peticion-check, .pedido-check {
+      transform: scale(1.3);
       cursor: pointer;
       accent-color: var(--primary);
     }
-    
-    .peticion-check {
-        transform: scale(1.5);
-        margin-right: 10px;
-        cursor: pointer;
-        accent-color: var(--info);
-    }
+    .user-select-check { margin-right: 15px; }
+    .pedido-check { margin-right: 10px; margin-top: 5px; }
 
-    /* NUEVO: Checkbox de Pedido Individual */
-    .pedido-check {
-        transform: scale(1.4);
-        margin-right: 10px;
-        cursor: pointer;
-        accent-color: var(--warning);
-        margin-top: 4px; /* Alineación óptica */
-    }
-
-    /* --- Etiqueta de Sub-Usuario en Grupos --- */
-    .sub-user-label {
-      background: #e0f2f1;
-      color: #00695c;
-      padding: 4px 10px;
+    /* --- Etiquetas --- */
+    .sub-user-label, .business-label {
+      padding: 4px 8px;
       border-radius: 4px;
-      font-size: 0.85em;
+      font-size: 0.8em;
       font-weight: bold;
       display: inline-block;
       margin-bottom: 5px;
-      border: 1px solid #b2dfdb;
     }
-    .business-label {
-      background: #fff8e1;
-      color: #f57f17;
-      padding: 4px 10px;
-      border-radius: 4px;
-      font-size: 0.85em;
-      font-weight: bold;
-      display: inline-block;
-      margin-bottom: 5px;
-      border: 1px solid #ffecb3;
-      margin-right: 5px;
-    }
-    /* --- Secciones (Details) --- */
-    details > summary {
-      list-style: none;
-      font-size: 1.5em;
-      font-weight: 700;
-      color: var(--primary);
-      margin-bottom: 1em;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 0.5em;
-      padding: 0.5em;
-      border-radius: 8px;
-      transition: background 0.2s;
-    }
-    details > summary:hover {
-      background: rgba(0,0,0,0.03);
-    }
-    details > summary::-webkit-details-marker { display: none;
-    }
-    details > summary::before {
-      content: "›";
-      font-size: 1.2em;
-      display: inline-block;
-      transition: transform 0.3s;
-      color: var(--primary-light);
-    }
-    details[open] > summary::before {
-      transform: rotate(90deg);
-    }
+    .sub-user-label { background: #e0f2f1; color: #00695c; border: 1px solid #b2dfdb; }
+    .business-label { background: #fff8e1; color: #f57f17; border: 1px solid #ffecb3; margin-right: 5px; }
 
-    /* --- Grid Layout --- */
+    /* --- Layout Principal (GRID DE CLIENTES) --- */
     #listaUsuarios, #listaPeticiones {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); 
       gap: 1.5em;
-      align-items: start;
       margin-bottom: 2em;
     }
 
-    /* --- Tarjetas (Usuarios y Peticiones) --- */
-    .user-details, .peticion-details {
+    /* --- Tarjeta de Cliente (Contenedor) --- */
+    .user-details {
       background: var(--card-bg);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       border: 1px solid #eee;
-      overflow: hidden;
-      transition: box-shadow 0.3s, transform 0.2s;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
     }
-    .user-details:hover, .peticion-details:hover {
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-      transform: translateY(-2px);
-    }
-
-    .user-details > summary, .peticion-details > summary {
-      background: linear-gradient(to right, #ffffff, #f9fafb);
-      padding: 1.2em;
+    
+    .user-details > summary {
+      list-style: none;
+      background: linear-gradient(to bottom, #ffffff, #f8f9fa);
+      padding: 1em;
       font-size: 1.1em;
       font-weight: 600;
       cursor: pointer;
-      border-bottom: 1px solid transparent;
-      transition: border-color 0.3s;
+      border-bottom: 1px solid #eee;
       display: flex;
-      justify-content: flex-start;
       align-items: center;
       color: var(--text);
     }
-    .user-details > summary::before, .peticion-details > summary::before {
-      content: none;
+    .user-details > summary::-webkit-details-marker { display: none; }
+    .user-details[open] > summary { background: #e8f5e9; color: var(--primary); border-bottom: 1px solid #c8e6c9; }
+
+    /* --- Grid INTERNO de Pedidos (Dentro del Cliente) --- */
+    .usuario-item ul {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+        gap: 15px;
+        padding: 15px;
+        list-style: none;
+        margin: 0;
     }
 
-    .user-details[open] > summary, .peticion-details[open] > summary {
-      border-bottom: 1px solid #eee;
-      color: var(--primary);
-      background: var(--accent);
-    }
-
-    /* --- Puntito de Enfoque (Minimalista) --- */
-    .focus-dot {
-        width: 12px;
-        height: 12px;
-        border: 2px solid #ccc;
-        border-radius: 50%;
-        margin-left: auto;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        position: relative;
-    }
-
-    .focus-dot:hover {
-        border-color: var(--primary-light);
-        transform: scale(1.2);
-    }
-    
-    .focus-dot:hover::after {
-        content: "Enfocar";
-        position: absolute;
-        right: 20px;
-        top: -4px;
-        background: #333;
-        color: #fff;
-        font-size: 10px;
-        padding: 2px 6px;
-        border-radius: 4px;
-        pointer-events: none;
-        white-space: nowrap;
-    }
-    
-    .focus-dot.active {
-        background-color: var(--primary);
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.15);
-    }
-    
-    .focus-dot.active:hover::after {
-        content: "Mostrar todos";
-    }
-
-    .user-details.usuario-enfocado {
-        border-color: var(--primary-light);
-    }
-
-    .usuario-item, .peticion-item {
-      padding: 1em;
+    /* --- Tarjeta de Pedido Individual --- */
+    .pedido-item {
       background: #fff;
-    }
-
-    ul { list-style: none; padding: 0; margin: 0; }
-    
-    .pedido-item, .peticion-info {
-      background: #fafafa;
-      border: 1px solid #eee;
+      border: 2px solid #eee;
       border-radius: 8px;
-      margin-bottom: 1em;
-      padding: 1em;
+      padding: 10px;
       transition: all 0.3s;
-    }
-    
-    .pedido-item.enfocado, .peticion-item.enfocado {
-      background: #fff;
-      border: 2px solid var(--primary-light);
-      box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+      height: 480px; /* Altura fija para scroll interno */
+      display: flex;
+      flex-direction: column;
+      position: relative;
     }
 
-    .pedido-line, .peticion-header-info {
-      font-size: 0.95em;
-      margin-bottom: 0.8em;
-      color: #555;
-      padding-bottom: 0.5em;
-      border-bottom: 1px dotted #ccc;
+    /* Colores de Estado */
+    .pedido-item.estado-armando { border-color: var(--state-armando-border); background-color: var(--state-armando-bg); }
+    .pedido-item.estado-preparado { border-color: var(--state-preparado-border); background-color: var(--state-preparado-bg); }
+
+    /* Área de Items con SCROLL */
+    .peticion-items {
+        flex: 1;
+        overflow-y: auto;
+        margin: 10px 0;
+        padding-right: 5px;
+        background: rgba(255,255,255,0.7);
+        border-radius: 4px;
+        border: 1px solid #eee;
     }
-    .pedido-line strong, .peticion-header-info strong { color: var(--primary);
+    .peticion-items::-webkit-scrollbar { width: 6px; }
+    .peticion-items::-webkit-scrollbar-track { background: #f1f1f1; }
+    .peticion-items::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+
+    /* Enfocado */
+    .pedido-item.enfocado {
+        position: fixed;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 2000;
+        width: 90%; max-width: 600px; height: 85vh;
+        box-shadow: 0 0 0 100vw rgba(0,0,0,0.6);
+    }
+
+    .pedido-line {
+      font-size: 0.9em;
+      margin-bottom: 0.5em;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+      padding-bottom: 5px;
     }
 
     .item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.9em;
-      padding: 6px 0;
-      border-bottom: 1px dashed #eee;
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.9em; padding: 6px 0; border-bottom: 1px dashed rgba(0,0,0,0.1);
     }
-    .item:last-child { border-bottom: none; }
+
+    .pedido-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      margin-top: auto;
+      padding-top: 10px;
+      border-top: 1px solid rgba(0,0,0,0.1);
+    }
+    .pedido-actions button { width: 100%; padding: 8px 4px; font-size: 0.85em; }
+
+    /* SWITCH Armando/Preparado */
+    .switch-container {
+        display: flex; align-items: center; justify-content: space-between;
+        background: rgba(255,255,255,0.6);
+        padding: 5px 10px; border-radius: 20px; margin-top: 5px;
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+    .switch-label { font-weight: bold; font-size: 0.9em; text-transform: uppercase; }
     
-    .item-controls { display: flex; gap: 4px; }
-    .item-controls button {
-      padding: 2px 8px;
-      border-radius: 4px;
-      border: none;
-      cursor: pointer;
-      font-size: 0.85em;
-      font-weight: bold;
+    .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: var(--state-armando-border); transition: .4s; border-radius: 34px;
     }
-    .item-controls button.increase { background: #dcedc8; color: #33691e; }
-    .item-controls button.decrease { background: #fff9c4; color: #f57f17; }
-    .item-controls button.delete { background: #ffcdd2; color: #c62828; }
-
-    .pedido-actions, .button-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5em;
-      margin-top: 1em;
-      padding-top: 1em;
-      border-top: 1px solid #eee;
+    .slider:before {
+      position: absolute; content: ""; height: 16px; width: 16px;
+      left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;
     }
+    input:checked + .slider { background-color: var(--state-preparado-border); }
+    input:checked + .slider:before { transform: translateX(26px); }
 
-    button {
-      flex: 1 1 auto;
-      padding: 8px 12px;
-      border: 1px solid #ddd;
-      background: white;
-      color: #555;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.85em;
-      font-weight: 600;
-      transition: all 0.2s;
+    /* Botones */
+    button { border: 1px solid #ddd; background: white; color: #555; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+    button:hover { transform: translateY(-1px); }
+
+    .guardar-btn { background: #e3f2fd; color: #1565c0; border-color: #bbdefb; } /* Guardar Cloud */
+    .preview-pdf { background: #fff3e0; color: #ef6c00; border-color: #ffe0b2; } /* PDF +3% */
+    .delete { background: #ffebee; color: #c62828; border-color: #ffcdd2; }
+    .confirmar { background: #e8f5e9; color: #2e7d32; border-color: #c8e6c9; }
+    .ver-original { background: #f3e5f5; color: #7b1fa2; border-color: #e1bee7; }
+    .add-product { color: var(--info); border-color: #b3e5fc; }
+
+    /* Focus Dot */
+    .focus-dot {
+        width: 12px; height: 12px; border: 2px solid #ccc; border-radius: 50%;
+        margin-left: auto; cursor: pointer;
     }
-    button:hover { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .focus-dot.active { background-color: var(--primary); border-color: var(--primary); }
+    .user-details.usuario-enfocado { border: 2px solid var(--primary); }
 
-    /* Botones específicos */
-    .guardar-btn, .confirmar { border-color: var(--primary-light); color: var(--primary); }
-    .guardar-btn:hover, .confirmar:hover { background: var(--primary); color: white; }
-    
-    .confirmar-plus { color: #00838f; border-color: #b2ebf2; }
-    .confirmar-plus:hover { background: #e0f7fa; }
-
-    .add-product, .copy-faltantes { color: var(--info); border-color: #b3e5fc; }
-    .add-product:hover, .copy-faltantes:hover { background: #e1f5fe; }
-    
-    .actualizar-precios, .preview-pdf { color: var(--warning); border-color: #ffe0b2; }
-    .actualizar-precios:hover, .preview-pdf:hover { background: #fff3e0; }
-
-    .delete-peticion, .delete, button[onclick*="eliminarPedido"] { color: var(--danger); border-color: #ffcdd2; }
-    .delete-peticion:hover, button[onclick*="eliminarPedido"]:hover { background: #ffebee; }
-    
-    .btn-disolver {
-        background: transparent;
-        border: 1px solid #999;
-        color: #666;
-        font-size: 0.8em;
-        margin-left: auto;
-        flex: 0;
-        white-space: nowrap;
-    }
-    .btn-disolver:hover { background: #eee; color: #333; }
-
-    .status-container {
-      margin-top: 1em;
-      display: flex;
-      gap: 1em;
-      font-size: 0.85em;
-      background: var(--accent);
-      padding: 8px;
-      border-radius: 6px;
-      justify-content: space-around;
-    }
-    .status-container label { cursor: pointer; display: flex; align-items: center; gap: 4px; }
-
+    /* Dialog */
     dialog {
-      border: none;
-      border-radius: 12px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-      padding: 2em;
-      width: 90%;
-      max-width: 450px;
+      border: none; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      padding: 2em; width: 90%; max-width: 450px;
     }
     dialog::backdrop { background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); }
-    dialog form { display: flex; flex-direction: column; gap: 1em; }
-    dialog input { padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
+    dialog input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; }
 
     footer { text-align: center; color: #888; font-size: 0.9em; margin-top: 4em; }
 
     @media (max-width: 600px) {
       #listaUsuarios, #listaPeticiones { grid-template-columns: 1fr; }
-      .top-controls { flex-direction: column-reverse; }
+      .usuario-item ul { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -457,25 +328,23 @@
   <main>
     <div class="top-controls">
       <button class="btn-volver" onclick="location.href='index.html'">← Volver a tienda</button>
-      
       <div class="search-container">
           <input type="text" id="searchInput" class="search-input" placeholder="Buscar cliente o grupo..." onkeyup="filtrarUsuarios()">
       </div>
-
       <div id="mensajeError"></div>
     </div>
 
     <details open>
-      <summary>Usuarios y Pedidos</summary>
+      <summary>Usuarios y Pedidos (Cuadrícula)</summary>
       <div id="listaUsuarios"></div>
     </details>
 
-    <details open>
+    <details open style="margin-top: 2em;">
       <summary>Peticiones Pendientes</summary>
       <div style="margin-bottom: 1em; padding: 10px; background: #e3f2fd; border-radius: 8px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-        <button onclick="copiarFaltantesGrupo()" style="background: var(--info); color: white; border: none; flex: 0 0 auto;">Faltantes En Grupo</button>
-        <button onclick="procesarPeticionesMasivas(false)" style="background: var(--primary); color: white; border: none; flex: 0 0 auto;">Aceptar Selecc.</button>
-        <button onclick="procesarPeticionesMasivas(true)" style="background: #00838f; color: white; border: none; flex: 0 0 auto;">Aceptar Selecc. (-3%)</button>
+        <button onclick="copiarFaltantesGrupo()" style="background: var(--info); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer;">Faltantes En Grupo</button>
+        <button onclick="procesarPeticionesMasivas(false)" style="background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer;">Aceptar Selecc.</button>
+        <button onclick="procesarPeticionesMasivas(true)" style="background: #00838f; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer;">Aceptar Selecc. (-3%)</button>
         <span id="peticionesSelectedCount" style="font-size: 0.9em; color: #555;">0 seleccionados</span>
       </div>
       <div id="listaPeticiones"></div>
@@ -484,29 +353,22 @@
 
   <div id="groupToolbar">
       <span id="selectedCount">0 seleccionados</span>
-      
       <button onclick="handleGroupAction()" id="btnGroupAction">Crear Grupo</button>
-      
       <button class="bulk-cloud" onclick="procesarPedidosMasivos('cloud')">Guardar Cloud</button>
-      <button class="bulk-pdf" onclick="procesarPedidosMasivos('pdf')">Ver PDF</button>
-      
+      <button class="bulk-pdf" onclick="procesarPedidosMasivos('pdf')">PDF +3%</button>
       <button class="cancel" onclick="clearSelection()">Cancelar</button>
   </div>
 
-  <footer>
-    Distribuidora Funaz © 2025
-  </footer>
+  <footer>Distribuidora Funaz © 2025</footer>
 
   <dialog id="addProductModal">
-    <form>
+    <form onsubmit="event.preventDefault(); addProductsToPedido();">
       <label for="productsInput" style="font-weight:600; color:var(--primary)">Productos (IDxCantidad, separados por coma):</label>
       <input type="text" id="productsInput" placeholder="Ej: 353x5, 24x2">
-      <label>
-        <input type="checkbox" id="apply3percent"> Aplicar -3%
-      </label>
+      <label><input type="checkbox" id="apply3percent"> Aplicar -3%</label>
       <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:1em;">
-        <button type="button" onclick="closeAddModal()" style="background:#eee; color:#333; border:none;">Cancelar</button>
-        <button type="button" onclick="addProductsToPedido()" style="background:var(--primary); color:white; border:none;">Añadir</button>
+        <button type="button" onclick="closeAddModal()" style="background:#eee;">Cancelar</button>
+        <button type="submit" style="background:var(--primary); color:white;">Añadir</button>
       </div>
     </form>
   </dialog>
@@ -514,13 +376,13 @@
   <script>
   const apiBase = 'https://distribuidorafunaz-a2o6.onrender.com/api';
 
+  // Verificación de Admin
   const user = localStorage.getItem('loggedUser');
-  if (user !== 'admin') {
-    window.location.href = 'index.html';
-  }
+  if (user !== 'admin') window.location.href = 'index.html';
 
-  // --- Variables Globales ---
+  // --- Estado Global ---
   let originalPedidosCache = JSON.parse(localStorage.getItem('originalPedidosCache') || '{}');
+  // estadosPedidos guardará { estado: 'armando'|'preparado', timestamp: ... }
   let estadosPedidos = JSON.parse(localStorage.getItem('estadosPedidos') || '{}');
   let groupsConfig = JSON.parse(localStorage.getItem('groupsConfig') || '{}'); 
   const usedButtons = JSON.parse(localStorage.getItem('usedButtons') || '{}');
@@ -528,11 +390,27 @@
   let currentPedidoId = null;
   window.usersPedidos = {};
   
-  // SEPARACIÓN DE SELECCIONES:
-  let selectedUsersForGroup = new Set(); // Para crear grupos (checkbox cabecera)
-  let selectedPedidoIds = new Set();     // Para PDF/Cloud (checkbox individual)
+  // Selecciones
+  let selectedUsersForGroup = new Set();
+  let selectedPedidoIds = new Set(); 
 
-  // --- Funciones de Persistencia ---
+  // --- Limpieza de Caché Antigua (1 semana) ---
+  function cleanOldCache() {
+      const now = Date.now();
+      const oneWeek = 7 * 24 * 60 * 60 * 1000;
+      let changed = false;
+      Object.keys(originalPedidosCache).forEach(key => {
+          const entry = originalPedidosCache[key];
+          // Si tiene timestamp y es mayor a una semana, borrar
+          if (entry.timestamp && (now - entry.timestamp > oneWeek)) {
+              delete originalPedidosCache[key];
+              changed = true;
+          }
+      });
+      if(changed) guardarOriginalCache();
+  }
+
+  // --- Persistencia ---
   function guardarEstados() { localStorage.setItem('estadosPedidos', JSON.stringify(estadosPedidos)); }
   function saveUsedButtons() { localStorage.setItem('usedButtons', JSON.stringify(usedButtons)); }
   function guardarOriginalCache() { localStorage.setItem('originalPedidosCache', JSON.stringify(originalPedidosCache)); }
@@ -542,40 +420,34 @@
   function mostrarError(msg) {
     const el = document.getElementById('mensajeError');
     if (el) el.textContent = msg;
-    else console.warn('mensajeError no encontrado:', msg);
+    setTimeout(() => { if(el) el.textContent = ''; }, 6000);
   }
 
   function formatMoney(n) {
     try {
       return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n);
-    } catch (e) {
-      return '$' + Number(n).toFixed(2);
-    }
+    } catch (e) { return '$' + Number(n).toFixed(2); }
   }
 
   function formatDateTime(fecha) {
     const date = new Date(fecha);
     const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
     const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-    const formattedDate = `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
-    const formattedTime = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-    return { formattedDate, formattedTime };
+    return { 
+        formattedDate: `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`,
+        formattedTime: `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+    };
   }
 
-  // --- Buscador ---
   function filtrarUsuarios() {
       const query = document.getElementById('searchInput').value.toLowerCase();
       document.querySelectorAll('.user-details').forEach(detail => {
           const name = detail.dataset.searchName.toLowerCase();
-          if (name.includes(query)) {
-              detail.style.display = '';
-          } else {
-              detail.style.display = 'none';
-          }
+          detail.style.display = name.includes(query) ? '' : 'none';
       });
   }
 
-  // ==================== LÓGICA DE PEDIDOS (Renderizado) ====================
+  // ==================== LÓGICA DE VISUALIZACIÓN PEDIDOS ====================
 
   function enfocarPedido(pedidoId) {
     const selectedPedido = document.getElementById(`pedido-${pedidoId}`);
@@ -583,37 +455,18 @@
     
     const btn = selectedPedido.querySelector('.enfocar');
     const estaEnfocado = selectedPedido.classList.contains('enfocado');
-    const peticionesSection = document.getElementById('listaPeticiones').closest('details');
+    
+    // Resetear otros
     document.querySelectorAll('.pedido-item').forEach(p => {
-      p.style.display = '';
       p.classList.remove('enfocado');
       const b = p.querySelector('.enfocar');
       if (b) b.textContent = 'Enfocar';
     });
-    if (peticionesSection) peticionesSection.style.display = '';
 
     if (!estaEnfocado) {
-      document.querySelectorAll('.pedido-item').forEach(p => {
-        if (p.id !== `pedido-${pedidoId}`) p.style.display = 'none';
-      });
-      if (peticionesSection) peticionesSection.style.display = 'none';
-
       selectedPedido.classList.add('enfocado');
-      btn.textContent = 'Mostrar todos';
-
-      const userDetails = selectedPedido.closest('.user-details');
-      if (userDetails) {
-        document.querySelectorAll('.user-details').forEach(ud => ud.open = false);
-        userDetails.open = true;
-        document.querySelectorAll('.user-details').forEach(ud => {
-            if(ud !== userDetails) ud.style.display = 'none';
-        });
-      }
-      selectedPedido.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    } else {
-      document.querySelectorAll('.user-details').forEach(ud => ud.style.display = '');
-      filtrarUsuarios();
-    }
+      btn.textContent = 'Cerrar';
+    } 
   }
 
   function renderItemsHTML(pedidoId, items, editable = true) {
@@ -623,10 +476,10 @@
             ${item.nombre}: <b>${item.cantidad}</b> x ${formatMoney(item.precio_unitario)} = <b>${formatMoney(item.subtotal)}</b>
         </span>
         ${editable ? `
-        <div class="item-controls">
-          <button class="increase" onclick="modificarCantidadPedido('${pedidoId}', ${itemIndex}, 1)">+</button>
-          <button class="decrease" onclick="modificarCantidadPedido('${pedidoId}', ${itemIndex}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
-          <button class="delete" onclick="eliminarItemPedido('${pedidoId}', ${itemIndex})">×</button>
+        <div style="display:flex; gap:2px;">
+          <button class="increase" style="padding:2px 6px; background:#dcedc8;" onclick="modificarCantidadPedido('${pedidoId}', ${itemIndex}, 1)">+</button>
+          <button class="decrease" style="padding:2px 6px; background:#fff9c4;" onclick="modificarCantidadPedido('${pedidoId}', ${itemIndex}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
+          <button class="delete" style="padding:2px 6px;" onclick="eliminarItemPedido('${pedidoId}', ${itemIndex})">×</button>
         </div>
         ` : ''}
       </div>
@@ -642,111 +495,106 @@
     if (totalSpan) totalSpan.textContent = formatMoney(total);
   }
 
-  async function actualizarPreciosPedido(pedidoId, applyDiscount = false) {
-    const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-    if (pedidoDiv.classList.contains('viewing-original')) {
-      alert('Salí de la vista original antes de actualizar precios.');
-      return;
-    }
-    const descuentoTexto = applyDiscount ? ' con -3% (cliente con descuento)' : '';
-    if (!confirm(`¿Actualizar precios según lista actual${descuentoTexto}?`)) return;
-    try {
-      const res = await fetch(`${apiBase}/productos`, { cache: 'no-store' });
-      if (!res.ok) throw new Error('Error al cargar productos');
-      const currentProductos = await res.json();
-      const precioMap = new Map(currentProductos.map(p => [p.id, p.precio]));
+  // --- SWITCH DE ESTADO (ARMANDO / PREPARADO) ---
+  function syncStatus(pedidoId, isPreparado) {
+      // 1. Guardar localmente
+      if (!estadosPedidos[pedidoId]) estadosPedidos[pedidoId] = {};
+      estadosPedidos[pedidoId].estado = isPreparado ? 'preparado' : 'armando';
+      estadosPedidos[pedidoId].timestamp = Date.now();
+      guardarEstados();
 
-      let items = JSON.parse(pedidoDiv.dataset.items || '[]');
-      let changed = false;
-      const multiplier = applyDiscount ? 1.10 * 0.97 : 1.10;
-      const updatedItems = items.map(item => {
-        const basePrecio = precioMap.get(item.id);
-        if (basePrecio !== undefined) {
-          const nuevoPrecio = Number((basePrecio * multiplier).toFixed(2));
-          if (nuevoPrecio !== item.precio_unitario) changed = true;
-          return { ...item, precio_unitario: nuevoPrecio, subtotal: nuevoPrecio * item.cantidad };
-        }
-        return item;
-    });
-      if (!changed) return alert('Todos los precios ya están actualizados.');
+      // 2. Actualizar UI
+      const card = document.getElementById(`pedido-${pedidoId}`);
+      const label = document.getElementById(`status-label-${pedidoId}`);
+      
+      const armandoColor = getComputedStyle(document.documentElement).getPropertyValue('--state-armando-text').trim();
+      const preparadoColor = getComputedStyle(document.documentElement).getPropertyValue('--state-preparado-text').trim();
 
-      pedidoDiv.dataset.items = JSON.stringify(updatedItems);
-      updatePedidoItems(pedidoId, updatedItems);
-      alert('Precios actualizados.');
-    } catch (e) {
-      mostrarError('Error al actualizar precios: ' + e.message);
-    }
+      if (card) {
+          if (isPreparado) {
+              card.classList.remove('estado-armando');
+              card.classList.add('estado-preparado');
+              if(label) { label.textContent = "Preparado"; label.style.color = preparadoColor; }
+          } else {
+              card.classList.remove('estado-preparado');
+              card.classList.add('estado-armando');
+              if(label) { label.textContent = "Armando"; label.style.color = armandoColor; }
+          }
+      }
   }
 
-  function toggleViewOriginal(pedidoId) {
-    const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-    const isViewingOriginal = pedidoDiv.classList.toggle('viewing-original');
-    const itemsToShow = isViewingOriginal 
-      ? JSON.parse(pedidoDiv.dataset.veryOriginalItems)
-      : JSON.parse(pedidoDiv.dataset.items);
-    updatePedidoItems(pedidoId, itemsToShow, !isViewingOriginal);
-
-    const btn = pedidoDiv.querySelector('.ver-original');
-    btn.textContent = isViewingOriginal ? 'Volver a editado' : 'Ver original';
-    pedidoDiv.querySelectorAll('button').forEach(b => {
-      if (!b.classList.contains('ver-original')) b.disabled = isViewingOriginal;
-    });
-  }
-
-  // --- BUILD PEDIDO HTML (AQUÍ SE AGREGA EL CHECKBOX POR PEDIDO) ---
   function buildPedidoHTML(pedido, index, groupOrUserName) {
     const items = pedido.items;
     const pedidoId = pedido.id ?? `${pedido.user}-${index}`;
-    const key = pedido.id ? pedido.id : `${pedido.user}-${index}`; 
     
-    const estado = estadosPedidos[key] || estadosPedidos[`${groupOrUserName}-${index}`] || {};
+    // Recuperar estado (Default: armando)
+    const storedState = estadosPedidos[pedidoId]?.estado || 'armando';
+    const isPreparado = storedState === 'preparado';
     
     const total = items.reduce((sum, p) => sum + p.subtotal, 0);
     const { formattedDate, formattedTime } = formatDateTime(pedido.fecha);
-    
+
+    // CACHÉ DE ORIGINAL (Solo guarda si no existe)
     if (pedido.id && !originalPedidosCache[pedidoId]) {
-      originalPedidosCache[pedidoId] = structuredClone(items);
+      originalPedidosCache[pedidoId] = {
+          items: structuredClone(items),
+          timestamp: Date.now() 
+      };
       guardarOriginalCache();
     }
 
-    const subUserHeader = (groupOrUserName !== pedido.user) 
-        ? `<div class="sub-user-label">👤 ${pedido.user}</div>` : '';
-    const negocioHeader = (pedido.nombre_negocio)
-        ? `<div class="business-label">🏢 ${pedido.nombre_negocio}</div>` : '';
+    const subUserHeader = (groupOrUserName !== pedido.user) ? `<div class="sub-user-label">👤 ${pedido.user}</div>` : '';
+    const negocioHeader = (pedido.nombre_negocio) ? `<div class="business-label">🏢 ${pedido.nombre_negocio}</div>` : '';
+
+    const estadoClass = isPreparado ? 'estado-preparado' : 'estado-armando';
+    const labelText = isPreparado ? 'Preparado' : 'Armando';
+    const labelColor = isPreparado ? 'var(--state-preparado-text)' : 'var(--state-armando-text)';
 
     return `
       <li>
         ${negocioHeader}
         ${subUserHeader}
-        <div class="pedido-item" id="pedido-${pedidoId}" data-items='${JSON.stringify(items)}' data-veryOriginalItems='${JSON.stringify(originalPedidosCache[pedidoId] || items)}'>
+        <div class="pedido-item ${estadoClass}" id="pedido-${pedidoId}" 
+             data-items='${JSON.stringify(items)}' 
+             data-veryOriginalItems='${JSON.stringify((originalPedidosCache[pedidoId] && originalPedidosCache[pedidoId].items) ? originalPedidosCache[pedidoId].items : items)}'>
+          
           <div class="pedido-line" style="display:flex; gap:10px; align-items:flex-start;">
             <input type="checkbox" class="pedido-check" value="${pedidoId}" onclick="event.stopPropagation(); togglePedidoSelection('${pedidoId}', this)">
-            
             <div style="flex:1;">
-                <strong>Pedido</strong> <br> ${formattedDate} ${formattedTime} <small>(ID: ${pedidoId})</small> <br> <b>Total: <span id="total-${pedidoId}">${formatMoney(total)}</span></b>
+                <strong>Pedido</strong> <small>(ID: ${pedidoId})</small><br> 
+                ${formattedDate} ${formattedTime} <br> 
+                <b>Total: <span id="total-${pedidoId}">${formatMoney(total)}</span></b>
             </div>
           </div>
+
+          <div class="switch-container">
+            <span id="status-label-${pedidoId}" class="switch-label" style="color: ${labelColor}">${labelText}</span>
+            <label class="switch">
+              <input type="checkbox" ${isPreparado ? 'checked' : ''} onchange="syncStatus('${pedidoId}', this.checked)">
+              <span class="slider"></span>
+            </label>
+          </div>
+
           <div class="peticion-items" id="items-${pedidoId}">
            ${renderItemsHTML(pedidoId, items)}
           </div>
+
           <div class="pedido-actions">
-            <button onclick="eliminarPedido('${pedidoId}', '${pedido.user}', ${index})">Eliminar</button>
-            <button class="guardar-btn" data-pedidoid="${pedidoId}" data-username="${pedido.user}" data-statekey="${key}">Guardar Cloud</button>
-            <button class="preview-pdf" onclick="previewPDFPedido('${pedidoId}')">PDF</button>
+            <button class="guardar-btn" data-pedidoid="${pedidoId}">Cloud (Guardar)</button>
+            <button class="preview-pdf" onclick="previewPDFPedido('${pedidoId}')">PDF + 3%</button>
+            
             <button class="add-product" onclick="openAddModal('${pedidoId}')">+ Prod</button>
+            <button class="ver-original" onclick="toggleViewOriginal('${pedidoId}')">Original</button>
+            
             <button class="actualizar-precios" onclick="actualizarPreciosPedido('${pedidoId}', false)">$ Act</button>
             <button class="actualizar-precios" onclick="actualizarPreciosPedido('${pedidoId}', true)">$ -3%</button>
-            <button class="ver-original" onclick="toggleViewOriginal('${pedidoId}')">Original</button>
+            
             <button class="confirmar" onclick="guardarCambiosPedido('${pedidoId}')">Confirmar</button>
             <button class="enfocar" onclick="enfocarPedido('${pedidoId}')">Enfocar</button>
-            <span class="guardar-status" id="guardar-status-${pedidoId}" aria-hidden="true" style="align-self:center; margin-left:auto;">
-              ${estado.guardado ? '✅' : ''}
-            </span>
-          </div>
-          <div class='status-container'>
-            <label><input type='checkbox' ${estado.guardado ? 'checked' : ''} onchange="toggleGuardado('${key}', this)"> Guardado</label>
-            <label><input type='checkbox' ${estado.recibido ? 'checked' : ''} onchange="toggleRecibido('${key}', this)"> Recibido</label>
-            <label><input type="checkbox" id="modo-devolucion-${pedidoId}"> Devolución</label>
+            
+            <button class="delete" style="grid-column: span 2; margin-top:5px;" onclick="eliminarPedido('${pedidoId}', '${pedido.user}', ${index})">Eliminar Pedido</button>
+            
+            <span class="guardar-status" id="guardar-status-${pedidoId}" style="grid-column: span 2; text-align:center; font-size:1.2em;"></span>
           </div>
         </div>
       </li>`;
@@ -755,144 +603,90 @@
   function addGuardarBtnListener(btn) {
     btn.addEventListener('click', async () => {
       const pedidoId = btn.dataset.pedidoid;
-      const stateKey = btn.dataset.statekey;
       const statusSpan = document.getElementById(`guardar-status-${pedidoId}`);
       if (statusSpan) statusSpan.textContent = '⏳';
       try {
         await guardarPedido(pedidoId);
         if (statusSpan) statusSpan.textContent = '✅';
-        estadosPedidos[stateKey] = estadosPedidos[stateKey] || {};
-        estadosPedidos[stateKey].guardado = true;
-        guardarEstados();
       } catch (err) {
         if (statusSpan) statusSpan.textContent = '❌';
-        console.error('Error:', err);
         alert(err.message);
       }
     });
   }
 
-  // ==================== LÓGICA DE SELECCIÓN Y TOOLBAR (ACTUALIZADA) ====================
+  // ==================== LÓGICA DE ELIMINAR ====================
+  async function eliminarPedido(pedidoId, usuario, index) {
+    // 1. Verificar Estado
+    const state = estadosPedidos[pedidoId]?.estado || 'armando';
+    const isPreparado = state === 'preparado';
+    
+    let msg = `¿Eliminar pedido permanentemente?`;
+    if (isPreparado) {
+        msg += `\n\n⚠️ ESTÁ EN 'PREPARADO': NO se devolverá el stock.`;
+    } else {
+        msg += `\n\n✅ ESTÁ EN 'ARMANDO': Se devolverá el stock automáticamente.`;
+    }
 
-  // A. Selección de USUARIO (Para Grupos)
-  function toggleUserSelection(userName, checkbox) {
-      if (checkbox.checked) {
-          selectedUsersForGroup.add(userName);
-      } else {
-          selectedUsersForGroup.delete(userName);
-      }
-      updateGroupToolbar();
-  }
+    if (!confirm(msg)) return;
 
-  // B. Selección de PEDIDO (Para PDF/Cloud)
-  function togglePedidoSelection(pedidoId, checkbox) {
-      if (checkbox.checked) {
-          selectedPedidoIds.add(pedidoId);
-      } else {
-          selectedPedidoIds.delete(pedidoId);
-      }
-      updateGroupToolbar();
-  }
-
-  function clearSelection() {
-      selectedUsersForGroup.clear();
-      selectedPedidoIds.clear();
-      document.querySelectorAll('.user-select-check').forEach(cb => cb.checked = false);
-      document.querySelectorAll('.pedido-check').forEach(cb => cb.checked = false);
-      updateGroupToolbar();
-  }
-
-  function updateGroupToolbar() {
-      const toolbar = document.getElementById('groupToolbar');
-      const countSpan = document.getElementById('selectedCount');
-      
-      const btnGroup = document.getElementById('btnGroupAction');
-      const btnCloud = document.querySelector('.bulk-cloud');
-      const btnPdf = document.querySelector('.bulk-pdf');
-      
-      const userCount = selectedUsersForGroup.size;
-      const pedidoCount = selectedPedidoIds.size;
-
-      // Prioridad Visual: Si hay pedidos seleccionados, mostramos acciones de pedidos.
-      // Si solo hay usuarios, mostramos acciones de grupo.
-      
-      if (pedidoCount > 0) {
-          toolbar.classList.add('visible');
-          countSpan.textContent = `${pedidoCount} pedido(s) seleccionado(s)`;
-          
-          btnCloud.style.display = 'inline-block';
-          btnPdf.style.display = 'inline-block';
-          btnGroup.style.display = 'none'; // Ocultamos grupo porque estamos en modo pedidos
-          
-      } else if (userCount > 0) {
-          toolbar.classList.add('visible');
-          countSpan.textContent = `${userCount} usuario(s) seleccionado(s)`;
-          
-          btnCloud.style.display = 'none';
-          btnPdf.style.display = 'none';
-          btnGroup.style.display = 'inline-block';
-          
-          // Lógica texto botón grupo
-          let groupCount = 0;
-          let uCount = 0;
-          selectedUsersForGroup.forEach(name => {
-              if (groupsConfig[name]) groupCount++;
-              else uCount++;
-          });
-          if (groupCount === 1 && uCount > 0) btnGroup.textContent = "Unir al Grupo";
-          else if (groupCount === 0 && uCount > 1) btnGroup.textContent = "Crear Grupo";
-          else if (groupCount > 1) btnGroup.textContent = "No se puede unir grupos";
-          else btnGroup.textContent = "Selecciona más...";
-          
-      } else {
-          toolbar.classList.remove('visible');
-      }
-  }
-
-  // --- Lógica de Grupos (Mantenida) ---
-  function handleGroupAction() {
-      let groupNames = [];
-      let normalUsers = [];
-      selectedUsersForGroup.forEach(name => {
-          if (groupsConfig[name]) groupNames.push(name);
-          else normalUsers.push(name);
+    try {
+      const res = await fetch(`${apiBase}/eliminar-pedido/${pedidoId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        // Aquí pasamos "recibido" como true si está preparado (para NO restaurar stock)
+        body: JSON.stringify({ recibido: isPreparado }) 
       });
-      if (groupNames.length === 0 && normalUsers.length > 1) {
-          const newName = prompt("Nombre para el nuevo grupo (ej: 'Vendedores Maxi'):");
-          if (!newName) return;
-          if (groupsConfig[newName] || usersPedidos[newName]) return alert("Ese nombre ya existe.");
-          groupsConfig[newName] = normalUsers;
-          saveGroups();
-          location.reload();
-      }
-      else if (groupNames.length === 1 && normalUsers.length > 0) {
-          const targetGroup = groupNames[0];
-          groupsConfig[targetGroup] = [...groupsConfig[targetGroup], ...normalUsers];
-          saveGroups();
-          location.reload();
-      }
-      else alert("Selección inválida para agrupar.");
-  }
-
-  function disolverGrupo(groupName) {
-      if(!confirm(`¿Disolver el grupo "${groupName}" y separar los pedidos?`)) return;
-      delete groupsConfig[groupName];
-      saveGroups();
+      if (!res.ok) throw new Error(await res.text());
+      alert('Pedido eliminado correctamente.');
       location.reload();
+    } catch (e) {
+      mostrarError(e.message);
+    }
   }
 
+  // ==================== ORIGINAL / EDICIÓN ====================
+  function toggleViewOriginal(pedidoId) {
+    const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
+    const isViewingOriginal = pedidoDiv.classList.toggle('viewing-original');
+    
+    let itemsToShow;
+    if (isViewingOriginal) {
+        // Cargar desde cache profunda
+        const raw = pedidoDiv.dataset.veryOriginalItems;
+        itemsToShow = raw ? JSON.parse(raw) : JSON.parse(pedidoDiv.dataset.items);
+    } else {
+        // Cargar actual
+        itemsToShow = JSON.parse(pedidoDiv.dataset.items);
+    }
+
+    updatePedidoItems(pedidoId, itemsToShow, !isViewingOriginal);
+
+    const btn = pedidoDiv.querySelector('.ver-original');
+    btn.textContent = isViewingOriginal ? 'Volver a Editado' : 'Original';
+    
+    pedidoDiv.querySelectorAll('button').forEach(b => {
+      if (!b.classList.contains('ver-original')) b.disabled = isViewingOriginal;
+    });
+    
+    if (isViewingOriginal) {
+        pedidoDiv.style.border = "2px dashed #7b1fa2";
+    } else {
+        const isPrep = pedidoDiv.classList.contains('estado-preparado');
+        pedidoDiv.style.border = isPrep ? "2px solid #76ff03" : "2px solid #eee";
+    }
+  }
+
+  // ==================== CARGA DE DATOS ====================
   async function cargarUsuarios() {
     try {
       const listaPedidos = document.getElementById('listaUsuarios');
-      if (!listaPedidos) return;
       listaPedidos.innerHTML = '<p style="text-align:center">Cargando pedidos...</p>';
       
       const res = await fetch(`${apiBase}/pedidos`, { cache: 'no-store' });
-      if (!res.ok) {
-        listaPedidos.innerHTML = '<p style="text-align:center">Error al cargar pedidos.</p>';
-        return;
-      }
+      if (!res.ok) throw new Error('Error al cargar pedidos.');
       const pedidosRaw = await res.json();
+      
       const processedPedidos = pedidosRaw.map(p => {
         let items = Array.isArray(p.items) ? p.items : JSON.parse(p.items || '[]');
         items = items.map(item => ({
@@ -904,6 +698,8 @@
         }));
         return { ...p, items, user: p.user || 'Invitado' };
       });
+
+      // Agrupación
       const userToGroupMap = {};
       Object.entries(groupsConfig).forEach(([groupName, members]) => {
           members.forEach(member => userToGroupMap[member] = groupName);
@@ -925,28 +721,19 @@
       Object.entries(pedidosOrganizados).forEach(([displayName, userPedidos]) => {
         userPedidos.sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
         
-        const initialCount = 5;
-        const pedidosToShow = userPedidos.slice(0, initialCount);
-        
         let pedidosHTML = '<ul>';
-        pedidosToShow.forEach((pedido, index) => {
-            pedidosHTML += buildPedidoHTML(pedido, index, displayName);
+        userPedidos.forEach((pedido, index) => {
+           pedidosHTML += buildPedidoHTML(pedido, index, displayName);
         });
         pedidosHTML += '</ul>';
-        
-        if (userPedidos.length > initialCount) {
-          pedidosHTML += `<button class="load-more" data-username="${displayName}" data-loaded="${initialCount}" onclick="loadMorePedidos(this)" style="width:100%; margin-top:10px;">Cargar más</button>`;
-        }
 
         const userDiv = document.createElement('details');
         userDiv.className = 'user-details';
         userDiv.dataset.searchName = displayName;
         
         const isGroup = !!groupsConfig[displayName];
-        const disolverBtn = isGroup ?
-        `<button class="btn-disolver" onclick="event.preventDefault(); disolverGrupo('${displayName}')">Disolver Grupo</button>` : '';
-        const groupTag = isGroup ?
-         ` <span style="font-size:0.6em; background:#333; color:#fff; padding:2px 6px; border-radius:4px; margin-left:8px; vertical-align:middle;">GRUPO</span>` : '';
+        const disolverBtn = isGroup ? `<button class="btn-disolver" onclick="event.preventDefault(); disolverGrupo('${displayName}')" style="margin-left:auto; font-size:0.7em; background:transparent; border:1px solid #999;">Disolver Grupo</button>` : '';
+        const groupTag = isGroup ? ` <span style="font-size:0.6em; background:#333; color:#fff; padding:2px 6px; border-radius:4px; margin-left:8px;">GRUPO</span>` : '';
         
         userDiv.innerHTML = `
             <summary>
@@ -955,21 +742,11 @@
                     <span>${displayName} ${groupTag}</span>
                     ${disolverBtn}
                 </div>
-                <div class="focus-dot" onclick="enfocarUsuario(this, '${displayName}')" title="Enfocar usuario"></div>
+                <div class="focus-dot" onclick="enfocarUsuario(this, '${displayName}')" title="Enfocar"></div>
             </summary>
             <div class='usuario-item'>${pedidosHTML}</div>
         `;
         listaPedidos.appendChild(userDiv);
-
-        pedidosToShow.forEach((pedido, index) => {
-           const pedidoId = pedido.id ?? `${pedido.user}-${index}`;
-           if(pedido.id && !originalPedidosCache[pedidoId]) {
-               originalPedidosCache[pedidoId] = structuredClone(pedido.items);
-               guardarOriginalCache();
-           }
-           const div = document.getElementById(`pedido-${pedidoId}`);
-           if(div) div.dataset.veryOriginalItems = JSON.stringify(originalPedidosCache[pedidoId] || pedido.items);
-        });
         userDiv.querySelectorAll('.guardar-btn').forEach(addGuardarBtnListener);
       });
     } catch (err) {
@@ -978,61 +755,119 @@
     }
   }
 
-  function enfocarUsuario(dotElement, userName) {
-      event.preventDefault(); 
-      event.stopPropagation();
-      const container = dotElement.closest('.user-details');
-      const yaEnfocado = container.classList.contains('usuario-enfocado');
-      if (yaEnfocado) {
-          document.querySelectorAll('.user-details').forEach(ud => {
-              ud.style.display = ''; 
-              ud.classList.remove('usuario-enfocado');
-              const d = ud.querySelector('.focus-dot');
-              if(d) d.classList.remove('active');
+  // --- SELECCIÓN Y MASIVOS ---
+  function toggleUserSelection(userName, checkbox) {
+      if (checkbox.checked) selectedUsersForGroup.add(userName);
+      else selectedUsersForGroup.delete(userName);
+      updateGroupToolbar();
+  }
+  function togglePedidoSelection(pedidoId, checkbox) {
+      if (checkbox.checked) selectedPedidoIds.add(pedidoId);
+      else selectedPedidoIds.delete(pedidoId);
+      updateGroupToolbar();
+  }
+  function clearSelection() {
+      selectedUsersForGroup.clear();
+      selectedPedidoIds.clear();
+      document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+          if(cb.classList.contains('user-select-check') || cb.classList.contains('pedido-check')) cb.checked = false;
+      });
+      updateGroupToolbar();
+  }
+  function updateGroupToolbar() {
+      const toolbar = document.getElementById('groupToolbar');
+      const countSpan = document.getElementById('selectedCount');
+      const btnGroup = document.getElementById('btnGroupAction');
+      const btnCloud = document.querySelector('.bulk-cloud');
+      const btnPdf = document.querySelector('.bulk-pdf');
+      
+      const userCount = selectedUsersForGroup.size;
+      const pedidoCount = selectedPedidoIds.size;
+
+      if (pedidoCount > 0) {
+          toolbar.classList.add('visible');
+          countSpan.textContent = `${pedidoCount} pedidos`;
+          btnCloud.style.display = 'inline-block';
+          btnPdf.style.display = 'inline-block';
+          btnGroup.style.display = 'none';
+      } else if (userCount > 0) {
+          toolbar.classList.add('visible');
+          countSpan.textContent = `${userCount} usuarios`;
+          btnCloud.style.display = 'none';
+          btnPdf.style.display = 'none';
+          btnGroup.style.display = 'inline-block';
+          
+          let groupCount = 0; let uCount = 0;
+          selectedUsersForGroup.forEach(name => {
+              if (groupsConfig[name]) groupCount++; else uCount++;
           });
-          filtrarUsuarios(); 
+          if (groupCount === 1 && uCount > 0) btnGroup.textContent = "Unir al Grupo";
+          else if (groupCount === 0 && uCount > 1) btnGroup.textContent = "Crear Grupo";
+          else btnGroup.textContent = "Selección inválida";
       } else {
-          document.querySelectorAll('.user-details').forEach(ud => {
-              if (ud !== container) {
-                  ud.style.display = 'none';
+          toolbar.classList.remove('visible');
+      }
+  }
+
+  async function procesarPedidosMasivos(modo) {
+      if(selectedPedidoIds.size === 0) return alert('Selecciona al menos un pedido.');
+      const accionTexto = (modo === 'cloud') ? 'GUARDAR CLOUD' : 'PDF + 3%';
+      if(!confirm(`¿${accionTexto} para ${selectedPedidoIds.size} pedidos?\nSe abrirán ventanas emergentes.`)) return;
+      
+      const pedidos = Array.from(selectedPedidoIds);
+      for(const pid of pedidos) {
+          try {
+              if (modo === 'cloud') {
+                  await guardarPedido(pid);
+                  const statusSpan = document.getElementById(`guardar-status-${pid}`);
+                  if (statusSpan) statusSpan.textContent = '✅';
+              } else {
+                  await previewPDFPedido(pid); 
               }
-              const d = ud.querySelector('.focus-dot');
-              if(d) d.classList.remove('active');
-          });
+              await new Promise(r => setTimeout(r, 800)); 
+          } catch(e) { console.error(e); }
+      }
+  }
+
+  // --- GRUPOS ---
+  function handleGroupAction() {
+      let groupNames = []; let normalUsers = [];
+      selectedUsersForGroup.forEach(name => {
+          if (groupsConfig[name]) groupNames.push(name); else normalUsers.push(name);
+      });
+      if (groupNames.length === 0 && normalUsers.length > 1) {
+          const newName = prompt("Nombre para el nuevo grupo:");
+          if (newName && !groupsConfig[newName]) {
+             groupsConfig[newName] = normalUsers;
+             saveGroups(); location.reload();
+          }
+      } else if (groupNames.length === 1 && normalUsers.length > 0) {
+          groupsConfig[groupNames[0]] = [...groupsConfig[groupNames[0]], ...normalUsers];
+          saveGroups(); location.reload();
+      }
+  }
+  function disolverGrupo(name) {
+      if(confirm(`¿Disolver grupo ${name}?`)) { delete groupsConfig[name]; saveGroups(); location.reload(); }
+  }
+  function enfocarUsuario(dot, userName) {
+      event.preventDefault(); event.stopPropagation();
+      const container = dot.closest('.user-details');
+      const yaEnfocado = container.classList.contains('usuario-enfocado');
+      
+      document.querySelectorAll('.user-details').forEach(ud => {
+          ud.style.display = yaEnfocado ? '' : (ud === container ? '' : 'none');
+          ud.classList.remove('usuario-enfocado');
+          const d = ud.querySelector('.focus-dot'); if(d) d.classList.remove('active');
+      });
+      if (!yaEnfocado) {
           container.classList.add('usuario-enfocado');
           container.open = true;
-          dotElement.classList.add('active');
+          dot.classList.add('active');
       }
+      filtrarUsuarios();
   }
-
-  function loadMorePedidos(btn) {
-    const userName = btn.dataset.username;
-    const loaded = parseInt(btn.dataset.loaded);
-    const userPedidos = usersPedidos[userName];
-    const nextPedidos = userPedidos.slice(loaded, loaded + 5);
-    if (nextPedidos.length === 0) return;
-    const ul = btn.previousElementSibling;
-    nextPedidos.forEach((pedido, offset) => {
-      const index = loaded + offset;
-      ul.insertAdjacentHTML('beforeend', buildPedidoHTML(pedido, index, userName));
-      
-      const pedidoId = pedido.id ?? `${pedido.user}-${index}`;
-      const div = document.getElementById(`pedido-${pedidoId}`);
-      if(div) {
-        div.dataset.items = JSON.stringify(pedido.items);
-        if(!originalPedidosCache[pedidoId]) {
-            originalPedidosCache[pedidoId] = structuredClone(pedido.items);
-             guardarOriginalCache();
-        }
-        div.dataset.veryOriginalItems = JSON.stringify(originalPedidosCache[pedidoId] || pedido.items);
-        const gBtn = div.querySelector('.guardar-btn');
-        if(gBtn) addGuardarBtnListener(gBtn);
-      }
-    });
-    btn.dataset.loaded = loaded + nextPedidos.length;
-    if (parseInt(btn.dataset.loaded) >= userPedidos.length) btn.remove();
-  }
-
+  
+  // --- EDICIÓN DE PEDIDO ---
   function modificarCantidadPedido(pedidoId, itemIndex, change) {
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
     if (pedidoDiv.classList.contains('viewing-original')) return;
@@ -1042,9 +877,8 @@
     pedidoDiv.dataset.items = JSON.stringify(items);
     updatePedidoItems(pedidoId, items);
   }
-
   function eliminarItemPedido(pedidoId, itemIndex) {
-    if (!confirm('¿Eliminar este item?')) return;
+    if (!confirm('¿Eliminar item?')) return;
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
     if (pedidoDiv.classList.contains('viewing-original')) return;
     let items = JSON.parse(pedidoDiv.dataset.items || '[]');
@@ -1052,208 +886,139 @@
     pedidoDiv.dataset.items = JSON.stringify(items);
     updatePedidoItems(pedidoId, items);
   }
-
+  async function actualizarPreciosPedido(pedidoId, applyDiscount) {
+      const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
+      if (pedidoDiv.classList.contains('viewing-original')) return alert('Estás viendo el original.');
+      if (!confirm(`¿Actualizar precios${applyDiscount?' con -3%':''} a valor actual?`)) return;
+      try {
+          const res = await fetch(`${apiBase}/productos`);
+          const currentProductos = await res.json();
+          const precioMap = new Map(currentProductos.map(p => [p.id, p.precio]));
+          let items = JSON.parse(pedidoDiv.dataset.items);
+          const multiplier = applyDiscount ? 1.10 * 0.97 : 1.10;
+          
+          let changed = false;
+          const updated = items.map(item => {
+              const base = precioMap.get(item.id);
+              if (base !== undefined) {
+                  const nuevo = Number((base * multiplier).toFixed(2));
+                  if(nuevo !== item.precio_unitario) changed = true;
+                  return { ...item, precio_unitario: nuevo, subtotal: nuevo * item.cantidad };
+              }
+              return item;
+          });
+          if(!changed) return alert('Precios ya actualizados.');
+          pedidoDiv.dataset.items = JSON.stringify(updated);
+          updatePedidoItems(pedidoId, updated);
+      } catch(e) { console.error(e); }
+  }
   async function guardarCambiosPedido(pedidoId) {
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-    if (pedidoDiv.classList.contains('viewing-original')) {
-        return alert('Estás viendo la versión original. Vuelve a la vista de edición para guardar.');
-    }
+    if (pedidoDiv.classList.contains('viewing-original')) return alert('Estás en vista original.');
     if (!confirm('¿Guardar cambios permanentemente?')) return;
     try {
-      const items = JSON.parse(pedidoDiv.dataset.items || '[]');
+      const items = JSON.parse(pedidoDiv.dataset.items);
       const originalItems = JSON.parse(pedidoDiv.dataset.veryOriginalItems || '[]');
-      const modoDevolucion = document.getElementById(`modo-devolucion-${pedidoId}`)?.checked || false;
+      
       const deltaMap = new Map();
-      originalItems.forEach(oi => deltaMap.set(oi.id, -Number(oi.cantidad || 0)));
-      items.forEach(item => {
-        const curr = deltaMap.get(item.id) || 0;
-        deltaMap.set(item.id, curr + Number(item.cantidad || 0));
-      });
+      originalItems.forEach(oi => deltaMap.set(oi.id, -Number(oi.cantidad||0)));
+      items.forEach(i => deltaMap.set(i.id, (deltaMap.get(i.id)||0) + Number(i.cantidad||0)));
+      
       const stockUpdates = [];
-      for (const [id, delta] of deltaMap.entries()) {
-        if (delta !== 0 && (delta > 0 || modoDevolucion)) {
-          stockUpdates.push({id, cantidad: delta});
-        }
+      // Lógica de servidor: enviamos cantidad positiva si queremos RESTAR stock (se vendió más)
+      for(const [id, delta] of deltaMap.entries()) {
+          if (delta > 0) stockUpdates.push({id, cantidad: delta});
       }
-      const payload = {
-        items: items.map(item => ({
-          id: item.id, nombre: item.nombre, cantidad: item.cantidad,
-          precio_unitario: item.precio_unitario, subtotal: item.cantidad * item.precio_unitario
-        })),
-        stockUpdates
-      };
+
       const res = await fetch(`${apiBase}/actualizar-pedido/${pedidoId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+          method: 'PUT', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ 
+              items: items.map(i => ({...i, subtotal: i.cantidad * i.precio_unitario})),
+              stockUpdates 
+          })
       });
-      if (!res.ok) throw new Error(await res.text());
-      const nuevosItemsGuardados = structuredClone(items);
-      pedidoDiv.dataset.veryOriginalItems = JSON.stringify(nuevosItemsGuardados);
-      originalPedidosCache[pedidoId] = nuevosItemsGuardados;
+      if(!res.ok) throw new Error();
+      
+      // Actualizamos referencia "original"
+      originalPedidosCache[pedidoId] = { items: items, timestamp: Date.now() };
       guardarOriginalCache();
-
-      pedidoDiv.dataset.items = JSON.stringify(nuevosItemsGuardados);
-      updatePedidoItems(pedidoId, nuevosItemsGuardados, true);
-      pedidoDiv.classList.remove('viewing-original');
-      const btnVerOriginal = pedidoDiv.querySelector('.ver-original');
-      if(btnVerOriginal) btnVerOriginal.textContent = 'Original';
-      pedidoDiv.querySelectorAll('button').forEach(b => b.disabled = false);
-      alert('Cambios guardados con éxito. Puedes seguir editando.');
-    } catch (e) {
-      mostrarError(`Error al guardar: ${e.message}`);
-    }
+      pedidoDiv.dataset.veryOriginalItems = JSON.stringify(items);
+      
+      alert('Guardado con éxito.');
+    } catch(e) { mostrarError('Error al guardar.'); }
   }
 
+  // --- API CALLS ---
   async function guardarPedido(pedidoId) {
-    const res = await fetch(`${apiBase}/pedidos/${pedidoId}/pdf`, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Error al generar PDF');
-    const data = await res.json();
-    if (data.pdf) window.open(data.pdf, '_blank');
+      const res = await fetch(`${apiBase}/pedidos/${pedidoId}/pdf`);
+      if(!res.ok) throw new Error('Error generando PDF Cloud');
+      const d = await res.json(); if(d.pdf) window.open(d.pdf, '_blank');
   }
-
-  async function eliminarPedido(pedidoId, usuario, index) {
-    if (!confirm('¿Eliminar pedido permanentemente?')) return;
-    try {
-      const key = pedidoId || `${usuario}-${index}`;
-      const estado = estadosPedidos[key] || {};
-      const res = await fetch(`${apiBase}/eliminar-pedido/${pedidoId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recibido: estado.recibido || false })
+  async function previewPDFPedido(pedidoId) {
+      const div = document.getElementById(`pedido-${pedidoId}`);
+      const items = JSON.parse(div.dataset.items);
+      const user = div.closest('.user-details').querySelector('summary').innerText.split('\n')[0].trim();
+      const payload = {
+          user: user, items: items, total: items.reduce((s,i)=>s+i.subtotal,0), fecha: new Date().toISOString()
+      };
+      const res = await fetch(`${apiBase}/generar-pdf-peticion`, {
+          method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
       });
-      if (!res.ok) throw new Error(await res.text());
-      alert('Pedido eliminado');
-      location.reload();
-    } catch (e) {
-      mostrarError(e.message);
-    }
+      const d = await res.json(); if(d.pdf) window.open(d.pdf, '_blank');
   }
 
-  function toggleGuardado(key, el) {
-    if(confirm(el.checked?'¿Marcar guardado?':'¿Desmarcar?')) {
-        estadosPedidos[key] = {...estadosPedidos[key], guardado: el.checked};
-        guardarEstados();
-    } else el.checked = !el.checked;
-  }
-  function toggleRecibido(key, el) {
-    if(confirm(el.checked?'¿Marcar recibido?':'¿Desmarcar?')) {
-        estadosPedidos[key] = {...estadosPedidos[key], recibido: el.checked};
-        guardarEstados();
-    } else el.checked = !el.checked;
-  }
-
-  async function cargarPeticiones() {
-    const lista = document.getElementById('listaPeticiones');
-    if (!lista) return;
-    lista.innerHTML = '<p style="text-align:center">Cargando peticiones...</p>';
-    
-    try {
-      const res = await fetch(`${apiBase}/peticiones`, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const peticiones = await res.json();
-      lista.innerHTML = '';
-      if (peticiones.length === 0) {
-        lista.innerHTML = '<p style="text-align:center">No hay peticiones.</p>';
-        return;
+  // --- AÑADIR PRODUCTO ---
+  function openAddModal(pid) { currentPedidoId = pid; document.getElementById('addProductModal').showModal(); }
+  function closeAddModal() { document.getElementById('addProductModal').close(); }
+  async function addProductsToPedido() {
+      const input = document.getElementById('productsInput').value;
+      if(!productos.length) { const r = await fetch(`${apiBase}/productos`); productos = await r.json(); }
+      const apply3 = document.getElementById('apply3percent').checked;
+      const parts = input.split(',');
+      let newItems = [];
+      for(let p of parts) {
+          const [id, qty] = p.trim().split('x');
+          const prod = productos.find(x => x.id == id);
+          if(prod) {
+              let pr = prod.precio * 1.10; if(apply3) pr *= 0.97;
+              newItems.push({id:prod.id, nombre:prod.nombre, cantidad:parseInt(qty), precio_unitario:pr, subtotal: parseInt(qty)*pr});
+          }
       }
-      peticiones.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-      peticiones.forEach(peticion => {
-        const peticionDiv = document.createElement('details');
-        peticionDiv.className = 'peticion-details'; 
-        peticionDiv.id = `peticion-${peticion.id}`;
-        
-        const isUsed = usedButtons[peticion.id];
-        peticionDiv.dataset.items = JSON.stringify(peticion.items);
-        peticionDiv.dataset.nombre = peticion.nombre;
-        peticionDiv.dataset.userId = peticion.user_id || '';
-        peticionDiv.dataset.nombreNegocio = peticion.nombre_negocio || '';
-        const { formattedDate, formattedTime } = formatDateTime(peticion.fecha);
-        
-        peticionDiv.innerHTML = `
-          <summary style="display:flex; align-items:center; gap:10px;">
-            <input type="checkbox" class="peticion-check" value="${peticion.id}" onclick="event.stopPropagation(); updatePeticionSelection()">
-            <span style="flex:1">${peticion.nombre} <span style="font-weight:400; font-size:0.8em; color:#777;">ID: ${peticion.id} - ${formattedDate} ${formattedTime}</span></span>
-           </summary>
-          <div class="peticion-item">
-            <div class="peticion-info">
-              <div class="peticion-header-info">
-                  <strong>Teléfono:</strong> ${peticion.telefono} <br>
-                <strong>Total Estimado:</strong> <span id="total-${peticion.id}">${formatMoney(peticion.total)}</span>
-              </div>
-              <div class="peticion-items" id="items-${peticion.id}">
-                ${renderPeticionItemsHTML(peticion.items, peticion.id)}
-              </div>
-              ${isUsed ?
-                `<div style="margin-top:10px; padding:10px; background:#e8f5e9; color:#2e7d32; border-radius:6px; text-align:center; font-weight:bold;">
-                    Estado: ${isUsed === 'plus7' ? '✅ Confirmado -3%' : '✅ Confirmado'}
-                 </div>` : `
-                <div class="button-group">
-                  <button class="confirmar" onclick="confirmarPeticion(${peticion.id}, false)">Confirmar</button>
-                  <button class="confirmar-plus" onclick="confirmarPeticion(${peticion.id}, true)">Confirmar -3%</button>
-                  <button class="preview-pdf" onclick="previewPDF(${peticion.id})">PDF Preview</button>
-                  <button class="copy-faltantes" onclick="copiarFaltantes(${peticion.id})">Copiar faltantes</button>
-                  <button class="delete-peticion" onclick="eliminarPeticion(${peticion.id})">Eliminar</button>
-                  <button class="enfocar-peticion" onclick="enfocarPeticion('${peticion.id}')">Enfocar</button>
-                </div>
-             `}
-            </div>
-          </div>
-        `;
-        lista.appendChild(peticionDiv);
-      });
-    } catch (err) {
-      console.error(err);
-      mostrarError('Error al cargar peticiones.');
-    }
+      if(newItems.length) {
+          const div = document.getElementById(`pedido-${currentPedidoId}`);
+          let items = JSON.parse(div.dataset.items);
+          newItems.forEach(ni => {
+              const idx = items.findIndex(i => i.id == ni.id);
+              if(idx >= 0) { items[idx].cantidad += ni.cantidad; items[idx].subtotal = items[idx].cantidad * items[idx].precio_unitario; }
+              else items.push(ni);
+          });
+          div.dataset.items = JSON.stringify(items);
+          updatePedidoItems(currentPedidoId, items);
+          closeAddModal();
+      }
   }
 
+  // --- PETICIONES ---
   function renderPeticionItemsHTML(items, peticionId) {
     return items.map((item, index) => {
         let stockWarning = '';
         const product = productos.find(p => p.id === item.id);
         if (product && item.cantidad > (product.stock || 0)) {
-        stockWarning = '<span style="color: #d32f2f; font-weight:bold; font-size:0.8em; margin-left:5px;">⚠️ Falta stock</span>';
+            stockWarning = '<span style="color: #d32f2f; font-weight:bold; font-size:0.8em; margin-left:5px;">⚠️ Falta stock</span>';
         }
         return `
         <div class="item" data-item-index="${index}">
         <span id="item-text-${peticionId}-${index}" style="flex:1;">
             ${item.nombre}: <b><span id="cantidad-${peticionId}-${index}">${item.cantidad}</span></b> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}${stockWarning}
         </span>
-        <div class="item-controls">
-            <button class="increase" onclick="modificarCantidad('${peticionId}', ${index}, 1)">+</button>
-            <button class="decrease" onclick="modificarCantidad('${peticionId}', ${index}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
-            <button class="delete" onclick="eliminarItemPeticion('${peticionId}', ${index})">×</button>
+        <div style="display:flex; gap:2px;">
+            <button class="increase" style="padding:2px 6px; background:#dcedc8;" onclick="modificarCantidad('${peticionId}', ${index}, 1)">+</button>
+            <button class="decrease" style="padding:2px 6px; background:#fff9c4;" onclick="modificarCantidad('${peticionId}', ${index}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
+            <button class="delete" style="padding:2px 6px;" onclick="eliminarItemPeticion('${peticionId}', ${index})">×</button>
         </div>
         </div>
         `;
     }).join('');
-  }
-
-  function enfocarPeticion(peticionId) {
-    const selectedPeticion = document.getElementById(`peticion-${peticionId}`);
-    if (!selectedPeticion) return;
-    const btn = selectedPeticion.querySelector('.enfocar-peticion');
-    const peticionItemInner = selectedPeticion.querySelector('.peticion-item');
-    const estaEnfocado = peticionItemInner.classList.contains('enfocado');
-    document.querySelectorAll('.peticion-item').forEach(p => p.classList.remove('enfocado'));
-    document.querySelectorAll('.peticion-details').forEach(d => {
-        d.style.display = '';
-        const b = d.querySelector('.enfocar-peticion');
-        if(b) b.textContent = 'Enfocar';
-    });
-    const usuariosSection = document.querySelector('main details:nth-of-type(1)');
-    if (usuariosSection) usuariosSection.style.display = '';
-    if (!estaEnfocado) {
-        document.querySelectorAll('.peticion-details').forEach(d => {
-            if (d.id !== `peticion-${peticionId}`) d.style.display = 'none';
-        });
-        if (usuariosSection) usuariosSection.style.display = 'none';
-        peticionItemInner.classList.add('enfocado');
-        selectedPeticion.open = true;
-        if(btn) btn.textContent = 'Mostrar todos';
-        selectedPeticion.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
   }
 
   function modificarCantidad(peticionId, itemIndex, change) {
@@ -1263,6 +1028,7 @@
     items[itemIndex].cantidad = Math.max(1, items[itemIndex].cantidad + change);
     items[itemIndex].subtotal = items[itemIndex].cantidad * items[itemIndex].precio_unitario;
     peticionDiv.dataset.items = JSON.stringify(items);
+    
     const total = items.reduce((sum, it) => sum + it.subtotal, 0);
     document.getElementById(`total-${peticionId}`).textContent = formatMoney(total);
     const cantSpan = document.getElementById(`cantidad-${peticionId}-${itemIndex}`);
@@ -1279,58 +1045,129 @@
     let items = JSON.parse(peticionDiv.dataset.items || '[]');
     items = items.filter((_, idx) => idx !== itemIndex);
     peticionDiv.dataset.items = JSON.stringify(items);
+    
     const container = document.getElementById(`items-${peticionId}`);
     if(container) container.innerHTML = renderPeticionItemsHTML(items, peticionId);
+    
     const total = items.reduce((sum, it) => sum + it.subtotal, 0);
-    const totalLabel = document.getElementById(`total-${peticionId}`);
-    if(totalLabel) totalLabel.textContent = formatMoney(total);
+    const totalLabel = document.getElementById(`total-${peticionId}`).textContent = formatMoney(total);
+  }
+
+  async function cargarPeticiones() {
+      const lista = document.getElementById('listaPeticiones');
+      try {
+          const res = await fetch(`${apiBase}/peticiones`, { cache: 'no-store' });
+          const peticiones = await res.json();
+          lista.innerHTML = '';
+          if(!peticiones.length) { lista.innerHTML = '<p>No hay peticiones.</p>'; return; }
+          
+          peticiones.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+          peticiones.forEach(p => {
+              const isUsed = usedButtons[p.id];
+              const { formattedDate, formattedTime } = formatDateTime(p.fecha);
+              
+              const div = document.createElement('div');
+              // Usamos estilo pedido-item para mantener grilla consistente
+              div.className = 'pedido-item';
+              div.id = `peticion-${p.id}`;
+              div.dataset.items = JSON.stringify(p.items);
+              div.dataset.nombre = p.nombre;
+              div.dataset.userId = p.user_id || '';
+              div.dataset.nombreNegocio = p.nombre_negocio || '';
+              
+              const itemsHTML = renderPeticionItemsHTML(p.items, p.id);
+              
+              // Botonera de peticiones
+              let buttonsHTML = '';
+              if (isUsed) {
+                  buttonsHTML = `<div style="margin-top:10px; padding:10px; background:#e8f5e9; color:#2e7d32; border-radius:6px; text-align:center; font-weight:bold;">
+                    Estado: ${isUsed === 'plus7' ? '✅ Confirmado -3%' : '✅ Confirmado'}
+                 </div>`;
+              } else {
+                  buttonsHTML = `
+                  <div class="pedido-actions">
+                      <button class="confirmar" onclick="confirmarPeticion(${p.id}, false)">Confirmar</button>
+                      <button class="confirmar" style="color:#00838f; border-color:#b2ebf2;" onclick="confirmarPeticion(${p.id}, true)">Confirmar -3%</button>
+                      <button class="preview-pdf" onclick="previewPDF(${p.id})">Preview PDF</button>
+                      <button class="add-product" onclick="copiarFaltantes(${p.id})">Copiar Faltantes</button>
+                      <button class="delete" style="grid-column: span 2;" onclick="eliminarPeticion(${p.id})">Eliminar Petición</button>
+                  </div>`;
+              }
+
+              div.innerHTML = `
+                 <div class="pedido-line" style="display:flex; gap:10px; align-items:flex-start;">
+                    <input type="checkbox" class="peticion-check" value="${p.id}" onclick="event.stopPropagation(); updatePeticionSelection()">
+                    <div style="flex:1;">
+                        <strong>${p.nombre}</strong> <small>(ID: ${p.id})</small><br>
+                        ${formattedDate} ${formattedTime}<br>
+                        Tel: ${p.telefono || '-'}<br>
+                        <b>Total Est: <span id="total-${p.id}">${formatMoney(p.total)}</span></b>
+                    </div>
+                 </div>
+                 <div class="peticion-items" id="items-${p.id}">${itemsHTML}</div>
+                 ${buttonsHTML}
+              `;
+              lista.appendChild(div);
+          });
+      } catch(e) { console.error(e); }
+  }
+
+  function updatePeticionSelection() {
+      const checks = document.querySelectorAll('.peticion-check:checked');
+      const span = document.getElementById('peticionesSelectedCount');
+      if(span) span.textContent = `${checks.length} seleccionados`;
   }
 
   async function confirmarPeticion(peticionId, subtractThreePercent, isBulk = false) {
     if (!isBulk && !confirm(`¿Confirmar esta petición${subtractThreePercent ? ' con -3%' : ''}?`)) return;
     const peticionDiv = document.getElementById(`peticion-${peticionId}`);
     const botones = peticionDiv.querySelectorAll('button');
-    botones.forEach(btn => {
-        btn.disabled = true; 
-        if (btn.classList.contains('confirmar') || btn.classList.contains('confirmar-plus')) {
-            btn.dataset.originalText = btn.textContent;
-            btn.textContent = 'Procesando...'; 
-        }
-    });
+    botones.forEach(btn => { btn.disabled = true; });
+
     try {
       if (usedButtons[peticionId]) throw new Error('Ya fue confirmado.');
       const items = JSON.parse(peticionDiv.dataset.items || '[]');
       if (items.length === 0) throw new Error('No hay items');
+      
       const nombre = peticionDiv.dataset.nombre;
       const userId = peticionDiv.dataset.userId || null;
       const nombreNegocio = peticionDiv.dataset.nombreNegocio || null;
+      
       const pedidoItems = items.map(item => ({
         id: item.id, cantidad: item.cantidad,
         precio: subtractThreePercent ? item.precio_unitario * 0.97 : item.precio_unitario
       }));
+
       const res = await fetch(`${apiBase}/guardar-pedidos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user: nombre, pedido: pedidoItems, user_id: userId, nombre_negocio: nombreNegocio })
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      
       await fetch(`${apiBase}/peticiones/${peticionId}`, { method: 'DELETE' });
       usedButtons[peticionId] = subtractThreePercent ? 'plus7' : 'normal';
       saveUsedButtons();
-      if (!isBulk) {
-        alert('Petición confirmada.');
-        location.reload();
-      }
+      
+      if (!isBulk) { alert('Petición confirmada.'); location.reload(); }
       return true;
     } catch (err) {
-      botones.forEach(btn => {
-          btn.disabled = false;
-          if (btn.dataset.originalText) btn.textContent = btn.dataset.originalText;
-      });
-      if (!isBulk) mostrarError(err.message);
-      else console.error(`Error confirmando petición ${peticionId}:`, err);
+      if (!isBulk) { alert(err.message); botones.forEach(btn => btn.disabled = false); }
       return false;
     }
+  }
+
+  async function procesarPeticionesMasivas(applyDiscount) {
+      const checks = document.querySelectorAll('.peticion-check:checked');
+      if(checks.length === 0) return alert('Selecciona al menos una petición.');
+      if(!confirm(`¿Aceptar ${checks.length} peticiones?`)) return;
+      let procesados = 0;
+      for (const chk of checks) {
+          const exito = await confirmarPeticion(chk.value, applyDiscount, true); 
+          if(exito) procesados++;
+      }
+      alert(`Proceso finalizado. ${procesados} aceptados.`);
+      location.reload();
   }
 
   async function eliminarPeticion(id) {
@@ -1341,6 +1178,7 @@
     } catch(e) { mostrarError(e.message); }
   }
 
+  // --- FALTANTES ---
   function copiarFaltantes(peticionId) {
     const peticionDiv = document.getElementById(`peticion-${peticionId}`);
     if (!peticionDiv) return alert('Petición no encontrada');
@@ -1353,27 +1191,19 @@
       if (missing > 0) faltantes.push(`${missing} ${item.nombre}`);
     }
     const textToCopy = faltantes.join('\n');
-    navigator.clipboard.writeText(textToCopy).then(() => {
-      alert('Faltantes copiados:\n' + textToCopy);
-    }).catch(() => {
-      alert('Error al copiar. Copia manual:\n' + textToCopy);
-    });
+    navigator.clipboard.writeText(textToCopy).then(() => alert('Copiado:\n' + textToCopy));
   }
-    
   function copiarFaltantesGrupo() {
     const checks = document.querySelectorAll('.peticion-check:checked');
-    if(checks.length === 0) return alert('Selecciona al menos una petición.');
+    if(checks.length === 0) return alert('Selecciona peticiones.');
     const aggregated = new Map();
     checks.forEach(chk => {
-        const peticionId = chk.value;
-        const div = document.getElementById(`peticion-${peticionId}`);
-        if(!div) return;
-        const items = JSON.parse(div.dataset.items || '[]');
+        const div = document.getElementById(`peticion-${chk.value}`);
+        const items = JSON.parse(div.dataset.items);
         items.forEach(item => {
             const idKey = String(item.id); 
             if(!aggregated.has(idKey)) aggregated.set(idKey, { nombre: item.nombre, cantidad: 0 });
-            const qtyNumerica = Number(item.cantidad) || 0;
-            aggregated.get(idKey).cantidad += qtyNumerica;
+            aggregated.get(idKey).cantidad += Number(item.cantidad);
         });
     });
     const faltantes = [];
@@ -1384,8 +1214,8 @@
         const missing = data.cantidad - stock;
         if(missing > 0) faltantes.push(`${missing} ${data.nombre}`);
     }
-    const text = faltantes.join('\n') || 'No faltan productos (Stock suficiente para la selección).';
-    navigator.clipboard.writeText(text).then(() => alert('Faltantes copiados:\n' + text));
+    const text = faltantes.join('\n') || 'No faltan productos.';
+    navigator.clipboard.writeText(text).then(() => alert('Copiado:\n' + text));
   }
 
   async function previewPDF(peticionId) {
@@ -1399,80 +1229,16 @@
               precio_unitario: i.precio_unitario * 0.97 * 1.10,
               subtotal: i.cantidad * (i.precio_unitario * 0.97 * 1.10)
         })),
-          total: 0, fecha: new Date().toISOString()
+        total: 0, fecha: new Date().toISOString()
       };
       payload.total = payload.items.reduce((s, i) => s + i.subtotal, 0);
       const res = await fetch(`${apiBase}/generar-pdf-peticion`, {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify(payload)
+          method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
       });
-      const data = await res.json();
-      if(data.pdf) window.open(data.pdf, '_blank');
+      const data = await res.json(); if(data.pdf) window.open(data.pdf, '_blank');
   }
 
-  function openAddModal(pedidoId) {
-    currentPedidoId = pedidoId;
-    document.getElementById('productsInput').value = '';
-    document.getElementById('apply3percent').checked = false;
-    document.getElementById('addProductModal').showModal();
-  }
-  function closeAddModal() { document.getElementById('addProductModal').close(); }
-  
-  async function addProductsToPedido() {
-    const input = document.getElementById('productsInput').value.trim();
-    if(!input) return;
-    const parts = input.split(',').map(s=>s.trim());
-    const newItems = [];
-    if(productos.length === 0) {
-        const res = await fetch(`${apiBase}/productos`);
-        productos = await res.json();
-    }
-    const apply3 = document.getElementById('apply3percent').checked;
-    for(let part of parts) {
-        const [idStr, qtyStr] = part.split('x');
-        const p = productos.find(x => x.id == idStr);
-        if(p) {
-            let precio = p.precio * 1.10;
-            if(apply3) precio *= 0.97;
-            newItems.push({
-                id: p.id, nombre: p.nombre, cantidad: parseInt(qtyStr)||1,
-                precio_unitario: precio, subtotal: (parseInt(qtyStr)||1)*precio
-            });
-        }
-    }
-    if(newItems.length === 0) return alert('No se encontraron productos.');
-    const div = document.getElementById(`pedido-${currentPedidoId}`);
-    let items = JSON.parse(div.dataset.items || '[]');
-    newItems.forEach(ni => {
-        const idx = items.findIndex(i => i.id === ni.id);
-        if(idx >= 0) {
-            items[idx].cantidad += ni.cantidad;
-            items[idx].subtotal = items[idx].cantidad * items[idx].precio_unitario;
-        } else items.push(ni);
-    });
-    div.dataset.items = JSON.stringify(items);
-    updatePedidoItems(currentPedidoId, items);
-    closeAddModal();
-  }
-  
-  async function previewPDFPedido(pedidoId) {
-      const div = document.getElementById(`pedido-${pedidoId}`);
-      const items = JSON.parse(div.dataset.items);
-      const user = div.closest('.user-details').querySelector('summary').innerText.split('\n')[0].trim(); 
-      const payload = {
-          user: user, items: items,
-          total: items.reduce((s,i)=>s+i.subtotal,0),
-          fecha: new Date().toISOString()
-      };
-      const res = await fetch(`${apiBase}/generar-pdf-peticion`, {
-          method: 'POST', headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if(data.pdf) window.open(data.pdf, '_blank');
-  }
-
+  // --- INIT ---
   async function cargarProductos() {
     try {
         const res = await fetch(`${apiBase}/productos`);
@@ -1480,68 +1246,13 @@
     } catch(e) { console.error(e); }
   }
 
-  function updatePeticionSelection() {
-      const checks = document.querySelectorAll('.peticion-check:checked');
-      const span = document.getElementById('peticionesSelectedCount');
-      if(span) span.textContent = `${checks.length} seleccionados`;
-  }
-
-  async function procesarPeticionesMasivas(applyDiscount) {
-      const checks = document.querySelectorAll('.peticion-check:checked');
-      if(checks.length === 0) return alert('Selecciona al menos una petición.');
-      const descuentoTexto = applyDiscount ? ' con -3%' : '';
-      if(!confirm(`¿Estás seguro de aceptar ${checks.length} peticiones${descuentoTexto}? Se procesarán una por una para ajustar el stock correctamente.`)) return;
-      let procesados = 0;
-      let errores = 0;
-      for (const chk of checks) {
-          const peticionId = chk.value;
-          const exito = await confirmarPeticion(peticionId, applyDiscount, true); 
-          if(exito) {
-              procesados++;
-              const div = document.getElementById(`peticion-${peticionId}`);
-              if(div) div.style.opacity = '0.3'; 
-          } else {
-              errores++;
-          }
-      }
-      alert(`Proceso finalizado.\nCorrectos: ${procesados}\nErrores: ${errores}`);
-      location.reload();
-  }
-
-  // --- NUEVA FUNCIÓN: PROCESAR PEDIDOS MASIVOS (POR ID DIRECTO) ---
-  async function procesarPedidosMasivos(modo) {
-      if(selectedPedidoIds.size === 0) return alert('Selecciona al menos un pedido (checkmark dentro de la tarjeta).');
-      
-      const accionTexto = (modo === 'cloud') ? 'GUARDAR EN CLOUD y abrir PDF' : 'SOLO VER PDF';
-      if(!confirm(`¿Deseas ${accionTexto} de los ${selectedPedidoIds.size} pedidos seleccionados?\n\n⚠️ IMPORTANTE: Se abrirán múltiples pestañas. Asegúrate de permitir ventanas emergentes.`)) return;
-
-      const pedidosEncontrados = Array.from(selectedPedidoIds);
-      let count = 0;
-      for(const pid of pedidosEncontrados) {
-          try {
-              if (modo === 'cloud') {
-                  await guardarPedido(pid);
-                  const statusSpan = document.getElementById(`guardar-status-${pid}`);
-                  if (statusSpan) statusSpan.textContent = '✅';
-              } else {
-                  await previewPDFPedido(pid);
-              }
-              count++;
-              await new Promise(r => setTimeout(r, 500)); 
-          } catch(e) {
-              console.error(`Error en masivo ${pid}:`, e);
-          }
-      }
-      console.log(`Acción masiva terminada. ${count} procesados.`);
-      // Opcional: Limpiar selección tras finalizar
-      // clearSelection();
-  }
-
   window.addEventListener('DOMContentLoaded', async () => {
+    cleanOldCache(); // Limpiar caché vieja (1 semana)
     await cargarProductos();
     await cargarUsuarios();
     await cargarPeticiones();
   });
-</script>
+
+  </script>
 </body>
 </html>
