@@ -7,21 +7,21 @@
   <style>
     :root {
       --primary: #2e7d32;
-      --primary-light: #4caf50;
+--primary-light: #4caf50;
       --accent: #e8f5e9;
       --bg: #f8f9fa;
       --text: #2c3e50;
       --card-bg: #ffffff;
-      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+--shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
       --radius: 12px;
-      --danger: #d32f2f;
+--danger: #d32f2f;
       --warning: #f57c00;
       --info: #0288d1;
     }
     
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      margin: 0;
+margin: 0;
       background: var(--bg);
       color: var(--text);
       padding-bottom: 4em;
@@ -30,83 +30,83 @@
     /* --- Header --- */
     header {
       background: var(--primary);
-      color: white;
+color: white;
       text-align: center;
       padding: 1.5em 0;
       font-size: 1.8em;
       font-weight: 600;
       letter-spacing: 0.5px;
-      box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2);
+box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2);
       margin-bottom: 2em;
-    }
+}
 
     main {
       max-width: 1400px;
       margin: 0 auto;
       padding: 0 1.5em;
-    }
+}
 
     /* --- Controles Superiores --- */
     .top-controls {
       display: flex;
-      flex-wrap: wrap;
+flex-wrap: wrap;
       gap: 1em;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 2em;
-    }
+}
 
     /* Buscador */
     .search-container {
       flex: 1;
-      max-width: 400px;
+max-width: 400px;
       position: relative;
     }
     .search-input {
       width: 100%;
       padding: 10px 15px;
-      border: 2px solid #ddd;
+border: 2px solid #ddd;
       border-radius: 8px;
       font-size: 1em;
       outline: none;
       transition: border-color 0.3s;
-    }
+}
     .search-input:focus {
       border-color: var(--primary);
-    }
+}
 
     button.btn-volver {
       background: transparent;
       color: var(--primary);
       border: 2px solid var(--primary);
-      border-radius: 8px;
+border-radius: 8px;
       padding: 10px 20px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
-    }
+}
     button.btn-volver:hover {
       background: var(--primary);
       color: #fff;
-    }
+}
 
     #mensajeError {
       text-align: center;
       color: var(--danger);
       background: #ffebee;
       padding: 10px;
-      border-radius: 8px;
+border-radius: 8px;
       margin-bottom: 1em;
       border: 1px solid #ffcdd2;
       display: none;
     }
     #mensajeError:not(:empty) { display: block;
-    }
+}
 
     /* --- Toolbar de Agrupación --- */
     #groupToolbar {
       position: fixed;
-      bottom: 20px;
+bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
       background: #333;
@@ -114,34 +114,37 @@
       padding: 10px 20px;
       border-radius: 50px;
       box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-      display: flex;
+display: flex;
       gap: 15px;
       align-items: center;
       z-index: 1000;
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.3s, transform 0.3s;
-    }
+}
     #groupToolbar.visible {
       opacity: 1;
       pointer-events: all;
       transform: translateX(-50%) translateY(0);
-    }
+}
     #groupToolbar span { font-weight: 600; }
     #groupToolbar button {
       background: var(--primary);
-      color: white;
+color: white;
       border: none;
       padding: 8px 16px;
       border-radius: 20px;
     }
     #groupToolbar button.cancel { background: #666;
-    }
+}
+    /* Estilos nuevos para botones masivos en toolbar */
+    #groupToolbar button.bulk-cloud { background: var(--primary-light); color: #fff; }
+    #groupToolbar button.bulk-pdf { background: var(--warning); color: #fff; }
 
     /* --- Checkbox de Selección de Usuario --- */
     .user-select-check {
       transform: scale(1.5);
-      margin-right: 15px;
+margin-right: 15px;
       cursor: pointer;
       accent-color: var(--primary);
     }
@@ -149,7 +152,7 @@
     /* Checkbox de Selección de Petición */
     .peticion-check {
         transform: scale(1.5);
-        margin-right: 10px;
+margin-right: 10px;
         cursor: pointer;
         accent-color: var(--info);
     }
@@ -157,7 +160,7 @@
     /* --- Etiqueta de Sub-Usuario en Grupos --- */
     .sub-user-label {
       background: #e0f2f1;
-      color: #00695c;
+color: #00695c;
       padding: 4px 10px;
       border-radius: 4px;
       font-size: 0.85em;
@@ -165,23 +168,25 @@
       display: inline-block;
       margin-bottom: 5px;
       border: 1px solid #b2dfdb;
-    }
+}
     .business-label {
-      background: #fff8e1; /* Fondo amarillento suave */
-      color: #f57f17;      /* Texto naranja oscuro */
+      background: #fff8e1;
+/* Fondo amarillento suave */
+      color: #f57f17;
+/* Texto naranja oscuro */
       padding: 4px 10px;
       border-radius: 4px;
       font-size: 0.85em;
       font-weight: bold;
-      display: inline-block;
+display: inline-block;
       margin-bottom: 5px;
       border: 1px solid #ffecb3;
       margin-right: 5px;
-    }
+}
     /* --- Secciones (Details) --- */
     details > summary {
       list-style: none;
-      font-size: 1.5em;
+font-size: 1.5em;
       font-weight: 700;
       color: var(--primary);
       margin-bottom: 1em;
@@ -191,52 +196,52 @@
       gap: 0.5em;
       padding: 0.5em;
       border-radius: 8px;
-      transition: background 0.2s;
+transition: background 0.2s;
     }
     details > summary:hover {
       background: rgba(0,0,0,0.03);
-    }
+}
     details > summary::-webkit-details-marker { display: none;
-    }
+}
     details > summary::before {
       content: "›";
       font-size: 1.2em;
       display: inline-block;
-      transition: transform 0.3s;
+transition: transform 0.3s;
       color: var(--primary-light);
     }
     details[open] > summary::before {
       transform: rotate(90deg);
-    }
+}
 
     /* --- Grid Layout --- */
     #listaUsuarios, #listaPeticiones {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
       gap: 1.5em;
       align-items: start;
       margin-bottom: 2em;
-    }
+}
 
     /* --- Tarjetas (Usuarios y Peticiones) --- */
     .user-details, .peticion-details {
       background: var(--card-bg);
-      border-radius: var(--radius);
+border-radius: var(--radius);
       box-shadow: var(--shadow);
       border: 1px solid #eee;
       overflow: hidden;
       transition: box-shadow 0.3s, transform 0.2s;
       display: flex;
       flex-direction: column;
-    }
+}
     .user-details:hover, .peticion-details:hover {
       box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-      transform: translateY(-2px);
+transform: translateY(-2px);
     }
 
     .user-details > summary, .peticion-details > summary {
       background: linear-gradient(to right, #ffffff, #f9fafb);
-      padding: 1.2em;
+padding: 1.2em;
       font-size: 1.1em;
       font-weight: 600;
       cursor: pointer;
@@ -244,41 +249,41 @@
       transition: border-color 0.3s;
       display: flex;
       justify-content: flex-start;
-      align-items: center;
+align-items: center;
       color: var(--text);
     }
     .user-details > summary::before, .peticion-details > summary::before {
       content: none;
-    }
+}
 
     .user-details[open] > summary, .peticion-details[open] > summary {
       border-bottom: 1px solid #eee;
-      color: var(--primary);
+color: var(--primary);
       background: var(--accent);
     }
 
     /* --- Puntito de Enfoque (Minimalista) --- */
     .focus-dot {
         width: 12px;
-        height: 12px;
+height: 12px;
         border: 2px solid #ccc; /* Gris suave por defecto */
         border-radius: 50%;
-        margin-left: auto; /* Se empuja a la derecha */
+margin-left: auto; /* Se empuja a la derecha */
         cursor: pointer;
-        transition: all 0.2s ease;
+transition: all 0.2s ease;
         position: relative;
     }
 
     /* Hover: se pone un poco más oscuro para indicar que es clickeable */
     .focus-dot:hover {
         border-color: var(--primary-light);
-        transform: scale(1.2);
+transform: scale(1.2);
     }
     
     /* Tooltip pequeño al pasar el mouse */
     .focus-dot:hover::after {
         content: "Enfocar";
-        position: absolute;
+position: absolute;
         right: 20px;
         top: -4px;
         background: #333;
@@ -287,100 +292,100 @@
         padding: 2px 6px;
         border-radius: 4px;
         pointer-events: none;
-        white-space: nowrap;
+white-space: nowrap;
     }
     
     /* Estado Activo: Verde solido */
     .focus-dot.active {
         background-color: var(--primary);
-        border-color: var(--primary);
+border-color: var(--primary);
         box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.15);
-    }
+}
     
     .focus-dot.active:hover::after {
         content: "Mostrar todos";
-    }
+}
 
     /* Resalte sutil del contenedor del usuario */
     .user-details.usuario-enfocado {
         border-color: var(--primary-light);
-    }
+}
 
     .usuario-item, .peticion-item {
       padding: 1em;
       background: #fff;
-    }
+}
 
     /* --- Listas de Items --- */
     ul { list-style: none; padding: 0;
-      margin: 0; }
+margin: 0; }
     
     .pedido-item, .peticion-info {
       background: #fafafa;
-      border: 1px solid #eee;
+border: 1px solid #eee;
       border-radius: 8px;
       margin-bottom: 1em;
       padding: 1em;
       transition: all 0.3s;
-    }
+}
     
     .pedido-item.enfocado, .peticion-item.enfocado {
       background: #fff;
-      border: 2px solid var(--primary-light);
+border: 2px solid var(--primary-light);
       box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
-    }
+}
 
     .pedido-line, .peticion-header-info {
       font-size: 0.95em;
       margin-bottom: 0.8em;
       color: #555;
       padding-bottom: 0.5em;
-      border-bottom: 1px dotted #ccc;
+border-bottom: 1px dotted #ccc;
     }
     .pedido-line strong, .peticion-header-info strong { color: var(--primary);
-    }
+}
 
     /* --- Items individuales --- */
     .item {
       display: flex;
-      justify-content: space-between;
+justify-content: space-between;
       align-items: center;
       font-size: 0.9em;
       padding: 6px 0;
       border-bottom: 1px dashed #eee;
-    }
+}
     .item:last-child { border-bottom: none; }
     
     .item-controls { display: flex;
-      gap: 4px; }
+gap: 4px; }
     .item-controls button {
       padding: 2px 8px;
       border-radius: 4px;
-      border: none;
+border: none;
       cursor: pointer;
       font-size: 0.85em;
       font-weight: bold;
     }
     .item-controls button.increase { background: #dcedc8; color: #33691e;
-    }
+}
     .item-controls button.decrease { background: #fff9c4; color: #f57f17; }
     .item-controls button.delete { background: #ffcdd2;
-      color: #c62828; }
+color: #c62828; }
 
     /* --- Botoneras --- */
     .pedido-actions, .button-group {
       display: flex;
-      flex-wrap: wrap;
+flex-wrap: wrap;
       gap: 0.5em;
       margin-top: 1em;
       padding-top: 1em;
       border-top: 1px solid #eee;
-    }
+}
 
     button {
       flex: 1 1 auto;
       padding: 8px 12px;
-      border: 1px solid #ddd;
+border: 1px solid #ddd;
       background: white;
       color: #555;
       border-radius: 6px;
@@ -388,83 +393,83 @@
       font-size: 0.85em;
       font-weight: 600;
       transition: all 0.2s;
-    }
+}
     button:hover { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
+}
 
     /* Botones específicos */
     .guardar-btn, .confirmar { border-color: var(--primary-light); color: var(--primary);
-    }
+}
     .guardar-btn:hover, .confirmar:hover { background: var(--primary); color: white;
-    }
+}
     
     .confirmar-plus { color: #00838f; border-color: #b2ebf2;
-    }
+}
     .confirmar-plus:hover { background: #e0f7fa; }
 
     .add-product, .copy-faltantes { color: var(--info); border-color: #b3e5fc;
-    }
+}
     .add-product:hover, .copy-faltantes:hover { background: #e1f5fe; }
     
     .actualizar-precios, .preview-pdf { color: var(--warning);
-      border-color: #ffe0b2; }
+border-color: #ffe0b2; }
     .actualizar-precios:hover, .preview-pdf:hover { background: #fff3e0;
-    }
+}
 
     .delete-peticion, .delete, button[onclick*="eliminarPedido"] { color: var(--danger); border-color: #ffcdd2;
-    }
+}
     .delete-peticion:hover, button[onclick*="eliminarPedido"]:hover { background: #ffebee; }
     
     .btn-disolver {
         background: transparent;
-        border: 1px solid #999;
+border: 1px solid #999;
         color: #666;
         font-size: 0.8em;
         margin-left: auto;
         flex: 0;
         white-space: nowrap;
-    }
+}
     .btn-disolver:hover { background: #eee; color: #333;
-    }
+}
 
     /* --- Status Bar --- */
     .status-container {
       margin-top: 1em;
-      display: flex;
+display: flex;
       gap: 1em;
       font-size: 0.85em;
       background: var(--accent);
       padding: 8px;
       border-radius: 6px;
       justify-content: space-around;
-    }
+}
     .status-container label { cursor: pointer; display: flex; align-items: center; gap: 4px;
-    }
+}
 
     /* --- Modal --- */
     dialog {
       border: none;
-      border-radius: 12px;
+border-radius: 12px;
       box-shadow: 0 20px 50px rgba(0,0,0,0.2);
       padding: 2em;
       width: 90%;
       max-width: 450px;
-    }
+}
     dialog::backdrop { background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); }
     dialog form { display: flex;
-      flex-direction: column; gap: 1em; }
+flex-direction: column; gap: 1em; }
     dialog input { padding: 10px; border: 1px solid #ddd; border-radius: 6px;
-    }
+}
 
     footer { text-align: center; color: #888; font-size: 0.9em; margin-top: 4em;
-    }
+}
 
     /* Responsive */
     @media (max-width: 600px) {
       #listaUsuarios, #listaPeticiones { grid-template-columns: 1fr;
-    }
+}
       .top-controls { flex-direction: column-reverse;
-    }
+}
     }
   </style>
 </head>
@@ -486,13 +491,18 @@
       <summary>Usuarios y Pedidos</summary>
       <div id="listaUsuarios"></div>
   
+
     </details>
 
     <details open>
       <summary>Peticiones Pendientes</summary>
-      <div style="margin-bottom: 1em; padding: 10px; background: #e3f2fd; border-radius: 8px; display: flex; align-items: center; gap: 15px;">
+      <div style="margin-bottom: 1em; padding: 10px; background: #e3f2fd; border-radius: 8px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
         <button onclick="copiarFaltantesGrupo()" style="background: var(--info); color: white; border: none; flex: 0 0 auto;">Faltantes En Grupo</button>
-        <span id="peticionesSelectedCount" style="font-size: 0.9em; color: #555;">0 seleccionados</span>
+        <button onclick="procesarPeticionesMasivas(false)" style="background: var(--primary); color: white; border: none; flex: 0 0 auto;">Aceptar Selecc.</button>
+        <button onclick="procesarPeticionesMasivas(true)" style="background: #00838f; color: white; border: none; flex: 0 0 auto;">Aceptar Selecc. (-3%)</button>
+        
+        <span id="peticionesSelectedCount" style="font-size: 0.9em;
+color: #555;">0 seleccionados</span>
       </div>
       <div id="listaPeticiones"></div>
     </details>
@@ -501,6 +511,9 @@
   <div id="groupToolbar">
       <span id="selectedCount">0 seleccionados</span>
       <button onclick="handleGroupAction()" id="btnGroupAction">Crear Grupo</button>
+      <button class="bulk-cloud" onclick="procesarPedidosMasivos('cloud')">Guardar Cloud</button>
+      <button class="bulk-pdf" onclick="procesarPedidosMasivos('pdf')">Ver PDF</button>
+      
       <button class="cancel" onclick="clearSelection()">Cancelar</button>
   </div>
 
@@ -511,17 +524,17 @@
   <dialog id="addProductModal">
     <form>
       <label for="productsInput" style="font-weight:600;
-      color:var(--primary)">Productos (IDxCantidad, separados por coma):</label>
+color:var(--primary)">Productos (IDxCantidad, separados por coma):</label>
       <input type="text" id="productsInput" placeholder="Ej: 353x5, 24x2">
       <label>
         <input type="checkbox" id="apply3percent"> Aplicar -3%
       </label>
       <div style="display:flex;
-      gap:10px; justify-content:flex-end; margin-top:1em;">
+gap:10px; justify-content:flex-end; margin-top:1em;">
         <button type="button" onclick="closeAddModal()" style="background:#eee; color:#333;
-        border:none;">Cancelar</button>
+border:none;">Cancelar</button>
         <button type="button" onclick="addProductsToPedido()" style="background:var(--primary); color:white;
-        border:none;">Añadir</button>
+border:none;">Añadir</button>
       </div>
     </form>
   </dialog>
@@ -544,50 +557,51 @@
   let currentPedidoId = null;
   window.usersPedidos = {};
   
+
   let selectedUsersForGroup = new Set(); // Para la selección múltiple
 
   // --- Funciones de Persistencia ---
   function guardarEstados() {
     localStorage.setItem('estadosPedidos', JSON.stringify(estadosPedidos));
-    }
+}
   function saveUsedButtons() {
     localStorage.setItem('usedButtons', JSON.stringify(usedButtons));
   }
   function guardarOriginalCache() {
     localStorage.setItem('originalPedidosCache', JSON.stringify(originalPedidosCache));
-    }
+}
   function saveGroups() {
       localStorage.setItem('groupsConfig', JSON.stringify(groupsConfig));
-    }
+}
 
   // --- UI Helpers ---
   function mostrarError(msg) {
     const el = document.getElementById('mensajeError');
-    if (el) el.textContent = msg;
+if (el) el.textContent = msg;
     else console.warn('mensajeError no encontrado:', msg);
-    }
+}
 
   function formatMoney(n) {
     try {
       return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n);
-    } catch (e) {
+} catch (e) {
       return '$' + Number(n).toFixed(2);
-    }
+}
   }
 
   function formatDateTime(fecha) {
     const date = new Date(fecha);
-    const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-    const formattedDate = `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
+const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+const formattedDate = `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
     const formattedTime = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
     return { formattedDate, formattedTime };
-    }
+}
 
   // --- Buscador ---
   function filtrarUsuarios() {
       const query = document.getElementById('searchInput').value.toLowerCase();
-      // Filtrar lista de Usuarios/Grupos
+// Filtrar lista de Usuarios/Grupos
       document.querySelectorAll('.user-details').forEach(detail => {
           const name = detail.dataset.searchName.toLowerCase();
           if (name.includes(query)) {
@@ -596,48 +610,48 @@
               detail.style.display = 'none';
           }
       });
-    }
+}
 
   // ==================== LÓGICA DE PEDIDOS (USUARIOS) ====================
 
   function enfocarPedido(pedidoId) {
     const selectedPedido = document.getElementById(`pedido-${pedidoId}`);
-    if (!selectedPedido) return;
+if (!selectedPedido) return;
     
     const btn = selectedPedido.querySelector('.enfocar');
     const estaEnfocado = selectedPedido.classList.contains('enfocado');
     const peticionesSection = document.getElementById('listaPeticiones').closest('details');
-    document.querySelectorAll('.pedido-item').forEach(p => {
+document.querySelectorAll('.pedido-item').forEach(p => {
       p.style.display = '';
       p.classList.remove('enfocado');
       const b = p.querySelector('.enfocar');
       if (b) b.textContent = 'Enfocar';
     });
-    if (peticionesSection) peticionesSection.style.display = '';
+if (peticionesSection) peticionesSection.style.display = '';
 
     if (!estaEnfocado) {
       document.querySelectorAll('.pedido-item').forEach(p => {
         if (p.id !== `pedido-${pedidoId}`) p.style.display = 'none';
       });
-    if (peticionesSection) peticionesSection.style.display = 'none';
+if (peticionesSection) peticionesSection.style.display = 'none';
 
       selectedPedido.classList.add('enfocado');
       btn.textContent = 'Mostrar todos';
 
       const userDetails = selectedPedido.closest('.user-details');
-    if (userDetails) {
+if (userDetails) {
         document.querySelectorAll('.user-details').forEach(ud => ud.open = false);
         userDetails.open = true;
-        document.querySelectorAll('.user-details').forEach(ud => {
+document.querySelectorAll('.user-details').forEach(ud => {
             if(ud !== userDetails) ud.style.display = 'none';
         });
-    }
+}
       selectedPedido.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    } else {
+} else {
       document.querySelectorAll('.user-details').forEach(ud => ud.style.display = '');
-      // Si hay busqueda activa, reaplicar filtro
+// Si hay busqueda activa, reaplicar filtro
       filtrarUsuarios();
-    }
+}
   }
 
   function renderItemsHTML(pedidoId, items, editable = true) {
@@ -650,41 +664,42 @@
         <div class="item-controls">
           <button class="increase" onclick="modificarCantidadPedido('${pedidoId}', ${itemIndex}, 1)">+</button>
  
+
           <button class="decrease" onclick="modificarCantidadPedido('${pedidoId}', ${itemIndex}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
           <button class="delete" onclick="eliminarItemPedido('${pedidoId}', ${itemIndex})">×</button>
         </div>
         ` : ''}
       </div>
     `).join('');
-    }
+}
 
   function updatePedidoItems(pedidoId, items, editable = true) {
     const container = document.getElementById(`items-${pedidoId}`);
     if (!container) return;
-    container.innerHTML = renderItemsHTML(pedidoId, items, editable);
+container.innerHTML = renderItemsHTML(pedidoId, items, editable);
     const total = items.reduce((acc, item) => acc + item.subtotal, 0);
     const totalSpan = document.getElementById(`total-${pedidoId}`);
-    if (totalSpan) totalSpan.textContent = formatMoney(total);
+if (totalSpan) totalSpan.textContent = formatMoney(total);
   }
 
   async function actualizarPreciosPedido(pedidoId, applyDiscount = false) {
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-    if (pedidoDiv.classList.contains('viewing-original')) {
+if (pedidoDiv.classList.contains('viewing-original')) {
       alert('Salí de la vista original antes de actualizar precios.');
       return;
-    }
+}
     const descuentoTexto = applyDiscount ? ' con -3% (cliente con descuento)' : '';
-    if (!confirm(`¿Actualizar precios según lista actual${descuentoTexto}?`)) return;
+if (!confirm(`¿Actualizar precios según lista actual${descuentoTexto}?`)) return;
     try {
       const res = await fetch(`${apiBase}/productos`, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Error al cargar productos');
+if (!res.ok) throw new Error('Error al cargar productos');
       const currentProductos = await res.json();
-    const precioMap = new Map(currentProductos.map(p => [p.id, p.precio]));
+const precioMap = new Map(currentProductos.map(p => [p.id, p.precio]));
 
       let items = JSON.parse(pedidoDiv.dataset.items || '[]');
       let changed = false;
-    const multiplier = applyDiscount ? 1.10 * 0.97 : 1.10;
-    const updatedItems = items.map(item => {
+const multiplier = applyDiscount ? 1.10 * 0.97 : 1.10;
+const updatedItems = items.map(item => {
         const basePrecio = precioMap.get(item.id);
         if (basePrecio !== undefined) {
           const nuevoPrecio = Number((basePrecio * multiplier).toFixed(2));
@@ -693,61 +708,60 @@
         }
         return item;
      
+
     });
       if (!changed) return alert('Todos los precios ya están actualizados.');
 
       pedidoDiv.dataset.items = JSON.stringify(updatedItems);
       updatePedidoItems(pedidoId, updatedItems);
-      alert('Precios actualizados.');
+alert('Precios actualizados.');
     } catch (e) {
       mostrarError('Error al actualizar precios: ' + e.message);
-    }
+}
   }
 
   function toggleViewOriginal(pedidoId) {
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
     const isViewingOriginal = pedidoDiv.classList.toggle('viewing-original');
-    const itemsToShow = isViewingOriginal 
+const itemsToShow = isViewingOriginal 
       ? JSON.parse(pedidoDiv.dataset.veryOriginalItems)
       : JSON.parse(pedidoDiv.dataset.items);
-    updatePedidoItems(pedidoId, itemsToShow, !isViewingOriginal);
+updatePedidoItems(pedidoId, itemsToShow, !isViewingOriginal);
 
     const btn = pedidoDiv.querySelector('.ver-original');
     btn.textContent = isViewingOriginal ? 'Volver a editado' : 'Ver original';
-    pedidoDiv.querySelectorAll('button').forEach(b => {
+pedidoDiv.querySelectorAll('button').forEach(b => {
       if (!b.classList.contains('ver-original')) b.disabled = isViewingOriginal;
     });
-    }
+}
 
-  // --- Lógica Principal de Renderizado de Pedido ---
-  // Modificado para soportar visualizar un "nombre original" diferente al del grupo
   // --- Lógica Principal de Renderizado de Pedido ---
   function buildPedidoHTML(pedido, index, groupOrUserName) {
     const items = pedido.items;
-    const pedidoId = pedido.id ?? `${pedido.user}-${index}`;
+const pedidoId = pedido.id ?? `${pedido.user}-${index}`;
     const key = pedido.id ? pedido.id : `${pedido.user}-${index}`; 
     
-    const estado = estadosPedidos[key] || estadosPedidos[`${groupOrUserName}-${index}`] || {};
+    const estado = estadosPedidos[key] ||
+estadosPedidos[`${groupOrUserName}-${index}`] || {};
     
     const total = items.reduce((sum, p) => sum + p.subtotal, 0);
     const { formattedDate, formattedTime } = formatDateTime(pedido.fecha);
-
-    if (pedido.id && !originalPedidosCache[pedidoId]) {
+if (pedido.id && !originalPedidosCache[pedidoId]) {
       originalPedidosCache[pedidoId] = structuredClone(items);
       guardarOriginalCache();
-    }
+}
 
     // 1. Header si es Grupo (sub-usuario)
     const subUserHeader = (groupOrUserName !== pedido.user) 
-        ? `<div class="sub-user-label">👤 ${pedido.user}</div>` 
+        ?
+`<div class="sub-user-label">👤 ${pedido.user}</div>` 
         : '';
-
-    // 2. Header de Negocio (Nuevo) 🔥
+// 2. Header de Negocio (Nuevo) 🔥
     const negocioHeader = (pedido.nombre_negocio)
-        ? `<div class="business-label">🏢 ${pedido.nombre_negocio}</div>`
+        ?
+`<div class="business-label">🏢 ${pedido.nombre_negocio}</div>`
         : '';
-
-    return `
+return `
       <li>
         ${negocioHeader}
         ${subUserHeader}
@@ -756,26 +770,30 @@
             <strong>Pedido</strong> <br> ${formattedDate} ${formattedTime} <small>(ID: ${pedidoId})</small> <br> <b>Total: <span id="total-${pedidoId}">${formatMoney(total)}</span></b>
           </div>
           <div class="peticion-items" id="items-${pedidoId}">
-            ${renderItemsHTML(pedidoId, items)}
+         
+   ${renderItemsHTML(pedidoId, items)}
           </div>
           <div class="pedido-actions">
             <button onclick="eliminarPedido('${pedidoId}', '${pedido.user}', ${index})">Eliminar</button>
             <button class="guardar-btn" data-pedidoid="${pedidoId}" data-username="${pedido.user}" data-statekey="${key}">Guardar Cloud</button>
             <button class="preview-pdf" onclick="previewPDFPedido('${pedidoId}')">PDF</button>
             <button class="add-product" onclick="openAddModal('${pedidoId}')">+ Prod</button>
-            <button class="actualizar-precios" onclick="actualizarPreciosPedido('${pedidoId}', false)">$ Act</button>
+            <button class="actualizar-precios" 
+onclick="actualizarPreciosPedido('${pedidoId}', false)">$ Act</button>
             <button class="actualizar-precios" onclick="actualizarPreciosPedido('${pedidoId}', true)">$ -3%</button>
             <button class="ver-original" onclick="toggleViewOriginal('${pedidoId}')">Original</button>
             <button class="confirmar" onclick="guardarCambiosPedido('${pedidoId}')">Confirmar</button>
             <button class="enfocar" onclick="enfocarPedido('${pedidoId}')">Enfocar</button>
-            <span class="guardar-status" id="guardar-status-${pedidoId}" aria-hidden="true" style="align-self:center; margin-left:auto;">
+            <span class="guardar-status" id="guardar-status-${pedidoId}" aria-hidden="true" style="align-self:center;
+margin-left:auto;">
               ${estado.guardado ? '✅' : ''}
             </span>
           </div>
           <div class='status-container'>
             <label><input type='checkbox' ${estado.guardado ? 'checked' : ''} onchange="toggleGuardado('${key}', this)"> Guardado</label>
             <label><input type='checkbox' ${estado.recibido ? 'checked' : ''} onchange="toggleRecibido('${key}', this)"> Recibido</label>
-            <label><input type="checkbox" id="modo-devolucion-${pedidoId}"> Devolución</label>
+       
+     <label><input type="checkbox" id="modo-devolucion-${pedidoId}"> Devolución</label>
           </div>
         </div>
       </li>`;
@@ -789,15 +807,15 @@
       if (statusSpan) statusSpan.textContent = '⏳';
       try {
         await 
-        guardarPedido(pedidoId);
+ 
+       guardarPedido(pedidoId);
         if (statusSpan) statusSpan.textContent = '✅';
-        
-        estadosPedidos[stateKey] = estadosPedidos[stateKey] || {};
+estadosPedidos[stateKey] = estadosPedidos[stateKey] || {};
         estadosPedidos[stateKey].guardado = true;
         guardarEstados();
       } catch (err) {
         if (statusSpan) statusSpan.textContent = '❌';
-        console.error('Error:', err);
+console.error('Error:', err);
         alert(err.message);
       }
     });
@@ -809,82 +827,82 @@
   function toggleUserSelection(userName, checkbox) {
       if (checkbox.checked) {
           selectedUsersForGroup.add(userName);
-    } else {
+} else {
           selectedUsersForGroup.delete(userName);
       }
       updateGroupToolbar();
-    }
+}
 
   function clearSelection() {
       selectedUsersForGroup.clear();
       document.querySelectorAll('.user-select-check').forEach(cb => cb.checked = false);
       updateGroupToolbar();
-    }
+}
 
   function updateGroupToolbar() {
       const toolbar = document.getElementById('groupToolbar');
       const countSpan = document.getElementById('selectedCount');
-      const btnAction = document.getElementById('btnGroupAction');
+const btnAction = document.getElementById('btnGroupAction');
       
       const count = selectedUsersForGroup.size;
       countSpan.textContent = `${count} seleccionado${count!==1?'s':''}`;
-      if (count > 0) {
+if (count > 0) {
           toolbar.classList.add('visible');
-          // Lógica inteligente de botón
+// Lógica inteligente de botón
           let groupCount = 0;
-          let userCount = 0;
+let userCount = 0;
           selectedUsersForGroup.forEach(name => {
               if (groupsConfig[name]) groupCount++;
               else userCount++;
           });
-          if (groupCount === 1 && userCount > 0) {
+if (groupCount === 1 && userCount > 0) {
               btnAction.textContent = "Unir al Grupo";
-          } else if (groupCount === 0 && userCount > 1) {
+} else if (groupCount === 0 && userCount > 1) {
               btnAction.textContent = "Crear Grupo";
-          } else if (groupCount > 1) {
+} else if (groupCount > 1) {
                btnAction.textContent = "No se puede unir grupos";
-          } else {
+} else {
               btnAction.textContent = "Selecciona más...";
-          }
+}
 
       } else {
           toolbar.classList.remove('visible');
-    }
+}
   }
 
   function handleGroupAction() {
       let groupNames = [];
       let normalUsers = [];
-      selectedUsersForGroup.forEach(name => {
+selectedUsersForGroup.forEach(name => {
           if (groupsConfig[name]) groupNames.push(name);
           else normalUsers.push(name);
       });
-      // CASO 1: Crear nuevo grupo (solo usuarios normales seleccionados)
+// CASO 1: Crear nuevo grupo (solo usuarios normales seleccionados)
       if (groupNames.length === 0 && normalUsers.length > 1) {
           const newName = prompt("Nombre para el nuevo grupo (ej: 'Vendedores Maxi'):");
-        if (!newName) return;
+if (!newName) return;
           if (groupsConfig[newName] || usersPedidos[newName]) return alert("Ese nombre ya existe.");
           
           groupsConfig[newName] = normalUsers;
           saveGroups();
           location.reload();
-    }
+}
       // CASO 2: Agregar a grupo existente (1 grupo + N usuarios)
       else if (groupNames.length === 1 && normalUsers.length > 0) {
           const targetGroup = groupNames[0];
-          groupsConfig[targetGroup] = [...groupsConfig[targetGroup], ...normalUsers];
+groupsConfig[targetGroup] = [...groupsConfig[targetGroup], ...normalUsers];
           saveGroups();
           location.reload();
       }
       // ERROR
       else {
           alert("Selección inválida. Para agrupar: Selecciona varios usuarios individuales. Para unir: Selecciona 1 grupo existente y usuarios individuales.");
-    }
+}
   }
 
   function disolverGrupo(groupName) {
       if(!confirm(`¿Disolver el grupo "${groupName}" y separar los pedidos?`)) return;
-      delete groupsConfig[groupName];
+delete groupsConfig[groupName];
       saveGroups();
       location.reload();
   }
@@ -893,16 +911,16 @@
   async function cargarUsuarios() {
     try {
       const listaPedidos = document.getElementById('listaUsuarios');
-    if (!listaPedidos) return;
+if (!listaPedidos) return;
       listaPedidos.innerHTML = '<p style="text-align:center">Cargando pedidos...</p>';
       
       const res = await fetch(`${apiBase}/pedidos`, { cache: 'no-store' });
-      if (!res.ok) {
+if (!res.ok) {
         listaPedidos.innerHTML = '<p style="text-align:center">Error al cargar pedidos.</p>';
         return;
-    }
+}
       const pedidosRaw = await res.json();
-      const processedPedidos = pedidosRaw.map(p => {
+const processedPedidos = pedidosRaw.map(p => {
         let items = Array.isArray(p.items) ? p.items : JSON.parse(p.items || '[]');
         items = items.map(item => ({
           id: item.id || 'unknown',
@@ -910,26 +928,27 @@
           cantidad: Number(item.cantidad) || 1,
           precio_unitario: Number(item.precio_unitario || item.precio) || 0,
           subtotal: 
+
             Number(item.subtotal) || (Number(item.cantidad) * Number(item.precio_unitario || item.precio)) || 0
         }));
         return { ...p, items, user: p.user || 'Invitado' };
       });
-      const userToGroupMap = {};
+const userToGroupMap = {};
       Object.entries(groupsConfig).forEach(([groupName, members]) => {
           members.forEach(member => userToGroupMap[member] = groupName);
       });
-      const pedidosOrganizados = {};
+const pedidosOrganizados = {};
       processedPedidos.forEach(pedido => {
           const key = userToGroupMap[pedido.user] || pedido.user;
           if (!pedidosOrganizados[key]) pedidosOrganizados[key] = [];
           pedidosOrganizados[key].push(pedido);
       });
-      window.usersPedidos = pedidosOrganizados;
+window.usersPedidos = pedidosOrganizados;
 
       listaPedidos.innerHTML = '';
       if (Object.keys(pedidosOrganizados).length === 0) {
         listaPedidos.innerHTML = '<p style="text-align:center">No hay pedidos registrados.</p>';
-        return;
+return;
       }
 
       Object.entries(pedidosOrganizados).forEach(([displayName, userPedidos]) => {
@@ -941,6 +960,7 @@
         let pedidosHTML = '<ul>';
         pedidosToShow.forEach((pedido, index) => {
           
+
             pedidosHTML += buildPedidoHTML(pedido, index, displayName);
         });
         pedidosHTML += '</ul>';
@@ -950,29 +970,31 @@
         }
 
         const userDiv = document.createElement('details');
-        userDiv.className = 'user-details';
+        
+userDiv.className = 'user-details';
         userDiv.dataset.searchName = 
         displayName;
         
         const isGroup = !!groupsConfig[displayName];
-        const disolverBtn = isGroup ?
+const disolverBtn = isGroup ?
         `<button class="btn-disolver" onclick="event.preventDefault(); disolverGrupo('${displayName}')">Disolver Grupo</button>` : '';
         const groupTag = isGroup ?
-        ` <span style="font-size:0.6em; background:#333; color:#fff; padding:2px 6px; border-radius:4px; margin-left:8px; vertical-align:middle;">GRUPO</span>` : '';
-        // --- AQUÍ ESTÁ EL CAMBIO PARA EL PUNTITO ---
+` <span style="font-size:0.6em; background:#333; color:#fff; padding:2px 6px; border-radius:4px; margin-left:8px; vertical-align:middle;">GRUPO</span>` : '';
+// --- AQUÍ ESTÁ EL CAMBIO PARA EL PUNTITO ---
         userDiv.innerHTML = `
             <summary>
                 <div style="display:flex; align-items:center; gap:10px; flex:1;">
                     <input type="checkbox" class="user-select-check" onclick="event.stopPropagation(); toggleUserSelection('${displayName}', this)">
                     <span>${displayName} ${groupTag}</span>
    
+
                     ${disolverBtn}
                 </div>
                 <div class="focus-dot" onclick="enfocarUsuario(this, '${displayName}')" title="Enfocar usuario"></div>
             </summary>
             <div class='usuario-item'>${pedidosHTML}</div>
         `;
-        listaPedidos.appendChild(userDiv);
+listaPedidos.appendChild(userDiv);
 
         pedidosToShow.forEach((pedido, index) => {
            const pedidoId = pedido.id ?? `${pedido.user}-${index}`;
@@ -982,14 +1004,15 @@
            }
            const div = document.getElementById(`pedido-${pedidoId}`);
          
+
            if(div) div.dataset.veryOriginalItems = JSON.stringify(originalPedidosCache[pedidoId] || pedido.items);
         });
-        userDiv.querySelectorAll('.guardar-btn').forEach(addGuardarBtnListener);
+userDiv.querySelectorAll('.guardar-btn').forEach(addGuardarBtnListener);
       });
     } catch (err) {
       console.error(err);
       mostrarError('Error inesperado al cargar usuarios.');
-    }
+}
   }
 
   function enfocarUsuario(dotElement, userName) {
@@ -997,7 +1020,7 @@
       event.stopPropagation();
 
       const container = dotElement.closest('.user-details');
-      const yaEnfocado = container.classList.contains('usuario-enfocado');
+const yaEnfocado = container.classList.contains('usuario-enfocado');
 
       if (yaEnfocado) {
           // --- RESTAURAR TODO ---
@@ -1006,10 +1029,11 @@
               ud.classList.remove('usuario-enfocado');
               // Quitamos la clase active de todos los puntitos
               const 
+
                 d = ud.querySelector('.focus-dot');
               if(d) d.classList.remove('active');
           });
-          filtrarUsuarios(); 
+filtrarUsuarios(); 
       } else {
           // --- ENFOCAR ESTE ---
           document.querySelectorAll('.user-details').forEach(ud => {
@@ -1017,11 +1041,12 @@
                   ud.style.display = 'none';
               }
               // Aseguramos que otros puntitos 
+
                 // se apaguen
               const d = ud.querySelector('.focus-dot');
               if(d) d.classList.remove('active');
           });
-          container.classList.add('usuario-enfocado');
+container.classList.add('usuario-enfocado');
           container.open = true;
           dotElement.classList.add('active');
       }
@@ -1029,13 +1054,13 @@
 
   function loadMorePedidos(btn) {
     const userName = btn.dataset.username;
-    // Esto puede ser nombre de usuario o de grupo
+// Esto puede ser nombre de usuario o de grupo
     const loaded = parseInt(btn.dataset.loaded);
-    const userPedidos = usersPedidos[userName];
+const userPedidos = usersPedidos[userName];
     const nextPedidos = userPedidos.slice(loaded, loaded + 5);
     if (nextPedidos.length === 0) return;
     const ul = btn.previousElementSibling;
-    nextPedidos.forEach((pedido, offset) => {
+nextPedidos.forEach((pedido, offset) => {
       const index = loaded + offset;
       ul.insertAdjacentHTML('beforeend', buildPedidoHTML(pedido, index, userName));
       
@@ -1046,6 +1071,7 @@
         if(!originalPedidosCache[pedidoId]) {
             originalPedidosCache[pedidoId] = structuredClone(pedido.items);
            
+
              guardarOriginalCache();
         }
         div.dataset.veryOriginalItems = JSON.stringify(originalPedidosCache[pedidoId] || pedido.items);
@@ -1053,57 +1079,57 @@
         if(gBtn) addGuardarBtnListener(gBtn);
       }
     });
-    btn.dataset.loaded = loaded + nextPedidos.length;
+btn.dataset.loaded = loaded + nextPedidos.length;
     if (parseInt(btn.dataset.loaded) >= userPedidos.length) btn.remove();
-    }
+}
 
   // --- Funciones de Modificación de Pedidos ---
   function modificarCantidadPedido(pedidoId, itemIndex, change) {
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-    if (pedidoDiv.classList.contains('viewing-original')) return;
+if (pedidoDiv.classList.contains('viewing-original')) return;
     let items = JSON.parse(pedidoDiv.dataset.items || '[]');
     items[itemIndex].cantidad = Math.max(1, items[itemIndex].cantidad + change);
     items[itemIndex].subtotal = items[itemIndex].cantidad * items[itemIndex].precio_unitario;
-    pedidoDiv.dataset.items = JSON.stringify(items);
+pedidoDiv.dataset.items = JSON.stringify(items);
     updatePedidoItems(pedidoId, items);
   }
 
   function eliminarItemPedido(pedidoId, itemIndex) {
     if (!confirm('¿Eliminar este item?')) return;
-    const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
+const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
     if (pedidoDiv.classList.contains('viewing-original')) return;
     let items = JSON.parse(pedidoDiv.dataset.items || '[]');
-    items = items.filter((_, idx) => idx !== itemIndex);
+items = items.filter((_, idx) => idx !== itemIndex);
     pedidoDiv.dataset.items = JSON.stringify(items);
     updatePedidoItems(pedidoId, items);
-    }
+}
 
   async function guardarCambiosPedido(pedidoId) {
     const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-    // Verificación de seguridad
+// Verificación de seguridad
     if (pedidoDiv.classList.contains('viewing-original')) {
         return alert('Estás viendo la versión original. Vuelve a la vista de edición para guardar.');
-    }
+}
 
     if (!confirm('¿Guardar cambios permanentemente?')) return;
 
     try {
       // 1. Obtener datos actuales
       const items = JSON.parse(pedidoDiv.dataset.items || '[]');
-      const originalItems = JSON.parse(pedidoDiv.dataset.veryOriginalItems || '[]');
+const originalItems = JSON.parse(pedidoDiv.dataset.veryOriginalItems || '[]');
       const modoDevolucion = document.getElementById(`modo-devolucion-${pedidoId}`)?.checked || false;
-      // 2. Calcular Deltas para Stock
+// 2. Calcular Deltas para Stock
       const deltaMap = new Map();
-      originalItems.forEach(oi => deltaMap.set(oi.id, -Number(oi.cantidad || 0)));
+originalItems.forEach(oi => deltaMap.set(oi.id, -Number(oi.cantidad || 0)));
       items.forEach(item => {
         const curr = deltaMap.get(item.id) || 0;
         deltaMap.set(item.id, curr + Number(item.cantidad || 0));
       });
-      const stockUpdates = [];
+const stockUpdates = [];
       for (const [id, delta] of deltaMap.entries()) {
         if (delta !== 0 && (delta > 0 || modoDevolucion)) {
           stockUpdates.push({id, cantidad: delta});
-    }
+}
       }
 
       // 3. Preparar Payload
@@ -1115,69 +1141,70 @@
           precio_unitario: item.precio_unitario, 
           subtotal: item.cantidad * item.precio_unitario
      
+
         })),
         stockUpdates
       };
-      // 4. Enviar a API
+// 4. Enviar a API
       const res = await fetch(`${apiBase}/actualizar-pedido/${pedidoId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      if (!res.ok) throw new Error(await res.text());
+if (!res.ok) throw new Error(await res.text());
       const nuevosItemsGuardados = structuredClone(items);
       pedidoDiv.dataset.veryOriginalItems = JSON.stringify(nuevosItemsGuardados);
       originalPedidosCache[pedidoId] = nuevosItemsGuardados;
       guardarOriginalCache();
 
       pedidoDiv.dataset.items = JSON.stringify(nuevosItemsGuardados);
-      updatePedidoItems(pedidoId, nuevosItemsGuardados, true);
+updatePedidoItems(pedidoId, nuevosItemsGuardados, true);
       pedidoDiv.classList.remove('viewing-original');
       const btnVerOriginal = pedidoDiv.querySelector('.ver-original');
       if(btnVerOriginal) btnVerOriginal.textContent = 'Original';
       pedidoDiv.querySelectorAll('button').forEach(b => b.disabled = false);
-      alert('Cambios guardados con éxito. Puedes seguir editando.');
+alert('Cambios guardados con éxito. Puedes seguir editando.');
       
     } catch (e) {
       mostrarError(`Error al guardar: ${e.message}`);
-    }
+}
   }
 
   async function guardarPedido(pedidoId) {
     const res = await fetch(`${apiBase}/pedidos/${pedidoId}/pdf`, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Error al generar PDF');
+if (!res.ok) throw new Error('Error al generar PDF');
     const data = await res.json();
     if (data.pdf) window.open(data.pdf, '_blank');
-    }
+}
 
   async function eliminarPedido(pedidoId, usuario, index) {
     if (!confirm('¿Eliminar pedido permanentemente?')) return;
-    try {
+try {
       const key = pedidoId || `${usuario}-${index}`;
       const estado = estadosPedidos[key] || {};
-      const res = await fetch(`${apiBase}/eliminar-pedido/${pedidoId}`, {
+const res = await fetch(`${apiBase}/eliminar-pedido/${pedidoId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ recibido: estado.recibido || false })
       });
-      if (!res.ok) throw new Error(await res.text());
+if (!res.ok) throw new Error(await res.text());
       alert('Pedido eliminado');
       location.reload();
     } catch (e) {
       mostrarError(e.message);
-    }
+}
   }
 
   function toggleGuardado(key, el) {
     if(confirm(el.checked?'¿Marcar guardado?':'¿Desmarcar?')) {
         estadosPedidos[key] = {...estadosPedidos[key], guardado: el.checked};
-        guardarEstados();
+guardarEstados();
     } else el.checked = !el.checked;
   }
   function toggleRecibido(key, el) {
     if(confirm(el.checked?'¿Marcar recibido?':'¿Desmarcar?')) {
         estadosPedidos[key] = {...estadosPedidos[key], recibido: el.checked};
-        guardarEstados();
+guardarEstados();
     } else el.checked = !el.checked;
   }
 
@@ -1185,21 +1212,21 @@
 
   async function cargarPeticiones() {
     const lista = document.getElementById('listaPeticiones');
-    if (!lista) return;
+if (!lista) return;
     lista.innerHTML = '<p style="text-align:center">Cargando peticiones...</p>';
     
     try {
       const res = await fetch(`${apiBase}/peticiones`, { cache: 'no-store' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const peticiones = await res.json();
       lista.innerHTML = '';
-      if (peticiones.length === 0) {
+if (peticiones.length === 0) {
         lista.innerHTML = '<p style="text-align:center">No hay peticiones.</p>';
         return;
-    }
+}
       
       peticiones.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-    peticiones.forEach(peticion => {
+peticiones.forEach(peticion => {
         const peticionDiv = document.createElement('details');
         peticionDiv.className = 'peticion-details'; 
         peticionDiv.id = `peticion-${peticion.id}`;
@@ -1209,7 +1236,8 @@
         peticionDiv.dataset.nombre = peticion.nombre;
         peticionDiv.dataset.userId = peticion.user_id || '';
         peticionDiv.dataset.nombreNegocio = peticion.nombre_negocio || '';
-        
+   
+     
         const { formattedDate, formattedTime } = formatDateTime(peticion.fecha);
         
      
@@ -1217,42 +1245,46 @@
           <summary style="display:flex; align-items:center; gap:10px;">
             <input type="checkbox" class="peticion-check" value="${peticion.id}" onclick="event.stopPropagation(); updatePeticionSelection()">
             <span style="flex:1">${peticion.nombre} <span style="font-weight:400; font-size:0.8em; color:#777;">ID: ${peticion.id} - ${formattedDate} ${formattedTime}</span></span>
-          </summary>
+       
+   </summary>
           <div class="peticion-item">
             <div class="peticion-info">
               <div class="peticion-header-info">
                   <strong>Teléfono:</strong> ${peticion.telefono} <br>
                   
                 <strong>Total Estimado:</strong> <span id="total-${peticion.id}">${formatMoney(peticion.total)}</span>
-              </div>
+ 
+             </div>
               <div class="peticion-items" id="items-${peticion.id}">
                 ${renderPeticionItemsHTML(peticion.items, peticion.id)}
               </div>
               ${isUsed ?
-                `<div style="margin-top:10px; padding:10px; background:#e8f5e9; color:#2e7d32; border-radius:6px; text-align:center; font-weight:bold;">
+`<div style="margin-top:10px; padding:10px; background:#e8f5e9; color:#2e7d32; border-radius:6px; text-align:center; font-weight:bold;">
                     Estado: ${isUsed === 'plus7' ?
-                    '✅ Confirmado -3%' : '✅ Confirmado'}
+'✅ Confirmado -3%' : '✅ Confirmado'}
                  </div>` : `
                 <div class="button-group">
                   <button class="confirmar" onclick="confirmarPeticion(${peticion.id}, false)">Confirmar</button>
                   <button class="confirmar-plus" onclick="confirmarPeticion(${peticion.id}, true)">Confirmar -3%</button>
                 
+
                   <button class="preview-pdf" onclick="previewPDF(${peticion.id})">PDF Preview</button>
                   <button class="copy-faltantes" onclick="copiarFaltantes(${peticion.id})">Copiar faltantes</button>
                   <button class="delete-peticion" onclick="eliminarPeticion(${peticion.id})">Eliminar</button>
                   <button class="enfocar-peticion" onclick="enfocarPeticion('${peticion.id}')">Enfocar</button>
                 </div>
-              `}
+  
+            `}
     
             </div>
           </div>
         `;
-        lista.appendChild(peticionDiv);
+lista.appendChild(peticionDiv);
       });
     } catch (err) {
       console.error(err);
       mostrarError('Error al cargar peticiones.');
-    }
+}
   }
 
   function renderPeticionItemsHTML(items, peticionId) {
@@ -1264,6 +1296,7 @@
         }
         return `
         <div 
+
         class="item" data-item-index="${index}">
         <span id="item-text-${peticionId}-${index}" style="flex:1;">
             ${item.nombre}: <b><span id="cantidad-${peticionId}-${index}">${item.cantidad}</span></b> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}${stockWarning}
@@ -1271,12 +1304,12 @@
         <div class="item-controls">
             <button class="increase" onclick="modificarCantidad('${peticionId}', ${index}, 1)">+</button>
             <button class="decrease" onclick="modificarCantidad('${peticionId}', ${index}, -1)" ${item.cantidad <= 1 ?
-            'disabled' : ''}>-</button>
+'disabled' : ''}>-</button>
             <button class="delete" onclick="eliminarItemPeticion('${peticionId}', ${index})">×</button>
         </div>
         </div>
         `;
-        }).join('');
+}).join('');
   }
 
   function enfocarPeticion(peticionId) {
@@ -1284,73 +1317,72 @@
     if (!selectedPeticion) return;
     
     const btn = selectedPeticion.querySelector('.enfocar-peticion');
-    const peticionItemInner = selectedPeticion.querySelector('.peticion-item');
+const peticionItemInner = selectedPeticion.querySelector('.peticion-item');
     const estaEnfocado = peticionItemInner.classList.contains('enfocado');
 
     document.querySelectorAll('.peticion-item').forEach(p => {
         p.classList.remove('enfocado');
     });
-    document.querySelectorAll('.peticion-details').forEach(d => {
+document.querySelectorAll('.peticion-details').forEach(d => {
         d.style.display = '';
         const b = d.querySelector('.enfocar-peticion');
         if(b) b.textContent = 'Enfocar';
     });
-    const usuariosSection = document.querySelector('main details:nth-of-type(1)');
+const usuariosSection = document.querySelector('main details:nth-of-type(1)');
     if (usuariosSection) usuariosSection.style.display = '';
-    if (!estaEnfocado) {
+if (!estaEnfocado) {
         document.querySelectorAll('.peticion-details').forEach(d => {
             if (d.id !== `peticion-${peticionId}`) d.style.display = 'none';
         });
-    if (usuariosSection) usuariosSection.style.display = 'none';
+if (usuariosSection) usuariosSection.style.display = 'none';
 
         peticionItemInner.classList.add('enfocado');
         selectedPeticion.open = true;
         if(btn) btn.textContent = 'Mostrar todos';
         selectedPeticion.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+}
   }
 
   function modificarCantidad(peticionId, itemIndex, change) {
     const peticionDiv = document.getElementById(`peticion-${peticionId}`);
     if (!peticionDiv) return;
-    let items = JSON.parse(peticionDiv.dataset.items || '[]');
+let items = JSON.parse(peticionDiv.dataset.items || '[]');
     items[itemIndex].cantidad = Math.max(1, items[itemIndex].cantidad + change);
     items[itemIndex].subtotal = items[itemIndex].cantidad * items[itemIndex].precio_unitario;
     peticionDiv.dataset.items = JSON.stringify(items);
-    const total = items.reduce((sum, it) => sum + it.subtotal, 0);
+const total = items.reduce((sum, it) => sum + it.subtotal, 0);
     document.getElementById(`total-${peticionId}`).textContent = formatMoney(total);
     
     const cantSpan = document.getElementById(`cantidad-${peticionId}-${itemIndex}`);
-    const txtSpan = document.getElementById(`item-text-${peticionId}-${itemIndex}`);
+const txtSpan = document.getElementById(`item-text-${peticionId}-${itemIndex}`);
     if(cantSpan) {
         cantSpan.textContent = items[itemIndex].cantidad;
-        txtSpan.innerHTML = `${items[itemIndex].nombre}: <b><span id="cantidad-${peticionId}-${itemIndex}">${items[itemIndex].cantidad}</span></b> x ${formatMoney(items[itemIndex].precio_unitario)} = ${formatMoney(items[itemIndex].subtotal)}`;
+txtSpan.innerHTML = `${items[itemIndex].nombre}: <b><span id="cantidad-${peticionId}-${itemIndex}">${items[itemIndex].cantidad}</span></b> x ${formatMoney(items[itemIndex].precio_unitario)} = ${formatMoney(items[itemIndex].subtotal)}`;
     }
   }
 
   function eliminarItemPeticion(peticionId, itemIndex) {
     if (!confirm('¿Eliminar item?')) return;
-    const peticionDiv = document.getElementById(`peticion-${peticionId}`);
+const peticionDiv = document.getElementById(`peticion-${peticionId}`);
     let items = JSON.parse(peticionDiv.dataset.items || '[]');
     items = items.filter((_, idx) => idx !== itemIndex);
-    peticionDiv.dataset.items = JSON.stringify(items);
+peticionDiv.dataset.items = JSON.stringify(items);
     const container = document.getElementById(`items-${peticionId}`);
     if(container) {
         container.innerHTML = renderPeticionItemsHTML(items, peticionId);
-    }
+}
     const total = items.reduce((sum, it) => sum + it.subtotal, 0);
     const totalLabel = document.getElementById(`total-${peticionId}`);
-    if(totalLabel) totalLabel.textContent = formatMoney(total);
+if(totalLabel) totalLabel.textContent = formatMoney(total);
   }
 
-  async function confirmarPeticion(peticionId, subtractThreePercent) {
-    if (!confirm(`¿Confirmar esta petición${subtractThreePercent ? ' con -3%' : ''}?`)) return;
-
-    // 1. Obtener el contenedor y los botones
+  // MODIFICADO: Agregado parámetro `isBulk` para no recargar si es en masa
+  async function confirmarPeticion(peticionId, subtractThreePercent, isBulk = false) {
+    if (!isBulk && !confirm(`¿Confirmar esta petición${subtractThreePercent ? ' con -3%' : ''}?`)) return;
+// 1. Obtener el contenedor y los botones
     const peticionDiv = document.getElementById(`peticion-${peticionId}`);
     const botones = peticionDiv.querySelectorAll('button');
-
-    // 2. BLOQUEAR LOS BOTONES VISUALMENTE (Para evitar doble click)
+// 2. BLOQUEAR LOS BOTONES VISUALMENTE (Para evitar doble click)
     botones.forEach(btn => {
         btn.disabled = true; // Deshabilita el click
         if (btn.classList.contains('confirmar') || btn.classList.contains('confirmar-plus')) {
@@ -1358,23 +1390,21 @@
             btn.textContent = 'Procesando...'; // Feedback visual
         }
     });
-
-    try {
+try {
       if (usedButtons[peticionId]) throw new Error('Ya fue confirmado.');
       
       const items = JSON.parse(peticionDiv.dataset.items || '[]');
-      if (items.length === 0) throw new Error('No hay items');
+if (items.length === 0) throw new Error('No hay items');
       
       const nombre = peticionDiv.dataset.nombre;
       const userId = peticionDiv.dataset.userId || null;
-      const nombreNegocio = peticionDiv.dataset.nombreNegocio || null;
+const nombreNegocio = peticionDiv.dataset.nombreNegocio || null;
 
       const pedidoItems = items.map(item => ({
         id: item.id, cantidad: item.cantidad,
         precio: subtractThreePercent ? item.precio_unitario * 0.97 : item.precio_unitario
       }));
-
-      const res = await fetch(`${apiBase}/guardar-pedidos`, {
+const res = await fetch(`${apiBase}/guardar-pedidos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -1383,17 +1413,22 @@
             user_id: userId,
             nombre_negocio: nombreNegocio
         })
-      });
+   
+   });
       
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       
       await fetch(`${apiBase}/peticiones/${peticionId}`, { method: 'DELETE' });
       
-      usedButtons[peticionId] = subtractThreePercent ? 'plus7' : 'normal';
+      usedButtons[peticionId] = subtractThreePercent ?
+'plus7' : 'normal';
       saveUsedButtons();
       
-      alert('Petición confirmada.');
-      location.reload(); 
+      if (!isBulk) {
+        alert('Petición confirmada.');
+        location.reload();
+      }
+      return true; // Éxito
 
     } catch (err) {
       botones.forEach(btn => {
@@ -1402,46 +1437,47 @@
               btn.textContent = btn.dataset.originalText;
           }
       });
-      mostrarError(err.message);
-    }
+      if (!isBulk) mostrarError(err.message);
+      else console.error(`Error confirmando petición ${peticionId}:`, err);
+      return false; // Error
+}
   }
 
   async function eliminarPeticion(id) {
     if(!confirm('¿Eliminar petición?')) return;
-    try {
+try {
         await fetch(`${apiBase}/peticiones/${id}`, { method: 'DELETE' });
         cargarPeticiones();
     } catch(e) { mostrarError(e.message);
-    }
+}
   }
 
 
   function copiarFaltantes(peticionId) {
     const peticionDiv = document.getElementById(`peticion-${peticionId}`);
     if (!peticionDiv) return alert('Petición no encontrada');
-    const items = JSON.parse(peticionDiv.dataset.items);
+const items = JSON.parse(peticionDiv.dataset.items);
     let faltantes = [];
     for (const item of items) {
       const product = productos.find(p => p.id === item.id);
-      const stock = product ? Math.max(product.stock || 0, 0) : 0;
+const stock = product ? Math.max(product.stock || 0, 0) : 0;
       const missing = Math.max(0, item.cantidad - stock);
-      if (missing > 0) faltantes.push(`${missing} ${item.nombre}`);
+if (missing > 0) faltantes.push(`${missing} ${item.nombre}`);
     }
     const textToCopy = faltantes.join('\n');
-    navigator.clipboard.writeText(textToCopy).then(() => {
+navigator.clipboard.writeText(textToCopy).then(() => {
       alert('Faltantes copiados:\n' + textToCopy);
     }).catch(() => {
       alert('Error al copiar. Copia manual:\n' + textToCopy);
     });
-  }
+}
     
   function copiarFaltantesGrupo() {
     const checks = document.querySelectorAll('.peticion-check:checked');
-    if(checks.length === 0) return alert('Selecciona al menos una petición.');
+if(checks.length === 0) return alert('Selecciona al menos una petición.');
 
     const aggregated = new Map();
-
-    // 1. Recorrer peticiones y sumar productos
+// 1. Recorrer peticiones y sumar productos
     checks.forEach(chk => {
         const peticionId = chk.value;
         const div = document.getElementById(`peticion-${peticionId}`);
@@ -1451,49 +1487,49 @@
         const items = JSON.parse(div.dataset.items || '[]');
 
         items.forEach(item => {
-            const idKey = String(item.id); // Usar String para ID consistente
+            
+const idKey = String(item.id); // Usar String para ID consistente
             
             if(!aggregated.has(idKey)) {
                 aggregated.set(idKey, { nombre: item.nombre, cantidad: 0 });
             }
             
-            // SUMA SEGURA: Convertir a Número explícitamente para evitar concatenación de texto
+            // SUMA SEGURA: Convertir a Número explícitamente para 
+evitar concatenación de texto
             const qtyNumerica = Number(item.cantidad) || 0;
             aggregated.get(idKey).cantidad += qtyNumerica;
         });
     });
-
-    // 2. Calcular faltantes comparando con Stock Global
+// 2. Calcular faltantes comparando con Stock Global
     const faltantes = [];
-    
-    // El bucle sobre el Map respeta el orden de inserción (visual)
+// El bucle sobre el Map respeta el orden de inserción (visual)
     for (const [idKey, data] of aggregated) {
         // Buscar producto en la lista global (usando '==' para coincidir texto/numero)
         const product = productos.find(p => p.id == idKey);
-        
-        // LÓGICA STOCK: Convertir a número. Si es negativo o no existe, cuenta como 0.
-        let stock = product ? Number(product.stock) : 0;
+// LÓGICA STOCK: Convertir a número. Si es negativo o no existe, cuenta como 0.
+        let stock = product ?
+Number(product.stock) : 0;
         if (isNaN(stock) || stock < 0) {
             stock = 0;
-        }
+}
 
         const missing = data.cantidad - stock;
-        
-        if(missing > 0) {
+if(missing > 0) {
             faltantes.push(`${missing} ${data.nombre}`);
-        }
+}
     }
 
     // 3. Copiar al portapapeles
-    const text = faltantes.join('\n') || 'No faltan productos (Stock suficiente para la selección).';
+    const text = faltantes.join('\n') ||
+'No faltan productos (Stock suficiente para la selección).';
     navigator.clipboard.writeText(text).then(() => alert('Faltantes copiados:\n' + text));
-  }
+}
 
 
   async function previewPDF(peticionId) {
       const peticionDiv = document.getElementById(`peticion-${peticionId}`);
       const items = JSON.parse(peticionDiv.dataset.items);
-      const nombre = peticionDiv.dataset.nombre;
+const nombre = peticionDiv.dataset.nombre;
       const payload = {
           user: nombre,
           items: items.map(i => ({
@@ -1501,108 +1537,108 @@
               precio_unitario: i.precio_unitario * 0.97 * 1.10,
               subtotal: i.cantidad * (i.precio_unitario * 0.97 * 1.10)
           
+
         })),
           total: 0, 
           fecha: new Date().toISOString()
       };
-      payload.total = payload.items.reduce((s, i) => s + i.subtotal, 0);
+payload.total = payload.items.reduce((s, i) => s + i.subtotal, 0);
       const res = await fetch(`${apiBase}/generar-pdf-peticion`, {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify(payload)
       });
-      const data = await res.json();
+const data = await res.json();
       if(data.pdf) window.open(data.pdf, '_blank');
   }
 
   // --- Modal Logic ---
   function openAddModal(pedidoId) {
     currentPedidoId = pedidoId;
-    document.getElementById('productsInput').value = '';
+document.getElementById('productsInput').value = '';
     document.getElementById('apply3percent').checked = false;
     document.getElementById('addProductModal').showModal();
   }
   function closeAddModal() { document.getElementById('addProductModal').close();
-    }
+}
   
   async function addProductsToPedido() {
     const input = document.getElementById('productsInput').value.trim();
     if(!input) return;
-    const parts = input.split(',').map(s=>s.trim());
+const parts = input.split(',').map(s=>s.trim());
     const newItems = [];
     
     if(productos.length === 0) {
         const res = await fetch(`${apiBase}/productos`);
-        productos = await res.json();
+productos = await res.json();
     }
     
     const apply3 = document.getElementById('apply3percent').checked;
-    for(let part of parts) {
+for(let part of parts) {
         const [idStr, qtyStr] = part.split('x');
-        const p = productos.find(x => x.id == idStr);
+const p = productos.find(x => x.id == idStr);
         if(p) {
             let precio = p.precio * 1.10;
-        if(apply3) precio *= 0.97;
+if(apply3) precio *= 0.97;
             newItems.push({
                 id: p.id, nombre: p.nombre, cantidad: parseInt(qtyStr)||1,
                 precio_unitario: precio, subtotal: (parseInt(qtyStr)||1)*precio
             });
-        }
+}
     }
     
     if(newItems.length === 0) return alert('No se encontraron productos.');
-    const div = document.getElementById(`pedido-${currentPedidoId}`);
+const div = document.getElementById(`pedido-${currentPedidoId}`);
     let items = JSON.parse(div.dataset.items || '[]');
-    newItems.forEach(ni => {
+newItems.forEach(ni => {
         const idx = items.findIndex(i => i.id === ni.id);
         if(idx >= 0) {
             items[idx].cantidad += ni.cantidad;
             items[idx].subtotal = items[idx].cantidad * items[idx].precio_unitario;
         } else items.push(ni);
     });
-    div.dataset.items = JSON.stringify(items);
+div.dataset.items = JSON.stringify(items);
     updatePedidoItems(currentPedidoId, items);
     closeAddModal();
   }
   
   async function previewPDFPedido(pedidoId) {
       const div = document.getElementById(`pedido-${pedidoId}`);
-      const items = JSON.parse(div.dataset.items);
+const items = JSON.parse(div.dataset.items);
       const user = div.closest('.user-details').querySelector('summary').innerText.split('\n')[0].trim(); // Obtener nombre limpio
       const payload = {
           user: user, items: items,
           total: items.reduce((s,i)=>s+i.subtotal,0),
           fecha: new Date().toISOString()
       };
-      const res = await fetch(`${apiBase}/generar-pdf-peticion`, {
+const res = await fetch(`${apiBase}/generar-pdf-peticion`, {
           method: 'POST', headers: {'Content-Type': 'application/json'},
           body: JSON.stringify(payload)
       });
-      const data = await res.json();
+const data = await res.json();
       if(data.pdf) window.open(data.pdf, '_blank');
   }
 
   async function cargarProductos() {
     try {
         const res = await fetch(`${apiBase}/productos`);
-        productos = await res.json();
+productos = await res.json();
     } catch(e) { console.error(e); }
   }
 
   // --- Funciones Nuevas: Faltantes en Grupo ---
   function updatePeticionSelection() {
       const checks = document.querySelectorAll('.peticion-check:checked');
-      const span = document.getElementById('peticionesSelectedCount');
+const span = document.getElementById('peticionesSelectedCount');
       if(span) span.textContent = `${checks.length} seleccionados`;
   }
 
   function copiarFaltantesGrupo() {
     const checks = document.querySelectorAll('.peticion-check:checked');
-    if(checks.length === 0) return alert('Selecciona al menos una petición.');
+if(checks.length === 0) return alert('Selecciona al menos una petición.');
 
     const aggregated = new Map();
-
-    // 1. Recorrer peticiones y sumar productos
+// 1. Recorrer peticiones y sumar productos
     checks.forEach(chk => {
         const peticionId = chk.value;
         const div = document.getElementById(`peticion-${peticionId}`);
@@ -1612,42 +1648,121 @@
         const items = JSON.parse(div.dataset.items || '[]');
 
         items.forEach(item => {
-            const idKey = String(item.id); // Usar String para ID consistente
+            
+const idKey = String(item.id); // Usar String para ID consistente
             
             if(!aggregated.has(idKey)) {
                 aggregated.set(idKey, { nombre: item.nombre, cantidad: 0 });
             }
             
-            // SUMA SEGURA: Convertir a Número explícitamente para evitar concatenación de texto
+            // SUMA SEGURA: Convertir a Número explícitamente para 
+evitar concatenación de texto
             const qtyNumerica = Number(item.cantidad) || 0;
             aggregated.get(idKey).cantidad += qtyNumerica;
         });
     });
-
-    // 2. Calcular faltantes comparando con Stock Global
+// 2. Calcular faltantes comparando con Stock Global
     const faltantes = [];
-    
-    // El bucle sobre el Map respeta el orden de inserción (visual)
+// El bucle sobre el Map respeta el orden de inserción (visual)
     for (const [idKey, data] of aggregated) {
         // Buscar producto en la lista global (usando '==' para coincidir texto/numero)
         const product = productos.find(p => p.id == idKey);
-        
-        // LÓGICA STOCK: Convertir a número. Si es negativo o no existe, cuenta como 0.
-        let stock = product ? Number(product.stock) : 0;
+// LÓGICA STOCK: Convertir a número. Si es negativo o no existe, cuenta como 0.
+        let stock = product ?
+Number(product.stock) : 0;
         if (isNaN(stock) || stock < 0) {
             stock = 0;
-        }
+}
 
         const missing = data.cantidad - stock;
-        
-        if(missing > 0) {
+if(missing > 0) {
             faltantes.push(`${missing} ${data.nombre}`);
-        }
+}
     }
 
     // 3. Copiar al portapapeles
-    const text = faltantes.join('\n') || 'No faltan productos (Stock suficiente para la selección).';
+    const text = faltantes.join('\n') ||
+'No faltan productos (Stock suficiente para la selección).';
     navigator.clipboard.writeText(text).then(() => alert('Faltantes copiados:\n' + text));
+}
+
+  // --- NUEVAS FUNCIONES DE ACCIÓN MASIVA ---
+
+  // 1. ACEPTAR PETICIONES EN LOTE (Uno por uno para seguridad de Stock)
+  async function procesarPeticionesMasivas(applyDiscount) {
+      const checks = document.querySelectorAll('.peticion-check:checked');
+      if(checks.length === 0) return alert('Selecciona al menos una petición.');
+      
+      const descuentoTexto = applyDiscount ? ' con -3%' : '';
+      if(!confirm(`¿Estás seguro de aceptar ${checks.length} peticiones${descuentoTexto}? Se procesarán una por una para ajustar el stock correctamente.`)) return;
+
+      let procesados = 0;
+      let errores = 0;
+
+      // Iteramos secuencialmente (await dentro de loop)
+      for (const chk of checks) {
+          const peticionId = chk.value;
+          // Llamamos a confirmarPeticion en modo "bulk" (sin reload, sin alerts)
+          const exito = await confirmarPeticion(peticionId, applyDiscount, true); 
+          if(exito) {
+              procesados++;
+              // Opcional: Remover visualmente para feedback de progreso
+              const div = document.getElementById(`peticion-${peticionId}`);
+              if(div) div.style.opacity = '0.3'; 
+          } else {
+              errores++;
+          }
+      }
+
+      alert(`Proceso finalizado.\nCorrectos: ${procesados}\nErrores: ${errores}`);
+      location.reload();
+  }
+
+  // 2. GENERAR PDF / GUARDAR CLOUD MASIVO (Pedidos)
+  async function procesarPedidosMasivos(modo) {
+      if(selectedUsersForGroup.size === 0) return alert('Selecciona al menos un usuario/grupo para esta acción.');
+      
+      const accionTexto = (modo === 'cloud') ? 'GUARDAR EN CLOUD y abrir PDF' : 'SOLO VER PDF';
+      if(!confirm(`¿Deseas ${accionTexto} de TODOS los pedidos visibles para los usuarios seleccionados?\n\n⚠️ IMPORTANTE: Se abrirán múltiples pestañas. Asegúrate de permitir ventanas emergentes.`)) return;
+
+      const usuarios = Array.from(selectedUsersForGroup);
+      let pedidosEncontrados = [];
+
+      // Recolectar todos los pedidos de los usuarios seleccionados
+      usuarios.forEach(userKey => {
+          // userKey puede ser usuario o grupo. La variable global usersPedidos ya tiene la info organizada.
+          const pedidosDeUsuario = usersPedidos[userKey] || [];
+          pedidosDeUsuario.forEach((pedido, index) => {
+              // Reconstruimos el ID igual que en buildPedidoHTML
+              const pedidoId = pedido.id ?? `${pedido.user}-${index}`;
+              pedidosEncontrados.push(pedidoId);
+          });
+      });
+
+      if(pedidosEncontrados.length === 0) return alert('No se encontraron pedidos en la selección.');
+
+      let count = 0;
+      for(const pid of pedidosEncontrados) {
+          try {
+              if (modo === 'cloud') {
+                  // Lógica de "Guardar Cloud" (guardarPedido)
+                  await guardarPedido(pid);
+                  // Actualizar estado visualmente (opcional, ya que se abrirá pestaña)
+                  const statusSpan = document.getElementById(`guardar-status-${pid}`);
+                  if (statusSpan) statusSpan.textContent = '✅';
+              } else {
+                  // Lógica de "PDF" (previewPDFPedido)
+                  await previewPDFPedido(pid);
+              }
+              count++;
+              // Pequeña pausa para no saturar al navegador con pestañas
+              await new Promise(r => setTimeout(r, 500)); 
+          } catch(e) {
+              console.error(`Error en masivo ${pid}:`, e);
+          }
+      }
+      
+      console.log(`Acción masiva terminada. ${count} procesados.`);
   }
 
   // --- INIT ---
@@ -1656,12 +1771,6 @@
     await cargarUsuarios();
     await cargarPeticiones();
   });
-  </script>
+</script>
 </body>
 </html>
-
-
-
-
-
-
