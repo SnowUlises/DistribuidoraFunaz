@@ -419,13 +419,18 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
    ========================================================= */
 
 // GENERAR PDF DE PETICIÓN (PREVIEW) - 🔥 MODIFICADO PARA INCLUIR NEGOCIO
+// GENERAR PDF DE PETICIÓN (PREVIEW) - 🔥 AHORA SÍ MUESTRA EL NEGOCIO
 app.post('/api/generar-pdf-peticion', async (req, res) => {
   try {
+    // 1. Recibimos 'nombre_negocio' desde el frontend
     const { user, items, total, fecha, nombre_negocio } = req.body;
+
     if (!user || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Datos inválidos' });
     }
+
     const fechaLocal = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
+
     const pedido = {
       id: `preview_${Date.now()}`,
       user: user || 'Invitado',
@@ -433,12 +438,16 @@ app.post('/api/generar-pdf-peticion', async (req, res) => {
         id: item.id,
         nombre: item.nombre,
         cantidad: Number(item.cantidad) || 0,
-        precio_unitario: Number(item.precio_unitario * 1.1) || 0,
+        // Mantenemos el 10% extra
+        precio_unitario: Number(item.precio_unitario * 1.1) || 0, 
         subtotal: Number(item.subtotal) || 0
       })),
       total: Number(total) || 0,
       fecha: fechaLocal || new Date().toISOString(),
-      nombre_negocio: nombre_negocio // <-- Pasamos el dato
+      
+      // 🔥 AQUÍ ESTÁ LA CLAVE: 
+      // Al asignarlo aquí, la función 'generarPDF' verá que existe y lo escribirá en el PDF.
+      nombre_negocio: nombre_negocio 
     };
     
     const pdfBuffer = await generarPDF(pedido);
@@ -739,5 +748,6 @@ async function generarPDF(pedido) {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
