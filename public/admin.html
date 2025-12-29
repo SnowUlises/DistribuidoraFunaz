@@ -3,406 +3,274 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Admin - Distribuidora Funaz</title>
+    <title>Admin Panel - Funaz</title>
     
-    <!-- LIBRERÍAS EXTERNAS (CDN) -->
-    <!-- Vue 3: Motor reactivo que reduce el código -->
+    <!-- Vue 3 + Tailwind + Iconos -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <!-- Tailwind CSS: Diseño bonito y rápido -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons: Iconos modernos -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
     <style>
-        /* ESTILOS GLOBALES */
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
         
-        /* Scroll personalizado y fino */
-        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+        /* Scrollbar más visible y cómodo */
+        .custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #e2e8f0; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #64748b; }
 
-        /* Estilos del Switch (Interruptor Armando/Preparado) */
-        .toggle-checkbox:checked { right: 0; border-color: #84CC16; }
-        .toggle-checkbox:checked + .toggle-label { background-color: #84CC16; }
-        
-        /* Bordes y colores de estado */
-        .border-armando { border-left: 4px solid #F97316; } /* Naranja */
-        .border-preparado { border-left: 4px solid #84CC16; } /* Verde */
-        
-        /* Animaciones suaves */
-        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
-        .fade-enter-from, .fade-leave-to { opacity: 0; }
-        
-        [v-cloak] { display: none; } /* Ocultar Vue hasta que cargue */
+        /* Estilos del Switch de Estado */
+        .switch-checkbox { display: none; }
+        .switch-label {
+            width: 44px; height: 24px;
+            background-color: #fb923c; /* Orange default */
+            border-radius: 999px; position: relative; cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .switch-label::after {
+            content: ''; position: absolute; top: 2px; left: 2px;
+            width: 20px; height: 20px; background-color: white; border-radius: 50%;
+            transition: transform 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        .switch-checkbox:checked + .switch-label { background-color: #65a30d; /* Lime/Green */ }
+        .switch-checkbox:checked + .switch-label::after { transform: translateX(20px); }
+
+        [v-cloak] { display: none; }
     </style>
 </head>
 <body>
-    <div id="app" v-cloak class="min-h-screen pb-32">
+    <div id="app" v-cloak class="min-h-screen pb-20">
         
-        <!-- HEADER FIJO -->
-        <header class="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-200">
-            <div class="max-w-[1800px] mx-auto px-4 py-3">
-                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div class="flex items-center gap-3">
-                        <a href="/" class="text-gray-500 hover:text-green-600 transition p-1 rounded-full hover:bg-gray-100">
-                            <i data-lucide="arrow-left" class="w-6 h-6"></i>
-                        </a>
-                        <h1 class="text-xl font-bold text-gray-800 tracking-tight flex items-center gap-2">
-                            <span class="bg-green-100 text-green-700 p-1 rounded-md"><i data-lucide="shield" class="w-5 h-5"></i></span>
-                            Panel Admin
-                        </h1>
-                    </div>
-                    
-                    <!-- Buscador Inteligente -->
-                    <div class="w-full md:w-96 relative group">
-                        <input v-model="search" type="text" placeholder="Buscar cliente, grupo, ID o producto..." 
-                            class="w-full pl-10 pr-4 py-2 bg-gray-100 border border-transparent rounded-lg text-gray-800 focus:bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all shadow-sm group-hover:bg-white group-hover:shadow-md">
-                        <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3 top-3 group-hover:text-green-500 transition-colors"></i>
-                        <button v-if="search" @click="search = ''" class="absolute right-3 top-2.5 text-gray-400 hover:text-red-500">
-                            <i data-lucide="x" class="w-4 h-4"></i>
-                        </button>
-                    </div>
+        <!-- HEADER -->
+        <header class="bg-white sticky top-0 z-50 shadow-md border-b border-gray-200">
+            <div class="max-w-[1920px] mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <a href="/" class="p-2 hover:bg-gray-100 rounded-full transition"><i data-lucide="arrow-left" class="w-6 h-6 text-gray-600"></i></a>
+                    <h1 class="text-2xl font-bold text-gray-800">Administración</h1>
                 </div>
 
-                <!-- Dashboard Mini (Métricas Rápidas) -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-                    <div class="bg-white p-2.5 rounded-lg border border-gray-200 shadow-sm flex items-center justify-between hover:shadow-md transition">
-                        <div class="flex flex-col">
-                            <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Pendientes</span>
-                            <span class="text-xl font-bold text-blue-600">{{ peticiones.length }}</span>
-                        </div>
-                        <i data-lucide="inbox" class="w-6 h-6 text-blue-100"></i>
+                <!-- Buscador -->
+                <div class="w-full md:w-1/3 relative">
+                    <input v-model="search" type="text" placeholder="Buscar cliente, ID o producto..." 
+                        class="w-full pl-11 pr-4 py-3 bg-gray-100 border-2 border-transparent focus:bg-white focus:border-blue-500 rounded-xl text-lg outline-none transition shadow-inner">
+                    <i data-lucide="search" class="w-6 h-6 text-gray-400 absolute left-3 top-3.5"></i>
+                </div>
+
+                <!-- Métricas Rápidas -->
+                <div class="flex gap-4 text-sm font-semibold">
+                    <div class="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg border border-blue-200 shadow-sm flex flex-col items-center">
+                        <span>Peticiones</span>
+                        <span class="text-xl leading-none">{{ peticiones.length }}</span>
                     </div>
-                    <div class="bg-orange-50 p-2.5 rounded-lg border border-orange-100 shadow-sm flex items-center justify-between hover:shadow-md transition">
-                        <div class="flex flex-col">
-                            <span class="text-[10px] text-orange-600 font-bold uppercase tracking-wider">En Armando</span>
-                            <span class="text-xl font-bold text-orange-700">{{ ordersArmando }}</span>
-                        </div>
-                        <i data-lucide="clock" class="w-6 h-6 text-orange-200"></i>
+                    <div class="bg-orange-50 text-orange-700 px-4 py-2 rounded-lg border border-orange-200 shadow-sm flex flex-col items-center">
+                        <span>Armando</span>
+                        <span class="text-xl leading-none">{{ ordersArmando }}</span>
                     </div>
-                    <div class="bg-lime-50 p-2.5 rounded-lg border border-lime-100 shadow-sm flex items-center justify-between hover:shadow-md transition">
-                        <div class="flex flex-col">
-                            <span class="text-[10px] text-lime-600 font-bold uppercase tracking-wider">Preparados</span>
-                            <span class="text-xl font-bold text-lime-700">{{ ordersPreparado }}</span>
-                        </div>
-                        <i data-lucide="check-circle" class="w-6 h-6 text-lime-200"></i>
+                    <div class="bg-green-50 text-green-700 px-4 py-2 rounded-lg border border-green-200 shadow-sm flex flex-col items-center">
+                        <span>Preparados</span>
+                        <span class="text-xl leading-none">{{ ordersPreparado }}</span>
                     </div>
-                    <button @click="copiarFaltantesGlobal" class="bg-gray-800 hover:bg-black text-white p-2 rounded-lg transition text-xs font-bold flex flex-col items-center justify-center gap-1 shadow hover:scale-[1.02] active:scale-95">
-                        <i data-lucide="clipboard" class="w-4 h-4"></i> 
-                        <span>Copiar Faltantes</span>
-                    </button>
                 </div>
             </div>
         </header>
 
-        <main class="max-w-[1800px] mx-auto px-4 py-6 space-y-8">
+        <main class="max-w-[1920px] mx-auto px-4 py-6 space-y-8">
             
-            <!-- Notificaciones Flotantes -->
-            <transition name="fade">
-                <div v-if="mensaje" :class="`fixed top-24 right-4 z-[100] p-4 rounded-lg shadow-xl font-medium flex items-center gap-3 border-l-4 animate-bounce-in ${mensajeTipo === 'error' ? 'bg-red-50 text-red-800 border-red-500' : 'bg-green-50 text-green-800 border-green-500'}`">
-                    <i :data-lucide="mensajeTipo === 'error' ? 'alert-triangle' : 'check-circle-2'" class="w-6 h-6"></i>
-                    <span class="text-sm">{{ mensaje }}</span>
-                </div>
-            </transition>
+            <!-- Notificación Flotante -->
+            <div v-if="mensaje" :class="`fixed top-24 right-5 z-[100] p-4 rounded-xl shadow-2xl flex items-center gap-3 border-l-8 text-lg font-medium animate-bounce ${mensajeTipo === 'error' ? 'bg-red-100 text-red-800 border-red-500' : 'bg-green-100 text-green-800 border-green-500'}`">
+                <span>{{ mensaje }}</span>
+            </div>
 
-            <!-- 1. SECCIÓN PETICIONES (SOLICITUDES NUEVAS) -->
-            <section v-if="peticiones.length > 0">
-                <div class="flex flex-wrap items-center justify-between mb-4 bg-blue-50/80 backdrop-blur p-3 rounded-xl border border-blue-100 shadow-sm">
-                    <h2 class="text-lg font-bold text-blue-900 flex items-center gap-2">
-                        <span class="bg-blue-200 p-1.5 rounded-lg"><i data-lucide="bell" class="w-4 h-4 text-blue-700"></i></span>
-                        Peticiones Nuevas
+            <!-- SECCIÓN PETICIONES (Nuevos) -->
+            <section v-if="peticiones.length > 0" class="bg-blue-50/50 p-4 rounded-2xl border border-blue-200">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-blue-900 flex items-center gap-2">
+                        <i data-lucide="bell" class="w-6 h-6"></i> Nuevas Peticiones ({{peticiones.length}})
                     </h2>
-                    
-                    <!-- Acciones Masivas Peticiones -->
-                    <div class="flex gap-2 mt-2 sm:mt-0">
-                         <button v-if="selectedPeticiones.length > 0" @click="copiarFaltantesPeticionesMasivo" class="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50 text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm transition flex items-center gap-1">
-                             <i data-lucide="copy" class="w-3 h-3"></i> Faltantes
-                         </button>
-                        <button @click="procesarPeticionesMasivo(false)" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-1.5 rounded-lg shadow-sm transition flex items-center gap-1">
-                            <i data-lucide="check" class="w-3 h-3"></i> Aceptar
-                        </button>
-                        <button @click="procesarPeticionesMasivo(true)" class="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-1.5 rounded-lg shadow-sm transition flex items-center gap-1">
-                            <i data-lucide="percent" class="w-3 h-3"></i> Aceptar (-3%)
-                        </button>
+                    <div class="flex gap-2">
+                        <button v-if="selectedPeticiones.length" @click="procesarPeticionesMasivo(false)" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold shadow transition">Aceptar Selecc.</button>
+                        <button v-if="selectedPeticiones.length" @click="procesarPeticionesMasivo(true)" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg font-bold shadow transition">Aceptar -10%</button>
                     </div>
                 </div>
-                
+
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    <div v-for="peticion in peticiones" :key="peticion.id" class="bg-white rounded-xl shadow-sm border border-blue-100 overflow-hidden hover:shadow-md transition-all duration-300 group">
-                        
-                        <!-- Header Tarjeta Petición -->
-                        <div class="bg-blue-50/50 p-3 border-b border-blue-100 flex justify-between items-start">
-                            <div class="flex gap-3 items-center w-full overflow-hidden">
-                                <input type="checkbox" v-model="selectedPeticiones" :value="peticion.id" class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer border-gray-300">
-                                <div class="truncate flex-1">
-                                    <h3 class="font-bold text-gray-800 text-sm truncate" :title="peticion.nombre">{{ peticion.nombre }}</h3>
-                                    <div class="text-[10px] text-gray-500 flex items-center gap-1">
-                                        <i data-lucide="calendar" class="w-3 h-3"></i> {{ formatDate(peticion.fecha) }}
-                                    </div>
-                                </div>
+                    <div v-for="peticion in peticiones" :key="peticion.id" class="bg-white rounded-xl shadow border border-blue-100 overflow-hidden">
+                        <div class="bg-blue-100 p-3 flex justify-between items-center">
+                            <div class="flex items-center gap-3 overflow-hidden">
+                                <input type="checkbox" v-model="selectedPeticiones" :value="peticion.id" class="w-5 h-5 cursor-pointer">
+                                <h3 class="font-bold text-gray-800 truncate">{{ peticion.nombre }}</h3>
                             </div>
-                            <span class="text-[9px] font-mono bg-white px-2 py-0.5 rounded-full border border-blue-200 text-blue-600 shrink-0 shadow-sm">#{{ peticion.id }}</span>
+                            <span class="text-xs font-mono text-blue-600 bg-white px-2 py-0.5 rounded">#{{ peticion.id }}</span>
                         </div>
-                        
                         <div class="p-3">
-                            <div class="flex justify-between items-center text-xs mb-3 bg-gray-50 p-2 rounded-lg border border-gray-100">
-                                <span v-if="peticion.telefono" class="text-gray-600 font-mono flex items-center gap-1"><i data-lucide="phone" class="w-3 h-3"></i> {{ peticion.telefono }}</span>
-                                <span class="font-bold text-blue-700 text-sm ml-auto bg-blue-100 px-2 py-0.5 rounded">{{ formatMoney(peticion.total) }}</span>
+                            <div class="flex justify-between text-sm mb-2 font-medium">
+                                <span>{{ peticion.telefono }}</span>
+                                <span class="text-blue-700 font-bold text-base">{{ formatMoney(peticion.total) }}</span>
                             </div>
-
-                            <!-- Lista Items (Scroll) -->
-                            <div class="bg-white rounded-lg p-2 max-h-32 overflow-y-auto custom-scroll text-xs border border-gray-200 mb-3 space-y-1 shadow-inner">
-                                <div v-for="(item, idx) in parseItems(peticion.items)" :key="idx" class="flex justify-between border-b border-dashed border-gray-100 last:border-0 pb-1.5 pt-0.5">
-                                    <span class="truncate pr-2 flex-1">
-                                        <b class="bg-gray-100 px-1.5 py-0.5 rounded text-gray-700 mr-1">{{ item.cantidad }}</b> 
-                                        {{ item.nombre }}
-                                        <span v-if="getStockWarning(item)" class="inline-flex items-center text-red-500 font-bold ml-1 bg-red-50 px-1 rounded" title="Stock insuficiente">
-                                            <i data-lucide="alert-circle" class="w-3 h-3 mr-0.5"></i> Stock
-                                        </span>
-                                    </span>
-                                    <span class="font-medium text-gray-500 shrink-0">{{ formatMoney(item.subtotal) }}</span>
+                            <div class="bg-gray-50 p-2 rounded border max-h-40 overflow-y-auto custom-scroll text-sm mb-3">
+                                <div v-for="item in parseItems(peticion.items)" class="flex justify-between border-b border-gray-200 py-1">
+                                    <span class="truncate pr-2"><b>{{ item.cantidad }}</b> x {{ item.nombre }}</span>
+                                    <span>{{ formatMoney(item.subtotal) }}</span>
                                 </div>
                             </div>
-
-                            <!-- Botones Petición -->
-                            <div v-if="usedButtons[peticion.id]" class="bg-green-100 text-green-800 text-center py-2 rounded-lg text-xs font-bold border border-green-200 flex items-center justify-center gap-2">
-                                <i data-lucide="check-check" class="w-4 h-4"></i> {{ usedButtons[peticion.id] === 'plus7' ? 'Confirmado (-3%)' : 'Confirmado' }}
-                            </div>
-                            <div v-else class="grid grid-cols-2 gap-2 text-[10px] font-bold">
-                                <button @click="confirmarPeticion(peticion, false)" class="bg-white border border-green-500 text-green-600 py-1.5 rounded hover:bg-green-50 transition">Confirmar</button>
-                                <button @click="confirmarPeticion(peticion, true)" class="bg-white border border-teal-500 text-teal-600 py-1.5 rounded hover:bg-teal-50 transition">-3% Desc.</button>
-                                <button @click="previewPDFPeticion(peticion)" class="bg-white border border-orange-300 text-orange-600 py-1.5 rounded hover:bg-orange-50 transition">Ver PDF</button>
-                                <button @click="copiarFaltantesIndividual(peticion)" class="bg-white border border-indigo-300 text-indigo-600 py-1.5 rounded hover:bg-indigo-50 transition">Copiar Falt.</button>
-                                <button @click="eliminarPeticion(peticion.id)" class="col-span-2 bg-red-50 border border-red-200 text-red-600 py-1.5 rounded hover:bg-red-100 transition flex items-center justify-center gap-1">
-                                    <i data-lucide="trash-2" class="w-3 h-3"></i> Eliminar
-                                </button>
+                            <div class="grid grid-cols-2 gap-2 text-sm font-bold">
+                                <button @click="confirmarPeticion(peticion, false)" class="bg-white border-2 border-green-500 text-green-600 py-2 rounded hover:bg-green-50">Confirmar</button>
+                                <button @click="confirmarPeticion(peticion, true)" class="bg-white border-2 border-teal-500 text-teal-600 py-2 rounded hover:bg-teal-50">-10%</button>
+                                <button @click="previewPDFPeticion(peticion)" class="bg-white border-2 border-orange-400 text-orange-600 py-2 rounded hover:bg-orange-50">Ver PDF</button>
+                                <button @click="eliminarPeticion(peticion.id)" class="bg-red-50 border border-red-200 text-red-600 py-2 rounded hover:bg-red-100">Eliminar</button>
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- 2. SECCIÓN CLIENTES Y PEDIDOS (GRID PRINCIPAL) -->
+            <!-- SECCIÓN CLIENTES (ACORDEÓN OPTIMIZADO) -->
             <section>
-                <!-- Toolbar Flotante Sticky -->
-                <div class="flex flex-wrap items-center justify-between mb-6 sticky top-20 z-40 bg-white/90 backdrop-blur-md py-3 px-4 rounded-xl shadow-md border border-gray-200/50">
-                    <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-                        <i data-lucide="users" class="w-5 h-5 text-gray-500"></i> Clientes Activos
-                    </h2>
-                    
-                    <!-- Acciones Masivas Dinámicas -->
-                    <transition name="fade">
-                        <div v-if="selectedOrders.length > 0 || selectedUsers.length > 0" class="flex items-center gap-3 bg-gray-900 text-white px-4 py-1.5 rounded-full shadow-lg text-sm animate-pulse ml-auto">
-                            <span v-if="selectedOrders.length > 0" class="font-bold text-orange-300 flex items-center gap-1"><i data-lucide="package" class="w-3 h-3"></i> {{ selectedOrders.length }} pedidos</span>
-                            <span v-else class="font-bold text-green-300 flex items-center gap-1"><i data-lucide="user" class="w-3 h-3"></i> {{ selectedUsers.length }} clientes</span>
-                            
-                            <div v-if="selectedOrders.length > 0" class="flex gap-2 border-l border-gray-700 pl-3 ml-2">
-                                 <button @click="accionMasivaPedidos('cloud')" class="bg-green-600 hover:bg-green-500 px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1">
-                                    <i data-lucide="cloud" class="w-3 h-3"></i> Guardar (PDF)
-                                 </button>
-                                 <button @click="accionMasivaPedidos('pdf')" class="bg-orange-600 hover:bg-orange-500 px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1">
-                                    <i data-lucide="eye" class="w-3 h-3"></i> Ver (PDF+3%)
-                                 </button>
-                            </div>
-                            <div v-else class="flex gap-2 border-l border-gray-700 pl-3 ml-2">
-                                <button @click="crearGrupo" class="bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded-full text-xs font-bold transition">Agrupar</button>
-                            </div>
-                            <button @click="clearSelection" class="ml-2 hover:bg-gray-700 p-1 rounded-full transition"><i data-lucide="x" class="w-3 h-3"></i></button>
-                        </div>
-                    </transition>
+                <div class="flex items-center justify-between mb-4 sticky top-20 z-40 bg-gray-100/90 py-2 backdrop-blur">
+                    <h2 class="text-2xl font-bold text-gray-800">Clientes</h2>
+                    <!-- Acciones Masivas -->
+                    <div v-if="selectedOrders.length > 0" class="flex items-center gap-3 bg-gray-900 text-white px-6 py-2 rounded-full shadow-lg animate-fade-in">
+                        <span class="font-bold text-orange-300">{{ selectedOrders.length }} pedidos</span>
+                        <div class="h-4 w-px bg-gray-600"></div>
+                        <button @click="accionMasivaPedidos('cloud')" class="hover:text-green-300 font-bold transition">Guardar Cloud</button>
+                        <button @click="accionMasivaPedidos('pdf')" class="hover:text-orange-300 font-bold transition">Ver PDF</button>
+                        <button @click="selectedOrders = []" class="ml-2 bg-gray-700 rounded-full p-1"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    </div>
                 </div>
 
-                <!-- GRID DE CLIENTES -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
                     
-                    <div v-for="(group, groupName) in filteredGroups" :key="groupName" 
-                         v-show="shouldShowGroup(groupName)"
-                         :class="['bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col transition-all duration-300 overflow-hidden', focusedUser === groupName ? 'col-span-full ring-2 ring-green-500 shadow-2xl z-10 scale-[1.01]' : 'hover:shadow-lg hover:border-green-200']">
+                    <!-- TARJETA DE CLIENTE -->
+                    <div v-for="(orders, clientName) in filteredClients" :key="clientName" 
+                         class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden transition-all duration-200 hover:shadow-lg">
                         
-                        <!-- Cabecera Cliente -->
-                        <div class="p-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between group/header">
-                            <div class="flex items-center gap-3 overflow-hidden cursor-pointer flex-1" @click="toggleFocus(groupName)">
-                                <input type="checkbox" v-model="selectedUsers" :value="groupName" @click.stop class="w-5 h-5 rounded text-green-600 focus:ring-green-500 flex-shrink-0 cursor-pointer border-gray-300">
-                                <div class="truncate">
-                                    <h3 class="font-bold text-gray-800 truncate text-sm select-none flex items-center gap-2">
-                                        {{ groupName }}
-                                        <span v-if="isGroup(groupName)" class="text-[9px] bg-gray-800 text-white px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">GRUPO</span>
-                                    </h3>
-                                    <div class="text-[10px] text-gray-500">{{ group.length }} pedidos activos</div>
+                        <!-- Cabecera Cliente (Siempre visible) -->
+                        <div @click="toggleClient(clientName)" 
+                             :class="['p-4 cursor-pointer flex justify-between items-center transition-colors select-none', activeClient === clientName ? 'bg-gray-800 text-white' : 'bg-white text-gray-800 hover:bg-gray-50']">
+                            <div>
+                                <h3 class="font-bold text-lg truncate">{{ clientName }}</h3>
+                                <div :class="['text-xs font-bold px-2 py-0.5 rounded inline-block mt-1', activeClient === clientName ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-500']">
+                                    {{ orders.length }} pedidos
                                 </div>
                             </div>
-                            
-                            <div class="flex items-center gap-2">
-                                <button v-if="isGroup(groupName)" @click.stop="disolverGrupo(groupName)" class="text-[10px] text-red-400 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded transition">Disolver</button>
-                                <button @click.stop="toggleFocus(groupName)" 
-                                        :class="['p-2 rounded-full transition-all', focusedUser === groupName ? 'bg-green-100 text-green-700 rotate-180' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-200']"
-                                        title="Expandir / Enfocar">
-                                    <i :data-lucide="focusedUser === groupName ? 'minimize-2' : 'maximize-2'" class="w-4 h-4"></i>
-                                </button>
-                            </div>
+                            <i :data-lucide="activeClient === clientName ? 'chevron-up' : 'chevron-down'" class="w-6 h-6"></i>
                         </div>
 
-                        <!-- Lista de Pedidos Internos -->
-                        <div class="p-3 bg-gray-100/50 flex-1">
-                            <div :class="['grid gap-4 transition-all', focusedUser === groupName ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1']">
-                                
-                                <div v-for="(pedido, idx) in getItemsSlice(groupName, group)" :key="pedido.uid" 
-                                     :class="['bg-white rounded-lg border shadow-sm flex flex-col transition-all duration-300 relative group/card', 
-                                              getEstado(pedido.uid).recibido ? 'border-preparado' : 'border-armando']">
+                        <!-- CUERPO CLIENTE (Lazy Load con v-if para rendimiento) -->
+                        <div v-if="activeClient === clientName" class="p-3 bg-gray-100 border-t border-gray-200">
+                            <!-- GRID DE PEDIDOS DEL CLIENTE -->
+                            <div class="grid grid-cols-1 gap-4">
+                                <div v-for="(pedido, idx) in orders" :key="pedido.uid"
+                                     :class="['rounded-lg border-l-8 shadow-sm transition-all duration-300 bg-white', 
+                                              getEstado(pedido.uid).recibido ? 'border-l-green-500 border border-green-200' : 'border-l-orange-500 border border-orange-200']">
                                     
-                                    <!-- Overlay de Cargando (Spinner) -->
-                                    <div v-if="loadingOrders[pedido.uid]" class="absolute inset-0 bg-white/90 z-20 flex flex-col items-center justify-center rounded-lg backdrop-blur-[1px]">
-                                        <div class="animate-spin text-green-600 mb-2"><i data-lucide="loader-2" class="w-8 h-8"></i></div>
-                                        <span class="text-xs font-bold text-gray-500">Procesando...</span>
-                                    </div>
-
                                     <!-- Cabecera Pedido -->
-                                    <div class="p-2.5 border-b border-gray-100 flex justify-between items-start bg-white rounded-t-lg">
-                                        <div class="flex gap-2.5 w-full">
-                                            <input type="checkbox" v-model="selectedOrders" :value="pedido.uid" class="mt-1 w-4 h-4 rounded text-orange-500 focus:ring-orange-500 cursor-pointer border-gray-300">
-                                            <div class="flex-1 min-w-0">
-                                                <!-- Etiquetas de Sub-usuario y Negocio -->
-                                                <div class="flex flex-wrap gap-1 mb-1">
-                                                    <span v-if="pedido.nombre_negocio" class="text-[10px] font-bold text-orange-700 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100 truncate max-w-[100%]">
-                                                        🏢 {{ pedido.nombre_negocio }}
-                                                    </span>
-                                                    <span v-if="pedido.user !== groupName" class="text-[10px] font-bold text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-100 truncate max-w-[100%]">
-                                                        👤 {{ pedido.user }}
-                                                    </span>
+                                    <div :class="['p-3 border-b flex justify-between items-start rounded-t-lg', getEstado(pedido.uid).recibido ? 'bg-green-50 border-green-100' : 'bg-orange-50 border-orange-100']">
+                                        <div class="flex gap-3 w-full">
+                                            <input type="checkbox" v-model="selectedOrders" :value="pedido.uid" class="mt-1 w-5 h-5 cursor-pointer accent-gray-800">
+                                            <div>
+                                                <div v-if="pedido.nombre_negocio" class="text-xs font-bold text-orange-700 bg-white px-1 rounded border border-orange-200 mb-1 inline-block">🏢 {{ pedido.nombre_negocio }}</div>
+                                                <div v-if="pedido.user !== clientName" class="text-xs font-bold text-teal-700 bg-white px-1 rounded border border-teal-200 mb-1 inline-block">👤 {{ pedido.user }}</div>
+                                                <div class="text-sm text-gray-500 font-mono">{{ formatDate(pedido.fecha) }}</div>
+                                                <div class="text-2xl font-bold text-gray-800 mt-1">{{ formatMoney(calculateTotal(pedido)) }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-xs text-gray-400 font-mono mb-1">ID: {{ String(pedido.id).slice(-4) }}</div>
+                                            <div v-if="estadosPedidos[pedido.uid]?.guardado" class="text-xl" title="Guardado Cloud">☁️</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Lista Items -->
+                                    <div class="p-2 max-h-[250px] overflow-y-auto custom-scroll bg-white">
+                                        <div v-for="(item, iIdx) in getItemsToShow(pedido)" :key="iIdx" class="flex justify-between items-center py-2 border-b border-gray-100 text-sm hover:bg-gray-50 px-1">
+                                            <div class="flex-1 pr-2">
+                                                <div class="font-medium text-gray-800">
+                                                    <span class="bg-gray-200 px-2 py-0.5 rounded font-bold mr-1">{{ item.cantidad }}</span>
+                                                    {{ item.nombre }}
                                                 </div>
-                                                <div class="text-[10px] text-gray-400 leading-tight font-mono flex items-center gap-1">
-                                                    <i data-lucide="clock" class="w-3 h-3"></i> {{ formatDate(pedido.fecha) }}
+                                                <div class="text-xs text-gray-400 pl-1">{{ formatMoney(item.precio_unitario) }}</div>
+                                            </div>
+                                            <div class="flex flex-col items-end gap-1">
+                                                <span class="font-bold text-gray-700">{{ formatMoney(item.subtotal) }}</span>
+                                                <!-- Botones edición rápida -->
+                                                <div v-if="!isOriginalView(pedido.uid)" class="flex gap-1">
+                                                    <button @click="modItem(pedido.uid, iIdx, 1)" class="w-6 h-6 flex items-center justify-center bg-green-100 text-green-700 rounded hover:bg-green-200 font-bold">+</button>
+                                                    <button @click="modItem(pedido.uid, iIdx, -1)" class="w-6 h-6 flex items-center justify-center bg-orange-100 text-orange-700 rounded hover:bg-orange-200 font-bold">-</button>
+                                                    <button @click="delItem(pedido.uid, iIdx)" class="w-6 h-6 flex items-center justify-center bg-red-100 text-red-700 rounded hover:bg-red-200 font-bold">×</button>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="text-right shrink-0">
-                                            <div class="text-sm font-bold text-gray-800">{{ formatMoney(calculateTotal(pedido)) }}</div>
-                                            <div class="text-[9px] text-gray-300 font-mono">ID:{{ String(pedido.id).slice(-4) }}</div>
-                                            <div v-if="estadosPedidos[pedido.uid]?.guardado" class="text-xs mt-1" title="Guardado en Cloud">☁️✅</div>
-                                        </div>
                                     </div>
 
-                                    <!-- Lista de Items Scrollable -->
-                                    <div class="p-2 flex-1 min-h-[140px] max-h-[300px] overflow-y-auto custom-scroll relative bg-white">
-                                        <ul class="space-y-1">
-                                            <li v-for="(item, iIdx) in getItemsToShow(pedido)" :key="iIdx" class="flex justify-between items-start text-xs border-b border-dashed border-gray-100 last:border-0 pb-1.5 pt-0.5 group/item hover:bg-gray-50 transition px-1 rounded">
-                                                <div class="flex-1 pr-2">
-                                                    <div class="font-medium text-gray-700 leading-tight flex items-start gap-1">
-                                                        <span class="bg-gray-100 px-1.5 rounded font-bold text-gray-800 shrink-0">{{ item.cantidad }}</span>
-                                                        <span class="break-words">{{ item.nombre }}</span>
-                                                    </div>
-                                                    <div class="text-[9px] text-gray-400 pl-1 mt-0.5">
-                                                        x {{ formatMoney(item.precio_unitario) }}
-                                                    </div>
-                                                </div>
-                                                <div class="flex flex-col items-end shrink-0">
-                                                    <span class="font-semibold text-gray-800">{{ formatMoney(item.subtotal) }}</span>
-                                                    <!-- Controles de Item (Hover) -->
-                                                    <div v-if="!isOriginalView(pedido.uid)" class="flex gap-0.5 opacity-0 group-hover/item:opacity-100 transition-opacity bg-white shadow-sm border rounded scale-90 origin-right mt-1">
-                                                        <button @click="modItem(pedido.uid, iIdx, 1)" class="text-green-600 hover:bg-green-50 p-1 rounded"><i data-lucide="plus" class="w-3 h-3"></i></button>
-                                                        <button @click="modItem(pedido.uid, iIdx, -1)" class="text-orange-600 hover:bg-orange-50 p-1 rounded"><i data-lucide="minus" class="w-3 h-3"></i></button>
-                                                        <button @click="delItem(pedido.uid, iIdx)" class="text-red-600 hover:bg-red-50 p-1 rounded"><i data-lucide="x" class="w-3 h-3"></i></button>
-                                                    </div>
-                                                </div>
-                                            </li>
-                                        </ul>
-                                    </div>
-
-                                    <!-- Footer con Controles -->
-                                    <div class="p-2.5 bg-gray-50/80 border-t border-gray-200 rounded-b-lg space-y-2.5">
+                                    <!-- Footer Controles -->
+                                    <div class="p-3 bg-gray-50 border-t border-gray-200 rounded-b-lg space-y-3">
                                         
-                                        <!-- Switch de Estado (Sustituye a Checkboxes antiguos) -->
-                                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg border shadow-sm group-hover/card:border-gray-300 transition-colors">
-                                            <div class="flex flex-col leading-none">
-                                                <span :class="['text-[10px] font-bold uppercase tracking-wide flex items-center gap-1.5', getEstado(pedido.uid).recibido ? 'text-lime-600' : 'text-orange-500']">
-                                                    <i :data-lucide="getEstado(pedido.uid).recibido ? 'check-circle-2' : 'package-open'" class="w-3.5 h-3.5"></i>
-                                                    {{ getEstado(pedido.uid).recibido ? 'Preparado' : 'Armando' }}
-                                                </span>
-                                                <span class="text-[8px] text-gray-400 mt-0.5 font-medium">
-                                                    {{ getEstado(pedido.uid).recibido ? 'Stock protegido (No devuelve)' : 'Edición activa (Devuelve stock)' }}
-                                                </span>
-                                            </div>
+                                        <!-- SWITCH ARMANDO / PREPARADO -->
+                                        <div class="flex items-center justify-between bg-white p-2 rounded-lg border shadow-sm">
+                                            <span :class="['text-sm font-bold uppercase', getEstado(pedido.uid).recibido ? 'text-green-600' : 'text-orange-500']">
+                                                {{ getEstado(pedido.uid).recibido ? 'Preparado' : 'Armando' }}
+                                            </span>
                                             
-                                            <div class="relative inline-block w-9 align-middle select-none">
-                                                <input type="checkbox" :id="'toggle-'+pedido.uid" 
-                                                       class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-300 top-0 left-0 shadow-sm"
+                                            <div class="flex items-center gap-2">
+                                                <input type="checkbox" :id="'sw-'+pedido.uid" class="switch-checkbox"
                                                        :checked="getEstado(pedido.uid).recibido"
                                                        @change="toggleEstado(pedido.uid, $event.target.checked)">
-                                                <label :for="'toggle-'+pedido.uid" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer transition-colors duration-300"></label>
+                                                <label :for="'sw-'+pedido.uid" class="switch-label"></label>
                                             </div>
                                         </div>
 
-                                        <!-- Botonera Compacta -->
-                                        <div class="grid grid-cols-2 gap-2 text-[10px] font-bold">
-                                            <button @click="guardarCloud(pedido)" class="bg-gray-800 text-white py-1.5 rounded hover:bg-black transition flex items-center justify-center gap-1.5 shadow-sm" title="Guardar estado en BD y generar PDF">
-                                                <i data-lucide="cloud" class="w-3 h-3"></i> PDF
-                                            </button>
-                                            <button @click="previewPDF(pedido)" class="bg-orange-500 text-white py-1.5 rounded hover:bg-orange-600 transition flex items-center justify-center gap-1.5 shadow-sm" title="Solo ver PDF con aumento">
-                                                <i data-lucide="file-search" class="w-3 h-3"></i> PDF + 3%
+                                        <!-- Botones Acción -->
+                                        <div class="grid grid-cols-2 gap-2 text-sm font-bold">
+                                            <button @click="guardarCloud(pedido)" class="bg-gray-800 text-white py-2 rounded hover:bg-black transition">Guardar PDF</button>
+                                            <button @click="previewPDF(pedido)" class="bg-orange-500 text-white py-2 rounded hover:bg-orange-600 transition">PDF + 10%</button>
+                                            
+                                            <button @click="openAddModal(pedido.uid)" class="bg-white border-2 border-blue-200 text-blue-600 py-2 rounded hover:bg-blue-50">+ Prod</button>
+                                            <button @click="toggleOriginal(pedido.uid)" :class="['py-2 rounded border-2 transition', isOriginalView(pedido.uid) ? 'bg-purple-100 text-purple-700 border-purple-300' : 'bg-white text-purple-600 border-purple-200']">
+                                                {{ isOriginalView(pedido.uid) ? 'Volver' : 'Original' }}
                                             </button>
                                             
-                                            <button @click="openAddModal(pedido.uid)" class="bg-white border border-blue-200 text-blue-600 py-1.5 rounded hover:bg-blue-50 transition flex items-center justify-center gap-1">
-                                                <i data-lucide="plus" class="w-3 h-3"></i> Prod
-                                            </button>
-                                            <button @click="toggleOriginal(pedido.uid)" :class="['py-1.5 rounded border transition flex items-center justify-center gap-1', isOriginalView(pedido.uid) ? 'bg-purple-100 text-purple-700 border-purple-300' : 'bg-white text-purple-600 border-purple-200 hover:bg-purple-50']">
-                                                <i data-lucide="history" class="w-3 h-3"></i> {{ isOriginalView(pedido.uid) ? 'Volver' : 'Original' }}
-                                            </button>
-                                            
-                                            <button @click="actualizarPrecios(pedido.uid, false)" class="text-gray-600 border border-gray-200 hover:bg-gray-100 rounded py-1.5 transition">$ Act</button>
-                                            <button @click="actualizarPrecios(pedido.uid, true)" class="text-teal-600 border border-teal-100 hover:bg-teal-50 rounded py-1.5 transition">$ -3%</button>
+                                            <button @click="actualizarPrecios(pedido.uid, false)" class="text-gray-600 bg-white border border-gray-300 py-2 rounded hover:bg-gray-100">$ Actualizar</button>
+                                            <button @click="actualizarPrecios(pedido.uid, true)" class="text-teal-600 bg-white border border-teal-200 py-2 rounded hover:bg-teal-50">$ -10%</button>
                                         </div>
 
-                                        <div class="flex gap-2 pt-1 border-t border-gray-200">
-                                            <button @click="guardarCambios(pedido.uid)" :disabled="isOriginalView(pedido.uid)" class="flex-1 bg-green-600 text-white text-[10px] font-bold py-1.5 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm flex items-center justify-center gap-1">
-                                                <i data-lucide="save" class="w-3 h-3"></i> Confirmar Cambios
+                                        <div class="flex gap-2 pt-2 border-t border-gray-200">
+                                            <button @click="guardarCambios(pedido.uid)" :disabled="isOriginalView(pedido.uid)" class="flex-1 bg-green-600 text-white font-bold py-2 rounded hover:bg-green-700 shadow disabled:opacity-50">
+                                                Confirmar Cambios
                                             </button>
-                                            <button @click="eliminarPedido(pedido)" class="px-2.5 text-red-500 hover:bg-red-50 rounded border border-transparent hover:border-red-100 transition" title="Eliminar Pedido">
-                                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                            <button @click="eliminarPedido(pedido)" class="px-3 bg-red-50 text-red-500 border border-red-200 rounded hover:bg-red-100">
+                                                <i data-lucide="trash-2" class="w-5 h-5"></i>
                                             </button>
                                         </div>
                                     </div>
+
                                 </div>
                             </div>
-                            
-                            <!-- Botón Cargar Más -->
-                            <button v-if="shouldShowLoadMore(groupName, group)" @click="loadMore(groupName)" class="w-full mt-4 py-2 text-xs font-bold text-gray-500 bg-white border border-gray-200 rounded hover:bg-gray-50 transition shadow-sm flex items-center justify-center gap-2">
-                                <i data-lucide="arrow-down-circle" class="w-4 h-4"></i> Cargar más pedidos de {{ groupName }}
-                            </button>
                         </div>
                     </div>
+
                 </div>
             </section>
         </main>
 
-        <!-- MODAL ADD PRODUCTO -->
-        <div v-if="modalOpen" class="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200" @click.self="modalOpen = false">
-            <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 transform transition-all scale-100 border border-gray-100">
-                <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
-                    <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-                        <i data-lucide="package-plus" class="w-5 h-5 text-green-600"></i> Añadir Productos
-                    </h3>
-                    <button @click="modalOpen = false" class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1 rounded transition"><i data-lucide="x" class="w-5 h-5"></i></button>
-                </div>
+        <!-- MODAL AGREGAR PRODUCTO -->
+        <div v-if="modalOpen" class="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4" @click.self="modalOpen = false">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">Añadir Productos</h3>
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">IDs x Cantidad (ej: 353x5, 24x2)</label>
-                        <input v-model="modalInput" type="text" ref="modalInputRef" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 p-3 border text-sm font-mono" placeholder="Ej: 353x5, 102x1" @keyup.enter="addProducts">
-                        <p class="text-[10px] text-gray-400 mt-1">Presiona ENTER para añadir</p>
+                        <label class="block text-sm font-bold text-gray-500 mb-1">IDs x Cantidad (Ej: 353x5, 24x1)</label>
+                        <input v-model="modalInput" type="text" ref="modalInputRef" class="w-full border-2 border-gray-300 rounded-lg p-3 text-lg font-mono focus:border-blue-500 outline-none" @keyup.enter="addProducts">
                     </div>
-                    <label class="flex items-center cursor-pointer bg-gray-50 p-3 rounded-lg border border-gray-200 hover:bg-gray-100 transition select-none">
-                        <input type="checkbox" v-model="modalApplyDiscount" class="rounded text-green-600 focus:ring-green-500 border-gray-300 w-4 h-4">
-                        <span class="ml-2 text-sm text-gray-700 font-medium">Aplicar -3% de descuento</span>
+                    <label class="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-200 cursor-pointer">
+                        <input type="checkbox" v-model="modalApplyDiscount" class="w-5 h-5 text-green-600">
+                        <span class="font-bold text-gray-700">Aplicar -10% descuento</span>
                     </label>
                 </div>
-                <div class="mt-6 flex justify-end gap-2">
-                    <button @click="modalOpen = false" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition">Cancelar</button>
-                    <button @click="addProducts" class="px-4 py-2 text-sm font-bold text-white bg-green-600 rounded-lg hover:bg-green-700 shadow-md transition transform active:scale-95 flex items-center gap-2">
-                        <i data-lucide="plus" class="w-4 h-4"></i> Añadir
-                    </button>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button @click="modalOpen = false" class="px-5 py-2.5 font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">Cancelar</button>
+                    <button @click="addProducts" class="px-5 py-2.5 font-bold text-white bg-green-600 rounded-lg hover:bg-green-700">Añadir</button>
                 </div>
             </div>
         </div>
@@ -413,34 +281,29 @@
         const { createApp, nextTick } = Vue;
         const apiBase = 'https://distribuidorafunaz-a2o6.onrender.com/api';
 
-        // --- SEGURIDAD: CHECK LOGIN ---
-        const currentUser = localStorage.getItem('loggedUser');
-        if (currentUser !== 'admin') { window.location.href = 'index.html'; }
+        // Check Login
+        if (localStorage.getItem('loggedUser') !== 'admin') window.location.href = 'index.html';
 
         createApp({
             data() {
                 return {
-                    // Datos API
+                    // Datos
                     rawPedidos: [],
                     peticiones: [],
                     productos: [],
                     
-                    // Persistencia y Configuración Local
+                    // Estado Local
                     estadosPedidos: JSON.parse(localStorage.getItem('estadosPedidos') || '{}'),
-                    groupsConfig: JSON.parse(localStorage.getItem('groupsConfig') || '{}'),
                     originalCache: JSON.parse(localStorage.getItem('originalPedidosCache') || '{}'),
-                    originalCacheTime: JSON.parse(localStorage.getItem('originalPedidosCacheTime') || '{}'),
                     usedButtons: JSON.parse(localStorage.getItem('usedButtons') || '{}'),
                     
-                    // Estado de la Interfaz
+                    // UI
                     search: '',
-                    focusedUser: null,
-                    loadedCounts: {}, 
-                    selectedUsers: [], // Para grupos
-                    selectedOrders: [], // Para acción masiva pedidos (IDs)
-                    selectedPeticiones: [], // Para acción masiva peticiones
+                    activeClient: null, // SOLO UNO ABIERTO A LA VEZ (Rendimiento clave)
+                    selectedOrders: [],
+                    selectedPeticiones: [],
                     
-                    // UI Modals y Feedbacks
+                    // Modals
                     mensaje: '',
                     mensajeTipo: 'info',
                     loadingOrders: {},
@@ -451,309 +314,230 @@
                 }
             },
             computed: {
-                // MÉTRICAS
                 ordersArmando() { return this.rawPedidos.filter(p => !this.estadosPedidos[p.uid]?.recibido).length; },
                 ordersPreparado() { return this.rawPedidos.filter(p => this.estadosPedidos[p.uid]?.recibido).length; },
                 
-                // LÓGICA DE AGRUPACIÓN
-                groupedUsers() {
+                filteredClients() {
+                    // Agrupar por usuario
                     const groups = {};
-                    const userToGroup = {};
-                    // Mapa inverso Usuario -> Grupo
-                    Object.entries(this.groupsConfig).forEach(([gName, members]) => {
-                        members.forEach(m => userToGroup[m] = gName);
-                    });
-
                     this.rawPedidos.forEach((p, index) => {
-                        // Generación de UID único y estable
                         p.uid = p.id ? String(p.id) : `${p.user}-${index}`;
-                        const key = userToGroup[p.user] || p.user || 'Invitado';
-                        if (!groups[key]) groups[key] = [];
-                        groups[key].push(p);
+                        const name = p.user || 'Invitado';
+                        if (!groups[name]) groups[name] = [];
+                        groups[name].push(p);
                     });
 
-                    // Ordenar por fecha (más reciente arriba)
-                    for (const key in groups) {
-                        groups[key].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-                    }
-                    return groups;
-                },
-                // FILTRADO INTELIGENTE
-                filteredGroups() {
-                    if (!this.search) return this.groupedUsers;
+                    // Ordenar por fecha dentro del grupo
+                    for(const key in groups) groups[key].sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+
+                    // Filtrar si hay busqueda
+                    if (!this.search) return groups;
                     const q = this.search.toLowerCase();
                     const result = {};
-                    
-                    for (const [name, orders] of Object.entries(this.groupedUsers)) {
-                        // Buscar en: Nombre Grupo, Nombre Cliente, ID Pedido, Negocio, Items
-                        const match = name.toLowerCase().includes(q) || 
-                                      orders.some(o => 
-                                          String(o.id).includes(q) || 
-                                          (o.nombre_negocio && o.nombre_negocio.toLowerCase().includes(q)) ||
-                                          (o.user && o.user.toLowerCase().includes(q)) ||
-                                          o.items.some(i => i.nombre.toLowerCase().includes(q))
-                                      );
-                        if (match) result[name] = orders;
+                    for (const [name, orders] of Object.entries(groups)) {
+                        if (name.toLowerCase().includes(q) || orders.some(o => String(o.id).includes(q) || o.items.some(i => i.nombre.toLowerCase().includes(q)))) {
+                            result[name] = orders;
+                        }
                     }
                     return result;
                 }
             },
             methods: {
-                // --- UTILIDADES ---
+                // UTILS
                 formatMoney(val) { return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(val || 0); },
                 formatDate(iso) { 
-                    if (!iso) return '';
-                    const d = new Date(iso);
+                    if (!iso) return ''; const d = new Date(iso);
                     return d.toLocaleDateString('es-AR', {day:'2-digit', month:'2-digit'}) + ' ' + d.toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
                 },
                 showMsg(msg, type='info') {
                     this.mensaje = msg; this.mensajeTipo = type;
-                    setTimeout(() => this.mensaje = '', 4000);
+                    setTimeout(() => this.mensaje = '', 3000);
                 },
                 saveStorage() {
                     localStorage.setItem('estadosPedidos', JSON.stringify(this.estadosPedidos));
-                    localStorage.setItem('groupsConfig', JSON.stringify(this.groupsConfig));
                     localStorage.setItem('originalPedidosCache', JSON.stringify(this.originalCache));
-                    localStorage.setItem('originalPedidosCacheTime', JSON.stringify(this.originalCacheTime));
                     localStorage.setItem('usedButtons', JSON.stringify(this.usedButtons));
                 },
-
-                // --- CARGA INICIAL DE DATOS ---
+                
+                // DATA
                 async loadAll() {
                     try {
                         const [resProd, resPed, resPet] = await Promise.all([
-                            fetch(`${apiBase}/productos`),
-                            fetch(`${apiBase}/pedidos`),
-                            fetch(`${apiBase}/peticiones`)
+                            fetch(`${apiBase}/productos`), fetch(`${apiBase}/pedidos`), fetch(`${apiBase}/peticiones`)
                         ]);
                         this.productos = await resProd.json();
                         this.rawPedidos = await resPed.json();
                         this.peticiones = await resPet.json();
                         
-                        // Parseo de seguridad para JSONs anidados
                         const parser = (list) => list.forEach(p => { 
-                            if(typeof p.items === 'string') { try { p.items = JSON.parse(p.items); } catch { p.items = []; } }
+                             if(typeof p.items === 'string') { try { p.items = JSON.parse(p.items); } catch { p.items = []; } }
                         });
-                        parser(this.rawPedidos);
-                        parser(this.peticiones);
-
-                        // Limpieza de caché antigua (> 7 días)
-                        const now = Date.now();
-                        const sevenDays = 604800000;
-                        for(const uid in this.originalCacheTime) {
-                            if(now - this.originalCacheTime[uid] > sevenDays) {
-                                delete this.originalCache[uid]; delete this.originalCacheTime[uid];
-                            }
-                        }
-                        this.saveStorage();
+                        parser(this.rawPedidos); parser(this.peticiones);
                         nextTick(() => lucide.createIcons());
-
-                    } catch (e) { console.error(e); this.showMsg('Error conectando con el servidor', 'error'); }
+                    } catch (e) { console.error(e); }
                 },
 
-                // --- ESTADOS Y LÓGICA DE NEGOCIO ---
+                // LOGICA UI CLIENTES (ACORDEON UNICO)
+                toggleClient(name) {
+                    // Si toco el mismo, lo cierro. Si toco otro, abro ese y cierro el anterior.
+                    this.activeClient = this.activeClient === name ? null : name;
+                    nextTick(() => lucide.createIcons()); // Refrescar iconos al abrir
+                },
+
+                // ESTADOS
                 getEstado(uid) {
                     if (!this.estadosPedidos[uid]) this.estadosPedidos[uid] = { recibido: false, guardado: false };
                     return this.estadosPedidos[uid];
                 },
                 toggleEstado(uid, val) {
-                    // Solo cambiamos el estado visual/lógico local
                     this.getEstado(uid).recibido = val;
                     this.saveStorage();
                 },
 
-                // --- VISTA ORIGINAL (CACHE) ---
+                // VISTA ORIGINAL
                 isOriginalView(uid) { return this.estadosPedidos[uid]?.viewOriginal || false; },
                 toggleOriginal(uid) {
                     const st = this.getEstado(uid);
                     st.viewOriginal = !st.viewOriginal;
-                    
-                    // Fallback: Si activamos vista original y no hay caché, guardamos estado actual como original
                     if (st.viewOriginal && !this.originalCache[uid]) {
-                        const pedido = this.rawPedidos.find(p => p.uid === uid);
-                        if(pedido) {
-                            this.originalCache[uid] = JSON.parse(JSON.stringify(pedido.items));
-                            this.originalCacheTime[uid] = Date.now();
-                            this.saveStorage();
-                        }
+                        const p = this.rawPedidos.find(x => x.uid === uid);
+                        if(p) { this.originalCache[uid] = JSON.parse(JSON.stringify(p.items)); this.saveStorage(); }
                     }
                 },
                 getItemsToShow(pedido) {
-                    // Si vista original activa y existe caché, mostramos caché. Si no, actual.
-                    if (this.isOriginalView(pedido.uid) && this.originalCache[pedido.uid]) return this.originalCache[pedido.uid];
-                    return pedido.items;
+                    return (this.isOriginalView(pedido.uid) && this.originalCache[pedido.uid]) ? this.originalCache[pedido.uid] : pedido.items;
                 },
                 calculateTotal(pedido) {
                     return this.getItemsToShow(pedido).reduce((acc, item) => acc + (Number(item.subtotal)||0), 0);
                 },
 
-                // --- UI HELPERS ---
-                shouldShowGroup(name) { return true; }, 
-                isGroup(name) { return !!this.groupsConfig[name]; },
-                toggleFocus(name) { 
-                    this.focusedUser = this.focusedUser === name ? null : name; 
-                    window.scrollTo({top: 0, behavior: 'smooth'});
-                },
-                shouldShowLoadMore(name, group) { return group.length > (this.loadedCounts[name] || 5); },
-                loadMore(name) { this.loadedCounts[name] = (this.loadedCounts[name] || 5) + 5; },
-                getItemsSlice(name, group) {
-                    const initial = this.focusedUser === name ? 50 : 5;
-                    const limit = Math.max(this.loadedCounts[name] || 0, initial);
-                    return group.slice(0, limit);
-                },
-
-                // --- ACCIONES DE PEDIDO ---
+                // ACCIONES
                 async guardarCloud(pedido) { 
                     this.loadingOrders[pedido.uid] = true;
                     try {
                         const res = await fetch(`${apiBase}/pedidos/${pedido.id}/pdf`);
-                        if(!res.ok) throw new Error('Error generando PDF en servidor');
                         const data = await res.json();
                         if(data.pdf) window.open(data.pdf, '_blank');
-                        // Marcamos como guardado visualmente
-                        this.getEstado(pedido.uid).guardado = true;
-                        this.saveStorage();
-                    } catch(e) { this.showMsg(e.message, 'error'); } 
+                        this.getEstado(pedido.uid).guardado = true; this.saveStorage();
+                    } catch(e) { this.showMsg('Error PDF', 'error'); } 
                     finally { this.loadingOrders[pedido.uid] = false; }
                 },
+                // LOGICA PDF +10%
                 async previewPDF(pedido) { 
                     this.loadingOrders[pedido.uid] = true;
                     try {
+                        // Aumento del 10% al total visual (o item por item si lo prefieres, aqui es item por item)
+                        const itemsModified = pedido.items.map(i => ({
+                            ...i, precio_unitario: i.precio_unitario * 1.10, subtotal: i.subtotal * 1.10
+                        }));
                         const payload = {
-                            user: pedido.user, items: pedido.items,
-                            total: this.calculateTotal(pedido),
+                            user: pedido.user, items: itemsModified,
+                            total: itemsModified.reduce((a,b)=>a+b.subtotal,0),
                             fecha: new Date().toISOString(), nombre_negocio: pedido.nombre_negocio
                         };
                         const res = await fetch(`${apiBase}/generar-pdf-peticion`, {
-                            method: 'POST', headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify(payload)
+                            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
                         });
                         const data = await res.json();
                         if(data.pdf) window.open(data.pdf, '_blank');
-                    } catch(e) { this.showMsg(e.message, 'error'); } 
+                    } catch(e) { this.showMsg('Error Generando', 'error'); } 
                     finally { this.loadingOrders[pedido.uid] = false; }
                 },
-
-                // --- GUARDAR CAMBIOS (Lógica Crítica de Delta) ---
+                
+                // GUARDAR CAMBIOS (DELTA)
                 async guardarCambios(uid) {
-                    if(!confirm('¿Confirmar cambios permanentemente en BD?')) return;
+                    if(!confirm('¿Guardar cambios en BD?')) return;
                     const pedido = this.rawPedidos.find(p => p.uid === uid);
                     const estado = this.getEstado(uid);
 
-                    // Si no hay snapshot original, asumimos que antes de editar, los items eran los originales
-                    if(!this.originalCache[uid]) {
-                        this.originalCache[uid] = JSON.parse(JSON.stringify(pedido.items)); 
-                        this.originalCacheTime[uid] = Date.now();
-                    }
+                    if(!this.originalCache[uid]) this.originalCache[uid] = JSON.parse(JSON.stringify(pedido.items));
 
-                    // Calculamos DELTA (Diferencia) para stockUpdates
                     const deltaMap = new Map();
                     const oldItems = this.originalCache[uid];
                     const newItems = pedido.items;
                     
-                    // Restamos lo viejo (devolver virtual) y Sumamos lo nuevo (consumir)
                     oldItems.forEach(i => deltaMap.set(i.id, (deltaMap.get(i.id)||0) - Number(i.cantidad))); 
                     newItems.forEach(i => deltaMap.set(i.id, (deltaMap.get(i.id)||0) + Number(i.cantidad))); 
                     
                     const stockUpdates = [];
-                    // LOGICA DE "MODO DEVOLUCIÓN" AUTOMATIZADA:
-                    // Si estado.recibido es FALSE (Armando) -> Permitimos devolver stock (deltas negativos).
-                    // Si estado.recibido es TRUE (Preparado) -> NO permitimos devolver stock (ignoramos deltas negativos).
-                    
+                    // Logica Clave: Si NO está recibido (Armando), permite devolver stock (negativos).
+                    // Si está recibido (Verde), NO devuelve stock (ignora negativos).
                     for(const [id, delta] of deltaMap.entries()) {
-                         if(delta > 0) {
-                             // Siempre consumimos stock si agregamos items
-                             stockUpdates.push({id, cantidad: delta});
-                         } else if (delta < 0 && !estado.recibido) {
-                             // Solo devolvemos stock si NO está Preparado (Armando)
-                             stockUpdates.push({id, cantidad: delta});
-                         }
-                         // Si delta < 0 y está Preparado, lo ignoramos (no devuelve stock)
+                         if(delta > 0) stockUpdates.push({id, cantidad: delta});
+                         else if (delta < 0 && !estado.recibido) stockUpdates.push({id, cantidad: delta});
                     }
 
-                    this.loadingOrders[uid] = true;
                     try {
-                        const res = await fetch(`${apiBase}/actualizar-pedido/${pedido.id}`, {
+                        await fetch(`${apiBase}/actualizar-pedido/${pedido.id}`, {
                             method: 'PUT', headers: {'Content-Type':'application/json'},
                             body: JSON.stringify({ items: newItems, stockUpdates })
                         });
-                        if(!res.ok) throw new Error(await res.text());
-                        
-                        // Nuevo estado se convierte en el "Original"
-                        this.originalCache[uid] = JSON.parse(JSON.stringify(newItems));
-                        this.saveStorage();
-                        this.showMsg('Pedido actualizado correctamente', 'success');
-                    } catch(e) { this.showMsg(e.message, 'error'); } 
-                    finally { this.loadingOrders[uid] = false; }
+                        this.originalCache[uid] = JSON.parse(JSON.stringify(newItems)); this.saveStorage();
+                        this.showMsg('Guardado OK', 'success');
+                    } catch(e) { this.showMsg('Error guardando', 'error'); }
                 },
 
                 async eliminarPedido(pedido) {
                     const estado = this.getEstado(pedido.uid);
+                    // Solo devuelve stock si NO está recibido (Verde)
                     const msg = estado.recibido 
-                        ? 'ESTADO: PREPARADO (VERDE). El stock NO se devolverá.'
-                        : 'ESTADO: ARMANDO (NARANJA). El stock SE DEVUELVE a inventario.';
+                        ? 'ESTÁ EN PREPARADO (VERDE). NO SE DEVOLVERÁ STOCK.' 
+                        : 'ESTÁ EN ARMANDO (NARANJA). SE DEVOLVERÁ EL STOCK.';
                     
                     if(!confirm(`¿Eliminar pedido?\n\n${msg}`)) return;
 
-                    try {
-                        await fetch(`${apiBase}/eliminar-pedido/${pedido.id}`, {
-                            method: 'DELETE', headers: {'Content-Type':'application/json'},
-                            body: JSON.stringify({ recibido: estado.recibido })
-                        });
-                        this.rawPedidos = this.rawPedidos.filter(p => p.uid !== pedido.uid);
-                        this.showMsg('Pedido eliminado');
-                    } catch(e) { this.showMsg(e.message, 'error'); }
+                    await fetch(`${apiBase}/eliminar-pedido/${pedido.id}`, {
+                        method: 'DELETE', headers: {'Content-Type':'application/json'},
+                        body: JSON.stringify({ recibido: estado.recibido })
+                    });
+                    this.rawPedidos = this.rawPedidos.filter(p => p.uid !== pedido.uid);
+                    // Si el cliente se queda vacio, cerrar acordeon
+                    if(this.filteredClients[pedido.user]?.length === 0) this.activeClient = null;
                 },
 
-                // --- EDICIÓN DE ITEMS ---
+                // EDICION RAPIDA
                 modItem(uid, idx, chg) {
                     const item = this.rawPedidos.find(p => p.uid === uid).items[idx];
                     item.cantidad = Math.max(1, Number(item.cantidad) + chg);
                     item.subtotal = item.cantidad * item.precio_unitario;
                 },
                 delItem(uid, idx) {
-                    if(!confirm('¿Quitar este item?')) return;
+                    if(!confirm('¿Borrar item?')) return;
                     this.rawPedidos.find(p => p.uid === uid).items.splice(idx, 1);
                 },
                 async actualizarPrecios(uid, discount) {
-                    if(this.isOriginalView(uid)) return alert('Sal de la vista original primero.');
-                    if(!confirm('¿Actualizar precios a valores actuales?')) return;
+                    if(this.isOriginalView(uid)) return alert('Sal de original');
+                    if(!confirm('¿Actualizar precios?')) return;
                     
                     const pedido = this.rawPedidos.find(p => p.uid === uid);
                     const precioMap = new Map(this.productos.map(p => [p.id, p.precio]));
-                    const mult = discount ? 1.10 * 0.97 : 1.10;
+                    const mult = discount ? 1.10 * 0.90 : 1.10; // -10% sobre lista nueva
                     
-                    let changes = 0;
                     pedido.items.forEach(i => {
                         const base = precioMap.get(i.id);
                         if(base) {
                             i.precio_unitario = Number((base * mult).toFixed(2));
                             i.subtotal = i.cantidad * i.precio_unitario;
-                            changes++;
                         }
                     });
-                    this.showMsg(`${changes} precios actualizados`);
+                    this.showMsg('Precios Actualizados', 'success');
                 },
 
-                // --- MODAL AÑADIR ---
-                openAddModal(uid) { this.modalPedidoId = uid; this.modalInput = ''; this.modalOpen = true; nextTick(() => this.$refs.modalInputRef?.focus()); },
+                // ADD MODAL
+                openAddModal(uid) { this.modalPedidoId = uid; this.modalInput = ''; this.modalOpen = true; nextTick(()=>this.$refs.modalInputRef.focus()); },
                 addProducts() {
                     const pedido = this.rawPedidos.find(p => p.uid === this.modalPedidoId);
-                    if(!pedido) return;
                     const parts = this.modalInput.split(',').map(s=>s.trim());
-                    
                     parts.forEach(part => {
                         const [idStr, qtyStr] = part.split('x');
                         const p = this.productos.find(pr => pr.id == idStr);
                         if(p) {
                             let precio = p.precio * 1.10;
-                            if(this.modalApplyDiscount) precio *= 0.97;
+                            if(this.modalApplyDiscount) precio *= 0.90; // -10%
                             const qty = parseInt(qtyStr)||1;
                             const exist = pedido.items.find(i => i.id == p.id);
                             if(exist) {
-                                exist.cantidad += qty;
-                                exist.precio_unitario = precio;
-                                exist.subtotal = exist.cantidad * precio;
+                                exist.cantidad += qty; exist.precio_unitario = precio; exist.subtotal = exist.cantidad * precio;
                             } else {
                                 pedido.items.push({ id: p.id, nombre: p.nombre, cantidad: qty, precio_unitario: precio, subtotal: qty*precio });
                             }
@@ -762,128 +546,73 @@
                     this.modalOpen = false;
                 },
 
-                // --- PETICIONES ---
+                // PETICIONES
                 parseItems(items) { return Array.isArray(items) ? items : JSON.parse(items || '[]'); },
-                getStockWarning(item) {
-                     const prod = this.productos.find(p => p.id === item.id);
-                     return prod && item.cantidad > (prod.stock || 0);
-                },
+                getStockWarning(item) { const p = this.productos.find(pr => pr.id === item.id); return p && item.cantidad > (p.stock||0); },
+                
                 async confirmarPeticion(peticion, discount) {
-                    if(!confirm('¿Aceptar petición y convertir en pedido?')) return;
-                    try {
-                        const items = this.parseItems(peticion.items);
-                        const finalItems = items.map(i => ({
-                            id: i.id, cantidad: i.cantidad,
-                            precio: discount ? i.precio_unitario * 0.97 : i.precio_unitario
-                        }));
-                        
-                        await fetch(`${apiBase}/guardar-pedidos`, {
-                            method: 'POST', headers: {'Content-Type':'application/json'},
-                            body: JSON.stringify({
-                                user: peticion.nombre, pedido: finalItems,
-                                user_id: peticion.user_id, nombre_negocio: peticion.nombre_negocio
-                            })
-                        });
-                        await fetch(`${apiBase}/peticiones/${peticion.id}`, { method: 'DELETE' });
-                        
-                        this.usedButtons[peticion.id] = discount ? 'plus7' : 'normal';
-                        this.saveStorage();
-                        this.peticiones = this.peticiones.filter(p => p.id !== peticion.id);
-                        this.loadAll(); 
-                        this.showMsg('Petición procesada', 'success');
-                    } catch(e) { this.showMsg(e.message, 'error'); }
-                },
-                async eliminarPeticion(id) {
-                    if(!confirm('¿Borrar petición definitivamente?')) return;
-                    await fetch(`${apiBase}/peticiones/${id}`, { method: 'DELETE' });
-                    this.peticiones = this.peticiones.filter(p => p.id !== id);
-                },
-                previewPDFPeticion(p) {
-                    this.previewPDF({ user: p.nombre, items: this.parseItems(p.items), fecha: p.fecha, nombre_negocio: p.nombre_negocio });
-                },
-
-                // --- CÁLCULO DE FALTANTES (INDIVIDUAL/MASIVO) ---
-                copiarFaltantesIndividual(peticion) {
-                    const items = this.parseItems(peticion.items);
-                    let text = "";
-                    items.forEach(i => {
-                        const prod = this.productos.find(p => p.id === i.id);
-                        const stock = prod ? Number(prod.stock || 0) : 0;
-                        const faltante = Math.max(0, i.cantidad - stock);
-                        if(faltante > 0) text += `${faltante} ${i.nombre}\n`;
-                    });
-                    if(!text) text = "Hay stock suficiente.";
-                    navigator.clipboard.writeText(text).then(() => alert('Copiado:\n' + text));
-                },
-                copiarFaltantesPeticionesMasivo() {
-                    const selected = this.peticiones.filter(p => this.selectedPeticiones.includes(p.id));
-                    if(selected.length === 0) return;
-                    const agg = {};
-                    selected.forEach(p => {
-                        this.parseItems(p.items).forEach(i => {
-                            if(!agg[i.id]) agg[i.id] = { nombre: i.nombre, cantidad: 0 };
-                            agg[i.id].cantidad += Number(i.cantidad);
-                        });
-                    });
-                    let text = "";
-                    for(const id in agg) {
-                        const prod = this.productos.find(p => p.id == id);
-                        const stock = prod ? Number(prod.stock || 0) : 0;
-                        const faltante = Math.max(0, agg[id].cantidad - stock);
-                        if(faltante > 0) text += `${faltante} ${agg[id].nombre}\n`;
-                    }
-                    if(!text) text = "Stock suficiente para la selección.";
-                    navigator.clipboard.writeText(text).then(() => alert('Faltantes Agrupados Copiados:\n' + text));
-                },
-                copiarFaltantesGlobal() {
-                    // Solo toma pedidos NO recibidos (Armando)
-                    const pendientes = this.rawPedidos.filter(p => !this.getEstado(p.uid).recibido);
-                    const agg = {};
-                    pendientes.forEach(p => p.items.forEach(i => {
-                        if(!agg[i.id]) agg[i.id] = { nombre: i.nombre, cantidad: 0 };
-                        agg[i.id].cantidad += Number(i.cantidad);
+                    if(!confirm('¿Aceptar petición?')) return;
+                    const items = this.parseItems(peticion.items).map(i => ({
+                        id: i.id, cantidad: i.cantidad, precio: discount ? i.precio_unitario * 0.90 : i.precio_unitario
                     }));
-                    let text = "LISTA DE ARMADO GLOBAL (FALTANTES):\n";
-                    Object.values(agg).forEach(v => text += `${v.cantidad} ${v.nombre}\n`);
-                    navigator.clipboard.writeText(text).then(() => alert('Lista global copiada.'));
+                    await fetch(`${apiBase}/guardar-pedidos`, {
+                        method: 'POST', headers: {'Content-Type':'application/json'},
+                        body: JSON.stringify({ user: peticion.nombre, pedido: items, user_id: peticion.user_id, nombre_negocio: peticion.nombre_negocio })
+                    });
+                    await fetch(`${apiBase}/peticiones/${peticion.id}`, { method: 'DELETE' });
+                    this.peticiones = this.peticiones.filter(p => p.id !== peticion.id);
+                    this.usedButtons[peticion.id] = discount ? 'plus10' : 'normal'; this.saveStorage();
+                    this.loadAll(); 
+                },
+                async eliminarPeticion(id) { if(confirm('¿Borrar?')) { await fetch(`${apiBase}/peticiones/${id}`, { method:'DELETE' }); this.peticiones=this.peticiones.filter(p=>p.id!==id); } },
+                previewPDFPeticion(p) { this.previewPDF({ user:p.nombre, items:this.parseItems(p.items), fecha:p.fecha, nombre_negocio:p.nombre_negocio }); },
+                copiarFaltantesIndividual(p) {
+                    const items = this.parseItems(p.items);
+                    let txt = "";
+                    items.forEach(i => {
+                        const pr = this.productos.find(x => x.id === i.id);
+                        const falt = Math.max(0, i.cantidad - (pr ? pr.stock : 0));
+                        if(falt>0) txt += `${falt} ${i.nombre}\n`;
+                    });
+                    navigator.clipboard.writeText(txt || "Hay stock");
+                    this.showMsg('Copiado', 'success');
                 },
 
-                // --- ACCIONES MASIVAS ---
-                crearGrupo() {
-                    if(this.selectedUsers.length < 2) return alert('Elige al menos 2 clientes.');
-                    const name = prompt('Nombre del Grupo:');
-                    if(name) { this.groupsConfig[name] = [...this.selectedUsers]; this.selectedUsers=[]; this.saveStorage(); }
+                // MASIVO
+                copiarFaltantesGlobal() {
+                    const pending = this.rawPedidos.filter(p => !this.getEstado(p.uid).recibido);
+                    const agg = {};
+                    pending.forEach(p => p.items.forEach(i => {
+                        if(!agg[i.id]) agg[i.id] = {name:i.nombre, qty:0};
+                        agg[i.id].qty += Number(i.cantidad);
+                    }));
+                    let txt = "FALTANTES ARMANDO:\n";
+                    Object.values(agg).forEach(v => txt += `${v.qty} ${v.name}\n`);
+                    navigator.clipboard.writeText(txt);
+                    this.showMsg('Lista Global Copiada', 'success');
                 },
-                disolverGrupo(name) {
-                    if(confirm(`¿Disolver grupo "${name}"?`)) { delete this.groupsConfig[name]; this.saveStorage(); }
-                },
-                clearSelection() { this.selectedUsers=[]; this.selectedOrders=[]; },
-                async accionMasivaPedidos(modo) {
-                    if(!confirm(`¿Procesar ${this.selectedOrders.length} pedidos?\nSe abrirán múltiples pestañas.`)) return;
+                async accionMasivaPedidos(mode) {
+                    if(!this.selectedOrders.length) return;
+                    if(!confirm(`¿Procesar ${this.selectedOrders.length} pedidos?`)) return;
                     for(const uid of this.selectedOrders) {
-                        const p = this.rawPedidos.find(o => o.uid === uid);
+                        const p = this.rawPedidos.find(x => x.uid === uid);
                         if(p) {
-                            if(modo === 'cloud') await this.guardarCloud(p);
-                            else await this.previewPDF(p);
-                            await new Promise(r => setTimeout(r, 600)); // Pausa para evitar bloqueo de popup
+                            if(mode==='cloud') await this.guardarCloud(p); else await this.previewPDF(p);
+                            await new Promise(r=>setTimeout(r,500));
                         }
                     }
-                    this.clearSelection();
+                    this.selectedOrders = [];
                 },
                 async procesarPeticionesMasivo(discount) {
-                    if(this.selectedPeticiones.length === 0) return alert('Selecciona peticiones');
-                    if(!confirm(`¿Aceptar ${this.selectedPeticiones.length} peticiones?`)) return;
+                    if(!confirm(`¿Procesar ${this.selectedPeticiones.length}?`)) return;
                     for(const pid of this.selectedPeticiones) {
-                        const p = this.peticiones.find(pet => pet.id === pid);
+                        const p = this.peticiones.find(x => x.id === pid);
                         if(p) await this.confirmarPeticion(p, discount);
                     }
                     this.selectedPeticiones = [];
                 }
             },
-            mounted() {
-                this.loadAll();
-                nextTick(() => lucide.createIcons());
-            }
+            mounted() { this.loadAll(); }
         }).mount('#app');
     </script>
 </body>
