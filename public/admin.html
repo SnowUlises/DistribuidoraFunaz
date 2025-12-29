@@ -1495,7 +1495,6 @@ const idKey = String(item.id); // Usar String para ID consistente
             }
             
             // SUMA SEGURA: Convertir a Número explícitamente para 
-evitar concatenación de texto
             const qtyNumerica = Number(item.cantidad) || 0;
             aggregated.get(idKey).cantidad += qtyNumerica;
         });
@@ -1774,3 +1773,4 @@ if(missing > 0) {
 </script>
 </body>
 </html>
+
