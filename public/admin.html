@@ -1,1258 +1,890 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel de Administración - Distribuidora Funaz</title>
-  <style>
-    :root {
-      --primary: #2e7d32;
-      --primary-light: #4caf50;
-      --accent: #e8f5e9;
-      --bg: #f0f2f5;
-      --text: #2c3e50;
-      --card-bg: #ffffff;
-      --shadow: 0 2px 8px rgba(0,0,0,0.08);
-      --radius: 12px;
-      --danger: #d32f2f;
-      --warning: #f57c00;
-      --info: #0288d1;
-      
-      /* Colores de Estado */
-      --state-armando-bg: #fff3e0;
-      --state-armando-border: #ffb74d;
-      --state-armando-text: #ef6c00;
-      --state-preparado-bg: #f1f8e9;
-      --state-preparado-border: #76ff03;
-      --state-preparado-text: #2e7d32;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - Distribuidora Funaz</title>
     
-    body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      padding-bottom: 6em;
-    }
+    <!-- LIBRERÍAS EXTERNAS (CDN) -->
+    <!-- Vue 3: Motor reactivo que reduce el código -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Tailwind CSS: Diseño bonito y rápido -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons: Iconos modernos -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    /* --- Header --- */
-    header {
-      background: var(--primary);
-      color: white;
-      text-align: center;
-      padding: 1.5em 0;
-      font-size: 1.8em;
-      font-weight: 600;
-      box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2);
-      margin-bottom: 2em;
-    }
+    <style>
+        /* ESTILOS GLOBALES */
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        
+        /* Scroll personalizado y fino */
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
 
-    main {
-      max-width: 95%;
-      margin: 0 auto;
-      padding: 0 1.5em;
-    }
-
-    /* --- Controles Superiores --- */
-    .top-controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1em;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2em;
-    }
-
-    .search-container {
-      flex: 1;
-      max-width: 400px;
-      position: relative;
-    }
-    .search-input {
-      width: 100%;
-      padding: 10px 15px;
-      border: 2px solid #ddd;
-      border-radius: 8px;
-      font-size: 1em;
-      outline: none;
-      transition: border-color 0.3s;
-    }
-    .search-input:focus { border-color: var(--primary); }
-
-    button.btn-volver {
-      background: transparent;
-      color: var(--primary);
-      border: 2px solid var(--primary);
-      border-radius: 8px;
-      padding: 10px 20px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    button.btn-volver:hover { background: var(--primary); color: #fff; }
-
-    #mensajeError {
-      text-align: center;
-      color: var(--danger);
-      background: #ffebee;
-      padding: 10px;
-      border-radius: 8px;
-      margin-bottom: 1em;
-      border: 1px solid #ffcdd2;
-      display: none;
-    }
-    #mensajeError:not(:empty) { display: block; }
-
-    /* --- Toolbar Flotante --- */
-    #groupToolbar {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #333;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 50px;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-      display: flex;
-      gap: 15px;
-      align-items: center;
-      z-index: 1000;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s, transform 0.3s;
-    }
-    #groupToolbar.visible { opacity: 1; pointer-events: all; transform: translateX(-50%) translateY(0); }
-    #groupToolbar span { font-weight: 600; }
-    #groupToolbar button {
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 20px;
-      cursor: pointer;
-    }
-    #groupToolbar button.cancel { background: #666; }
-    #groupToolbar button.bulk-cloud { background: var(--primary-light); display: none; }
-    #groupToolbar button.bulk-pdf { background: var(--warning); display: none; }
-    #btnGroupAction { display: none; }
-
-    /* --- Checkboxes --- */
-    .user-select-check, .peticion-check, .pedido-check {
-      transform: scale(1.3);
-      cursor: pointer;
-      accent-color: var(--primary);
-    }
-    .user-select-check { margin-right: 15px; }
-    .pedido-check { margin-right: 10px; margin-top: 5px; }
-
-    /* --- Etiquetas --- */
-    .sub-user-label, .business-label {
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 0.8em;
-      font-weight: bold;
-      display: inline-block;
-      margin-bottom: 5px;
-    }
-    .sub-user-label { background: #e0f2f1; color: #00695c; border: 1px solid #b2dfdb; }
-    .business-label { background: #fff8e1; color: #f57f17; border: 1px solid #ffecb3; margin-right: 5px; }
-
-    /* --- Layout Principal (GRID DE CLIENTES) --- */
-    #listaUsuarios, #listaPeticiones {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); 
-      gap: 1.5em;
-      margin-bottom: 2em;
-    }
-
-    /* --- Tarjeta de Cliente (Contenedor) --- */
-    .user-details {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      border: 1px solid #eee;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    
-    .user-details > summary {
-      list-style: none;
-      background: linear-gradient(to bottom, #ffffff, #f8f9fa);
-      padding: 1em;
-      font-size: 1.1em;
-      font-weight: 600;
-      cursor: pointer;
-      border-bottom: 1px solid #eee;
-      display: flex;
-      align-items: center;
-      color: var(--text);
-    }
-    .user-details > summary::-webkit-details-marker { display: none; }
-    .user-details[open] > summary { background: #e8f5e9; color: var(--primary); border-bottom: 1px solid #c8e6c9; }
-
-    /* --- Grid INTERNO de Pedidos (Dentro del Cliente) --- */
-    .usuario-item ul {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
-        gap: 15px;
-        padding: 15px;
-        list-style: none;
-        margin: 0;
-    }
-
-    /* --- Tarjeta de Pedido Individual --- */
-    .pedido-item {
-      background: #fff;
-      border: 2px solid #eee;
-      border-radius: 8px;
-      padding: 10px;
-      transition: all 0.3s;
-      height: 480px; /* Altura fija para scroll interno */
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
-
-    /* Colores de Estado */
-    .pedido-item.estado-armando { border-color: var(--state-armando-border); background-color: var(--state-armando-bg); }
-    .pedido-item.estado-preparado { border-color: var(--state-preparado-border); background-color: var(--state-preparado-bg); }
-
-    /* Área de Items con SCROLL */
-    .peticion-items {
-        flex: 1;
-        overflow-y: auto;
-        margin: 10px 0;
-        padding-right: 5px;
-        background: rgba(255,255,255,0.7);
-        border-radius: 4px;
-        border: 1px solid #eee;
-    }
-    .peticion-items::-webkit-scrollbar { width: 6px; }
-    .peticion-items::-webkit-scrollbar-track { background: #f1f1f1; }
-    .peticion-items::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
-
-    /* Enfocado */
-    .pedido-item.enfocado {
-        position: fixed;
-        top: 50%; left: 50%;
-        transform: translate(-50%, -50%);
-        z-index: 2000;
-        width: 90%; max-width: 600px; height: 85vh;
-        box-shadow: 0 0 0 100vw rgba(0,0,0,0.6);
-    }
-
-    .pedido-line {
-      font-size: 0.9em;
-      margin-bottom: 0.5em;
-      border-bottom: 1px solid rgba(0,0,0,0.1);
-      padding-bottom: 5px;
-    }
-
-    .item {
-      display: flex; justify-content: space-between; align-items: center;
-      font-size: 0.9em; padding: 6px 0; border-bottom: 1px dashed rgba(0,0,0,0.1);
-    }
-
-    .pedido-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 5px;
-      margin-top: auto;
-      padding-top: 10px;
-      border-top: 1px solid rgba(0,0,0,0.1);
-    }
-    .pedido-actions button { width: 100%; padding: 8px 4px; font-size: 0.85em; }
-
-    /* SWITCH Armando/Preparado */
-    .switch-container {
-        display: flex; align-items: center; justify-content: space-between;
-        background: rgba(255,255,255,0.6);
-        padding: 5px 10px; border-radius: 20px; margin-top: 5px;
-        border: 1px solid rgba(0,0,0,0.1);
-    }
-    .switch-label { font-weight: bold; font-size: 0.9em; text-transform: uppercase; }
-    
-    .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider {
-      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-      background-color: var(--state-armando-border); transition: .4s; border-radius: 34px;
-    }
-    .slider:before {
-      position: absolute; content: ""; height: 16px; width: 16px;
-      left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;
-    }
-    input:checked + .slider { background-color: var(--state-preparado-border); }
-    input:checked + .slider:before { transform: translateX(26px); }
-
-    /* Botones */
-    button { border: 1px solid #ddd; background: white; color: #555; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
-    button:hover { transform: translateY(-1px); }
-
-    .guardar-btn { background: #e3f2fd; color: #1565c0; border-color: #bbdefb; } /* Guardar Cloud */
-    .preview-pdf { background: #fff3e0; color: #ef6c00; border-color: #ffe0b2; } /* PDF +3% */
-    .delete { background: #ffebee; color: #c62828; border-color: #ffcdd2; }
-    .confirmar { background: #e8f5e9; color: #2e7d32; border-color: #c8e6c9; }
-    .ver-original { background: #f3e5f5; color: #7b1fa2; border-color: #e1bee7; }
-    .add-product { color: var(--info); border-color: #b3e5fc; }
-
-    /* Focus Dot */
-    .focus-dot {
-        width: 12px; height: 12px; border: 2px solid #ccc; border-radius: 50%;
-        margin-left: auto; cursor: pointer;
-    }
-    .focus-dot.active { background-color: var(--primary); border-color: var(--primary); }
-    .user-details.usuario-enfocado { border: 2px solid var(--primary); }
-
-    /* Dialog */
-    dialog {
-      border: none; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-      padding: 2em; width: 90%; max-width: 450px;
-    }
-    dialog::backdrop { background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); }
-    dialog input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; }
-
-    footer { text-align: center; color: #888; font-size: 0.9em; margin-top: 4em; }
-
-    @media (max-width: 600px) {
-      #listaUsuarios, #listaPeticiones { grid-template-columns: 1fr; }
-      .usuario-item ul { grid-template-columns: 1fr; }
-    }
-  </style>
+        /* Estilos del Switch (Interruptor Armando/Preparado) */
+        .toggle-checkbox:checked { right: 0; border-color: #84CC16; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #84CC16; }
+        
+        /* Bordes y colores de estado */
+        .border-armando { border-left: 4px solid #F97316; } /* Naranja */
+        .border-preparado { border-left: 4px solid #84CC16; } /* Verde */
+        
+        /* Animaciones suaves */
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+        
+        [v-cloak] { display: none; } /* Ocultar Vue hasta que cargue */
+    </style>
 </head>
 <body>
-  <header>Panel de Administración</header>
-  
-  <main>
-    <div class="top-controls">
-      <button class="btn-volver" onclick="location.href='index.html'">← Volver a tienda</button>
-      <div class="search-container">
-          <input type="text" id="searchInput" class="search-input" placeholder="Buscar cliente o grupo..." onkeyup="filtrarUsuarios()">
-      </div>
-      <div id="mensajeError"></div>
+    <div id="app" v-cloak class="min-h-screen pb-32">
+        
+        <!-- HEADER FIJO -->
+        <header class="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-200">
+            <div class="max-w-[1800px] mx-auto px-4 py-3">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <a href="/" class="text-gray-500 hover:text-green-600 transition p-1 rounded-full hover:bg-gray-100">
+                            <i data-lucide="arrow-left" class="w-6 h-6"></i>
+                        </a>
+                        <h1 class="text-xl font-bold text-gray-800 tracking-tight flex items-center gap-2">
+                            <span class="bg-green-100 text-green-700 p-1 rounded-md"><i data-lucide="shield" class="w-5 h-5"></i></span>
+                            Panel Admin
+                        </h1>
+                    </div>
+                    
+                    <!-- Buscador Inteligente -->
+                    <div class="w-full md:w-96 relative group">
+                        <input v-model="search" type="text" placeholder="Buscar cliente, grupo, ID o producto..." 
+                            class="w-full pl-10 pr-4 py-2 bg-gray-100 border border-transparent rounded-lg text-gray-800 focus:bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all shadow-sm group-hover:bg-white group-hover:shadow-md">
+                        <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3 top-3 group-hover:text-green-500 transition-colors"></i>
+                        <button v-if="search" @click="search = ''" class="absolute right-3 top-2.5 text-gray-400 hover:text-red-500">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dashboard Mini (Métricas Rápidas) -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+                    <div class="bg-white p-2.5 rounded-lg border border-gray-200 shadow-sm flex items-center justify-between hover:shadow-md transition">
+                        <div class="flex flex-col">
+                            <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Pendientes</span>
+                            <span class="text-xl font-bold text-blue-600">{{ peticiones.length }}</span>
+                        </div>
+                        <i data-lucide="inbox" class="w-6 h-6 text-blue-100"></i>
+                    </div>
+                    <div class="bg-orange-50 p-2.5 rounded-lg border border-orange-100 shadow-sm flex items-center justify-between hover:shadow-md transition">
+                        <div class="flex flex-col">
+                            <span class="text-[10px] text-orange-600 font-bold uppercase tracking-wider">En Armando</span>
+                            <span class="text-xl font-bold text-orange-700">{{ ordersArmando }}</span>
+                        </div>
+                        <i data-lucide="clock" class="w-6 h-6 text-orange-200"></i>
+                    </div>
+                    <div class="bg-lime-50 p-2.5 rounded-lg border border-lime-100 shadow-sm flex items-center justify-between hover:shadow-md transition">
+                        <div class="flex flex-col">
+                            <span class="text-[10px] text-lime-600 font-bold uppercase tracking-wider">Preparados</span>
+                            <span class="text-xl font-bold text-lime-700">{{ ordersPreparado }}</span>
+                        </div>
+                        <i data-lucide="check-circle" class="w-6 h-6 text-lime-200"></i>
+                    </div>
+                    <button @click="copiarFaltantesGlobal" class="bg-gray-800 hover:bg-black text-white p-2 rounded-lg transition text-xs font-bold flex flex-col items-center justify-center gap-1 shadow hover:scale-[1.02] active:scale-95">
+                        <i data-lucide="clipboard" class="w-4 h-4"></i> 
+                        <span>Copiar Faltantes</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-[1800px] mx-auto px-4 py-6 space-y-8">
+            
+            <!-- Notificaciones Flotantes -->
+            <transition name="fade">
+                <div v-if="mensaje" :class="`fixed top-24 right-4 z-[100] p-4 rounded-lg shadow-xl font-medium flex items-center gap-3 border-l-4 animate-bounce-in ${mensajeTipo === 'error' ? 'bg-red-50 text-red-800 border-red-500' : 'bg-green-50 text-green-800 border-green-500'}`">
+                    <i :data-lucide="mensajeTipo === 'error' ? 'alert-triangle' : 'check-circle-2'" class="w-6 h-6"></i>
+                    <span class="text-sm">{{ mensaje }}</span>
+                </div>
+            </transition>
+
+            <!-- 1. SECCIÓN PETICIONES (SOLICITUDES NUEVAS) -->
+            <section v-if="peticiones.length > 0">
+                <div class="flex flex-wrap items-center justify-between mb-4 bg-blue-50/80 backdrop-blur p-3 rounded-xl border border-blue-100 shadow-sm">
+                    <h2 class="text-lg font-bold text-blue-900 flex items-center gap-2">
+                        <span class="bg-blue-200 p-1.5 rounded-lg"><i data-lucide="bell" class="w-4 h-4 text-blue-700"></i></span>
+                        Peticiones Nuevas
+                    </h2>
+                    
+                    <!-- Acciones Masivas Peticiones -->
+                    <div class="flex gap-2 mt-2 sm:mt-0">
+                         <button v-if="selectedPeticiones.length > 0" @click="copiarFaltantesPeticionesMasivo" class="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50 text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm transition flex items-center gap-1">
+                             <i data-lucide="copy" class="w-3 h-3"></i> Faltantes
+                         </button>
+                        <button @click="procesarPeticionesMasivo(false)" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-1.5 rounded-lg shadow-sm transition flex items-center gap-1">
+                            <i data-lucide="check" class="w-3 h-3"></i> Aceptar
+                        </button>
+                        <button @click="procesarPeticionesMasivo(true)" class="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-1.5 rounded-lg shadow-sm transition flex items-center gap-1">
+                            <i data-lucide="percent" class="w-3 h-3"></i> Aceptar (-3%)
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <div v-for="peticion in peticiones" :key="peticion.id" class="bg-white rounded-xl shadow-sm border border-blue-100 overflow-hidden hover:shadow-md transition-all duration-300 group">
+                        
+                        <!-- Header Tarjeta Petición -->
+                        <div class="bg-blue-50/50 p-3 border-b border-blue-100 flex justify-between items-start">
+                            <div class="flex gap-3 items-center w-full overflow-hidden">
+                                <input type="checkbox" v-model="selectedPeticiones" :value="peticion.id" class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer border-gray-300">
+                                <div class="truncate flex-1">
+                                    <h3 class="font-bold text-gray-800 text-sm truncate" :title="peticion.nombre">{{ peticion.nombre }}</h3>
+                                    <div class="text-[10px] text-gray-500 flex items-center gap-1">
+                                        <i data-lucide="calendar" class="w-3 h-3"></i> {{ formatDate(peticion.fecha) }}
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="text-[9px] font-mono bg-white px-2 py-0.5 rounded-full border border-blue-200 text-blue-600 shrink-0 shadow-sm">#{{ peticion.id }}</span>
+                        </div>
+                        
+                        <div class="p-3">
+                            <div class="flex justify-between items-center text-xs mb-3 bg-gray-50 p-2 rounded-lg border border-gray-100">
+                                <span v-if="peticion.telefono" class="text-gray-600 font-mono flex items-center gap-1"><i data-lucide="phone" class="w-3 h-3"></i> {{ peticion.telefono }}</span>
+                                <span class="font-bold text-blue-700 text-sm ml-auto bg-blue-100 px-2 py-0.5 rounded">{{ formatMoney(peticion.total) }}</span>
+                            </div>
+
+                            <!-- Lista Items (Scroll) -->
+                            <div class="bg-white rounded-lg p-2 max-h-32 overflow-y-auto custom-scroll text-xs border border-gray-200 mb-3 space-y-1 shadow-inner">
+                                <div v-for="(item, idx) in parseItems(peticion.items)" :key="idx" class="flex justify-between border-b border-dashed border-gray-100 last:border-0 pb-1.5 pt-0.5">
+                                    <span class="truncate pr-2 flex-1">
+                                        <b class="bg-gray-100 px-1.5 py-0.5 rounded text-gray-700 mr-1">{{ item.cantidad }}</b> 
+                                        {{ item.nombre }}
+                                        <span v-if="getStockWarning(item)" class="inline-flex items-center text-red-500 font-bold ml-1 bg-red-50 px-1 rounded" title="Stock insuficiente">
+                                            <i data-lucide="alert-circle" class="w-3 h-3 mr-0.5"></i> Stock
+                                        </span>
+                                    </span>
+                                    <span class="font-medium text-gray-500 shrink-0">{{ formatMoney(item.subtotal) }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Botones Petición -->
+                            <div v-if="usedButtons[peticion.id]" class="bg-green-100 text-green-800 text-center py-2 rounded-lg text-xs font-bold border border-green-200 flex items-center justify-center gap-2">
+                                <i data-lucide="check-check" class="w-4 h-4"></i> {{ usedButtons[peticion.id] === 'plus7' ? 'Confirmado (-3%)' : 'Confirmado' }}
+                            </div>
+                            <div v-else class="grid grid-cols-2 gap-2 text-[10px] font-bold">
+                                <button @click="confirmarPeticion(peticion, false)" class="bg-white border border-green-500 text-green-600 py-1.5 rounded hover:bg-green-50 transition">Confirmar</button>
+                                <button @click="confirmarPeticion(peticion, true)" class="bg-white border border-teal-500 text-teal-600 py-1.5 rounded hover:bg-teal-50 transition">-3% Desc.</button>
+                                <button @click="previewPDFPeticion(peticion)" class="bg-white border border-orange-300 text-orange-600 py-1.5 rounded hover:bg-orange-50 transition">Ver PDF</button>
+                                <button @click="copiarFaltantesIndividual(peticion)" class="bg-white border border-indigo-300 text-indigo-600 py-1.5 rounded hover:bg-indigo-50 transition">Copiar Falt.</button>
+                                <button @click="eliminarPeticion(peticion.id)" class="col-span-2 bg-red-50 border border-red-200 text-red-600 py-1.5 rounded hover:bg-red-100 transition flex items-center justify-center gap-1">
+                                    <i data-lucide="trash-2" class="w-3 h-3"></i> Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. SECCIÓN CLIENTES Y PEDIDOS (GRID PRINCIPAL) -->
+            <section>
+                <!-- Toolbar Flotante Sticky -->
+                <div class="flex flex-wrap items-center justify-between mb-6 sticky top-20 z-40 bg-white/90 backdrop-blur-md py-3 px-4 rounded-xl shadow-md border border-gray-200/50">
+                    <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                        <i data-lucide="users" class="w-5 h-5 text-gray-500"></i> Clientes Activos
+                    </h2>
+                    
+                    <!-- Acciones Masivas Dinámicas -->
+                    <transition name="fade">
+                        <div v-if="selectedOrders.length > 0 || selectedUsers.length > 0" class="flex items-center gap-3 bg-gray-900 text-white px-4 py-1.5 rounded-full shadow-lg text-sm animate-pulse ml-auto">
+                            <span v-if="selectedOrders.length > 0" class="font-bold text-orange-300 flex items-center gap-1"><i data-lucide="package" class="w-3 h-3"></i> {{ selectedOrders.length }} pedidos</span>
+                            <span v-else class="font-bold text-green-300 flex items-center gap-1"><i data-lucide="user" class="w-3 h-3"></i> {{ selectedUsers.length }} clientes</span>
+                            
+                            <div v-if="selectedOrders.length > 0" class="flex gap-2 border-l border-gray-700 pl-3 ml-2">
+                                 <button @click="accionMasivaPedidos('cloud')" class="bg-green-600 hover:bg-green-500 px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1">
+                                    <i data-lucide="cloud" class="w-3 h-3"></i> Guardar (PDF)
+                                 </button>
+                                 <button @click="accionMasivaPedidos('pdf')" class="bg-orange-600 hover:bg-orange-500 px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1">
+                                    <i data-lucide="eye" class="w-3 h-3"></i> Ver (PDF+3%)
+                                 </button>
+                            </div>
+                            <div v-else class="flex gap-2 border-l border-gray-700 pl-3 ml-2">
+                                <button @click="crearGrupo" class="bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded-full text-xs font-bold transition">Agrupar</button>
+                            </div>
+                            <button @click="clearSelection" class="ml-2 hover:bg-gray-700 p-1 rounded-full transition"><i data-lucide="x" class="w-3 h-3"></i></button>
+                        </div>
+                    </transition>
+                </div>
+
+                <!-- GRID DE CLIENTES -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
+                    
+                    <div v-for="(group, groupName) in filteredGroups" :key="groupName" 
+                         v-show="shouldShowGroup(groupName)"
+                         :class="['bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col transition-all duration-300 overflow-hidden', focusedUser === groupName ? 'col-span-full ring-2 ring-green-500 shadow-2xl z-10 scale-[1.01]' : 'hover:shadow-lg hover:border-green-200']">
+                        
+                        <!-- Cabecera Cliente -->
+                        <div class="p-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between group/header">
+                            <div class="flex items-center gap-3 overflow-hidden cursor-pointer flex-1" @click="toggleFocus(groupName)">
+                                <input type="checkbox" v-model="selectedUsers" :value="groupName" @click.stop class="w-5 h-5 rounded text-green-600 focus:ring-green-500 flex-shrink-0 cursor-pointer border-gray-300">
+                                <div class="truncate">
+                                    <h3 class="font-bold text-gray-800 truncate text-sm select-none flex items-center gap-2">
+                                        {{ groupName }}
+                                        <span v-if="isGroup(groupName)" class="text-[9px] bg-gray-800 text-white px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">GRUPO</span>
+                                    </h3>
+                                    <div class="text-[10px] text-gray-500">{{ group.length }} pedidos activos</div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center gap-2">
+                                <button v-if="isGroup(groupName)" @click.stop="disolverGrupo(groupName)" class="text-[10px] text-red-400 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded transition">Disolver</button>
+                                <button @click.stop="toggleFocus(groupName)" 
+                                        :class="['p-2 rounded-full transition-all', focusedUser === groupName ? 'bg-green-100 text-green-700 rotate-180' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-200']"
+                                        title="Expandir / Enfocar">
+                                    <i :data-lucide="focusedUser === groupName ? 'minimize-2' : 'maximize-2'" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Lista de Pedidos Internos -->
+                        <div class="p-3 bg-gray-100/50 flex-1">
+                            <div :class="['grid gap-4 transition-all', focusedUser === groupName ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1']">
+                                
+                                <div v-for="(pedido, idx) in getItemsSlice(groupName, group)" :key="pedido.uid" 
+                                     :class="['bg-white rounded-lg border shadow-sm flex flex-col transition-all duration-300 relative group/card', 
+                                              getEstado(pedido.uid).recibido ? 'border-preparado' : 'border-armando']">
+                                    
+                                    <!-- Overlay de Cargando (Spinner) -->
+                                    <div v-if="loadingOrders[pedido.uid]" class="absolute inset-0 bg-white/90 z-20 flex flex-col items-center justify-center rounded-lg backdrop-blur-[1px]">
+                                        <div class="animate-spin text-green-600 mb-2"><i data-lucide="loader-2" class="w-8 h-8"></i></div>
+                                        <span class="text-xs font-bold text-gray-500">Procesando...</span>
+                                    </div>
+
+                                    <!-- Cabecera Pedido -->
+                                    <div class="p-2.5 border-b border-gray-100 flex justify-between items-start bg-white rounded-t-lg">
+                                        <div class="flex gap-2.5 w-full">
+                                            <input type="checkbox" v-model="selectedOrders" :value="pedido.uid" class="mt-1 w-4 h-4 rounded text-orange-500 focus:ring-orange-500 cursor-pointer border-gray-300">
+                                            <div class="flex-1 min-w-0">
+                                                <!-- Etiquetas de Sub-usuario y Negocio -->
+                                                <div class="flex flex-wrap gap-1 mb-1">
+                                                    <span v-if="pedido.nombre_negocio" class="text-[10px] font-bold text-orange-700 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100 truncate max-w-[100%]">
+                                                        🏢 {{ pedido.nombre_negocio }}
+                                                    </span>
+                                                    <span v-if="pedido.user !== groupName" class="text-[10px] font-bold text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-100 truncate max-w-[100%]">
+                                                        👤 {{ pedido.user }}
+                                                    </span>
+                                                </div>
+                                                <div class="text-[10px] text-gray-400 leading-tight font-mono flex items-center gap-1">
+                                                    <i data-lucide="clock" class="w-3 h-3"></i> {{ formatDate(pedido.fecha) }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="text-right shrink-0">
+                                            <div class="text-sm font-bold text-gray-800">{{ formatMoney(calculateTotal(pedido)) }}</div>
+                                            <div class="text-[9px] text-gray-300 font-mono">ID:{{ String(pedido.id).slice(-4) }}</div>
+                                            <div v-if="estadosPedidos[pedido.uid]?.guardado" class="text-xs mt-1" title="Guardado en Cloud">☁️✅</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Lista de Items Scrollable -->
+                                    <div class="p-2 flex-1 min-h-[140px] max-h-[300px] overflow-y-auto custom-scroll relative bg-white">
+                                        <ul class="space-y-1">
+                                            <li v-for="(item, iIdx) in getItemsToShow(pedido)" :key="iIdx" class="flex justify-between items-start text-xs border-b border-dashed border-gray-100 last:border-0 pb-1.5 pt-0.5 group/item hover:bg-gray-50 transition px-1 rounded">
+                                                <div class="flex-1 pr-2">
+                                                    <div class="font-medium text-gray-700 leading-tight flex items-start gap-1">
+                                                        <span class="bg-gray-100 px-1.5 rounded font-bold text-gray-800 shrink-0">{{ item.cantidad }}</span>
+                                                        <span class="break-words">{{ item.nombre }}</span>
+                                                    </div>
+                                                    <div class="text-[9px] text-gray-400 pl-1 mt-0.5">
+                                                        x {{ formatMoney(item.precio_unitario) }}
+                                                    </div>
+                                                </div>
+                                                <div class="flex flex-col items-end shrink-0">
+                                                    <span class="font-semibold text-gray-800">{{ formatMoney(item.subtotal) }}</span>
+                                                    <!-- Controles de Item (Hover) -->
+                                                    <div v-if="!isOriginalView(pedido.uid)" class="flex gap-0.5 opacity-0 group-hover/item:opacity-100 transition-opacity bg-white shadow-sm border rounded scale-90 origin-right mt-1">
+                                                        <button @click="modItem(pedido.uid, iIdx, 1)" class="text-green-600 hover:bg-green-50 p-1 rounded"><i data-lucide="plus" class="w-3 h-3"></i></button>
+                                                        <button @click="modItem(pedido.uid, iIdx, -1)" class="text-orange-600 hover:bg-orange-50 p-1 rounded"><i data-lucide="minus" class="w-3 h-3"></i></button>
+                                                        <button @click="delItem(pedido.uid, iIdx)" class="text-red-600 hover:bg-red-50 p-1 rounded"><i data-lucide="x" class="w-3 h-3"></i></button>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
+
+                                    <!-- Footer con Controles -->
+                                    <div class="p-2.5 bg-gray-50/80 border-t border-gray-200 rounded-b-lg space-y-2.5">
+                                        
+                                        <!-- Switch de Estado (Sustituye a Checkboxes antiguos) -->
+                                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg border shadow-sm group-hover/card:border-gray-300 transition-colors">
+                                            <div class="flex flex-col leading-none">
+                                                <span :class="['text-[10px] font-bold uppercase tracking-wide flex items-center gap-1.5', getEstado(pedido.uid).recibido ? 'text-lime-600' : 'text-orange-500']">
+                                                    <i :data-lucide="getEstado(pedido.uid).recibido ? 'check-circle-2' : 'package-open'" class="w-3.5 h-3.5"></i>
+                                                    {{ getEstado(pedido.uid).recibido ? 'Preparado' : 'Armando' }}
+                                                </span>
+                                                <span class="text-[8px] text-gray-400 mt-0.5 font-medium">
+                                                    {{ getEstado(pedido.uid).recibido ? 'Stock protegido (No devuelve)' : 'Edición activa (Devuelve stock)' }}
+                                                </span>
+                                            </div>
+                                            
+                                            <div class="relative inline-block w-9 align-middle select-none">
+                                                <input type="checkbox" :id="'toggle-'+pedido.uid" 
+                                                       class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-300 top-0 left-0 shadow-sm"
+                                                       :checked="getEstado(pedido.uid).recibido"
+                                                       @change="toggleEstado(pedido.uid, $event.target.checked)">
+                                                <label :for="'toggle-'+pedido.uid" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer transition-colors duration-300"></label>
+                                            </div>
+                                        </div>
+
+                                        <!-- Botonera Compacta -->
+                                        <div class="grid grid-cols-2 gap-2 text-[10px] font-bold">
+                                            <button @click="guardarCloud(pedido)" class="bg-gray-800 text-white py-1.5 rounded hover:bg-black transition flex items-center justify-center gap-1.5 shadow-sm" title="Guardar estado en BD y generar PDF">
+                                                <i data-lucide="cloud" class="w-3 h-3"></i> PDF
+                                            </button>
+                                            <button @click="previewPDF(pedido)" class="bg-orange-500 text-white py-1.5 rounded hover:bg-orange-600 transition flex items-center justify-center gap-1.5 shadow-sm" title="Solo ver PDF con aumento">
+                                                <i data-lucide="file-search" class="w-3 h-3"></i> PDF + 3%
+                                            </button>
+                                            
+                                            <button @click="openAddModal(pedido.uid)" class="bg-white border border-blue-200 text-blue-600 py-1.5 rounded hover:bg-blue-50 transition flex items-center justify-center gap-1">
+                                                <i data-lucide="plus" class="w-3 h-3"></i> Prod
+                                            </button>
+                                            <button @click="toggleOriginal(pedido.uid)" :class="['py-1.5 rounded border transition flex items-center justify-center gap-1', isOriginalView(pedido.uid) ? 'bg-purple-100 text-purple-700 border-purple-300' : 'bg-white text-purple-600 border-purple-200 hover:bg-purple-50']">
+                                                <i data-lucide="history" class="w-3 h-3"></i> {{ isOriginalView(pedido.uid) ? 'Volver' : 'Original' }}
+                                            </button>
+                                            
+                                            <button @click="actualizarPrecios(pedido.uid, false)" class="text-gray-600 border border-gray-200 hover:bg-gray-100 rounded py-1.5 transition">$ Act</button>
+                                            <button @click="actualizarPrecios(pedido.uid, true)" class="text-teal-600 border border-teal-100 hover:bg-teal-50 rounded py-1.5 transition">$ -3%</button>
+                                        </div>
+
+                                        <div class="flex gap-2 pt-1 border-t border-gray-200">
+                                            <button @click="guardarCambios(pedido.uid)" :disabled="isOriginalView(pedido.uid)" class="flex-1 bg-green-600 text-white text-[10px] font-bold py-1.5 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm flex items-center justify-center gap-1">
+                                                <i data-lucide="save" class="w-3 h-3"></i> Confirmar Cambios
+                                            </button>
+                                            <button @click="eliminarPedido(pedido)" class="px-2.5 text-red-500 hover:bg-red-50 rounded border border-transparent hover:border-red-100 transition" title="Eliminar Pedido">
+                                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Botón Cargar Más -->
+                            <button v-if="shouldShowLoadMore(groupName, group)" @click="loadMore(groupName)" class="w-full mt-4 py-2 text-xs font-bold text-gray-500 bg-white border border-gray-200 rounded hover:bg-gray-50 transition shadow-sm flex items-center justify-center gap-2">
+                                <i data-lucide="arrow-down-circle" class="w-4 h-4"></i> Cargar más pedidos de {{ groupName }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- MODAL ADD PRODUCTO -->
+        <div v-if="modalOpen" class="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200" @click.self="modalOpen = false">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 transform transition-all scale-100 border border-gray-100">
+                <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                        <i data-lucide="package-plus" class="w-5 h-5 text-green-600"></i> Añadir Productos
+                    </h3>
+                    <button @click="modalOpen = false" class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1 rounded transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">IDs x Cantidad (ej: 353x5, 24x2)</label>
+                        <input v-model="modalInput" type="text" ref="modalInputRef" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 p-3 border text-sm font-mono" placeholder="Ej: 353x5, 102x1" @keyup.enter="addProducts">
+                        <p class="text-[10px] text-gray-400 mt-1">Presiona ENTER para añadir</p>
+                    </div>
+                    <label class="flex items-center cursor-pointer bg-gray-50 p-3 rounded-lg border border-gray-200 hover:bg-gray-100 transition select-none">
+                        <input type="checkbox" v-model="modalApplyDiscount" class="rounded text-green-600 focus:ring-green-500 border-gray-300 w-4 h-4">
+                        <span class="ml-2 text-sm text-gray-700 font-medium">Aplicar -3% de descuento</span>
+                    </label>
+                </div>
+                <div class="mt-6 flex justify-end gap-2">
+                    <button @click="modalOpen = false" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition">Cancelar</button>
+                    <button @click="addProducts" class="px-4 py-2 text-sm font-bold text-white bg-green-600 rounded-lg hover:bg-green-700 shadow-md transition transform active:scale-95 flex items-center gap-2">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Añadir
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <details open>
-      <summary>Usuarios y Pedidos (Cuadrícula)</summary>
-      <div id="listaUsuarios"></div>
-    </details>
-
-    <details open style="margin-top: 2em;">
-      <summary>Peticiones Pendientes</summary>
-      <div style="margin-bottom: 1em; padding: 10px; background: #e3f2fd; border-radius: 8px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-        <button onclick="copiarFaltantesGrupo()" style="background: var(--info); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer;">Faltantes En Grupo</button>
-        <button onclick="procesarPeticionesMasivas(false)" style="background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer;">Aceptar Selecc.</button>
-        <button onclick="procesarPeticionesMasivas(true)" style="background: #00838f; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer;">Aceptar Selecc. (-3%)</button>
-        <span id="peticionesSelectedCount" style="font-size: 0.9em; color: #555;">0 seleccionados</span>
-      </div>
-      <div id="listaPeticiones"></div>
-    </details>
-  </main>
-
-  <div id="groupToolbar">
-      <span id="selectedCount">0 seleccionados</span>
-      <button onclick="handleGroupAction()" id="btnGroupAction">Crear Grupo</button>
-      <button class="bulk-cloud" onclick="procesarPedidosMasivos('cloud')">Guardar Cloud</button>
-      <button class="bulk-pdf" onclick="procesarPedidosMasivos('pdf')">PDF +3%</button>
-      <button class="cancel" onclick="clearSelection()">Cancelar</button>
-  </div>
-
-  <footer>Distribuidora Funaz © 2025</footer>
-
-  <dialog id="addProductModal">
-    <form onsubmit="event.preventDefault(); addProductsToPedido();">
-      <label for="productsInput" style="font-weight:600; color:var(--primary)">Productos (IDxCantidad, separados por coma):</label>
-      <input type="text" id="productsInput" placeholder="Ej: 353x5, 24x2">
-      <label><input type="checkbox" id="apply3percent"> Aplicar -3%</label>
-      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:1em;">
-        <button type="button" onclick="closeAddModal()" style="background:#eee;">Cancelar</button>
-        <button type="submit" style="background:var(--primary); color:white;">Añadir</button>
-      </div>
-    </form>
-  </dialog>
-
-  <script>
-  const apiBase = 'https://distribuidorafunaz-a2o6.onrender.com/api';
-
-  // Verificación de Admin
-  const user = localStorage.getItem('loggedUser');
-  if (user !== 'admin') window.location.href = 'index.html';
-
-  // --- Estado Global ---
-  let originalPedidosCache = JSON.parse(localStorage.getItem('originalPedidosCache') || '{}');
-  // estadosPedidos guardará { estado: 'armando'|'preparado', timestamp: ... }
-  let estadosPedidos = JSON.parse(localStorage.getItem('estadosPedidos') || '{}');
-  let groupsConfig = JSON.parse(localStorage.getItem('groupsConfig') || '{}'); 
-  const usedButtons = JSON.parse(localStorage.getItem('usedButtons') || '{}');
-  let productos = [];
-  let currentPedidoId = null;
-  window.usersPedidos = {};
-  
-  // Selecciones
-  let selectedUsersForGroup = new Set();
-  let selectedPedidoIds = new Set(); 
-
-  // --- Limpieza de Caché Antigua (1 semana) ---
-  function cleanOldCache() {
-      const now = Date.now();
-      const oneWeek = 7 * 24 * 60 * 60 * 1000;
-      let changed = false;
-      Object.keys(originalPedidosCache).forEach(key => {
-          const entry = originalPedidosCache[key];
-          // Si tiene timestamp y es mayor a una semana, borrar
-          if (entry.timestamp && (now - entry.timestamp > oneWeek)) {
-              delete originalPedidosCache[key];
-              changed = true;
-          }
-      });
-      if(changed) guardarOriginalCache();
-  }
-
-  // --- Persistencia ---
-  function guardarEstados() { localStorage.setItem('estadosPedidos', JSON.stringify(estadosPedidos)); }
-  function saveUsedButtons() { localStorage.setItem('usedButtons', JSON.stringify(usedButtons)); }
-  function guardarOriginalCache() { localStorage.setItem('originalPedidosCache', JSON.stringify(originalPedidosCache)); }
-  function saveGroups() { localStorage.setItem('groupsConfig', JSON.stringify(groupsConfig)); }
-
-  // --- UI Helpers ---
-  function mostrarError(msg) {
-    const el = document.getElementById('mensajeError');
-    if (el) el.textContent = msg;
-    setTimeout(() => { if(el) el.textContent = ''; }, 6000);
-  }
-
-  function formatMoney(n) {
-    try {
-      return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n);
-    } catch (e) { return '$' + Number(n).toFixed(2); }
-  }
-
-  function formatDateTime(fecha) {
-    const date = new Date(fecha);
-    const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-    return { 
-        formattedDate: `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`,
-        formattedTime: `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
-    };
-  }
-
-  function filtrarUsuarios() {
-      const query = document.getElementById('searchInput').value.toLowerCase();
-      document.querySelectorAll('.user-details').forEach(detail => {
-          const name = detail.dataset.searchName.toLowerCase();
-          detail.style.display = name.includes(query) ? '' : 'none';
-      });
-  }
-
-  // ==================== LÓGICA DE VISUALIZACIÓN PEDIDOS ====================
-
-  function enfocarPedido(pedidoId) {
-    const selectedPedido = document.getElementById(`pedido-${pedidoId}`);
-    if (!selectedPedido) return;
-    
-    const btn = selectedPedido.querySelector('.enfocar');
-    const estaEnfocado = selectedPedido.classList.contains('enfocado');
-    
-    // Resetear otros
-    document.querySelectorAll('.pedido-item').forEach(p => {
-      p.classList.remove('enfocado');
-      const b = p.querySelector('.enfocar');
-      if (b) b.textContent = 'Enfocar';
-    });
-
-    if (!estaEnfocado) {
-      selectedPedido.classList.add('enfocado');
-      btn.textContent = 'Cerrar';
-    } 
-  }
-
-  function renderItemsHTML(pedidoId, items, editable = true) {
-    return items.map((item, itemIndex) => `
-      <div class="item" ${editable ? `data-item-index="${itemIndex}"` : ''}>
-        <span id="item-text-${pedidoId}-${itemIndex}" style="flex:1; padding-right:10px;">
-            ${item.nombre}: <b>${item.cantidad}</b> x ${formatMoney(item.precio_unitario)} = <b>${formatMoney(item.subtotal)}</b>
-        </span>
-        ${editable ? `
-        <div style="display:flex; gap:2px;">
-          <button class="increase" style="padding:2px 6px; background:#dcedc8;" onclick="modificarCantidadPedido('${pedidoId}', ${itemIndex}, 1)">+</button>
-          <button class="decrease" style="padding:2px 6px; background:#fff9c4;" onclick="modificarCantidadPedido('${pedidoId}', ${itemIndex}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
-          <button class="delete" style="padding:2px 6px;" onclick="eliminarItemPedido('${pedidoId}', ${itemIndex})">×</button>
-        </div>
-        ` : ''}
-      </div>
-    `).join('');
-  }
-
-  function updatePedidoItems(pedidoId, items, editable = true) {
-    const container = document.getElementById(`items-${pedidoId}`);
-    if (!container) return;
-    container.innerHTML = renderItemsHTML(pedidoId, items, editable);
-    const total = items.reduce((acc, item) => acc + item.subtotal, 0);
-    const totalSpan = document.getElementById(`total-${pedidoId}`);
-    if (totalSpan) totalSpan.textContent = formatMoney(total);
-  }
-
-  // --- SWITCH DE ESTADO (ARMANDO / PREPARADO) ---
-  function syncStatus(pedidoId, isPreparado) {
-      // 1. Guardar localmente
-      if (!estadosPedidos[pedidoId]) estadosPedidos[pedidoId] = {};
-      estadosPedidos[pedidoId].estado = isPreparado ? 'preparado' : 'armando';
-      estadosPedidos[pedidoId].timestamp = Date.now();
-      guardarEstados();
-
-      // 2. Actualizar UI
-      const card = document.getElementById(`pedido-${pedidoId}`);
-      const label = document.getElementById(`status-label-${pedidoId}`);
-      
-      const armandoColor = getComputedStyle(document.documentElement).getPropertyValue('--state-armando-text').trim();
-      const preparadoColor = getComputedStyle(document.documentElement).getPropertyValue('--state-preparado-text').trim();
-
-      if (card) {
-          if (isPreparado) {
-              card.classList.remove('estado-armando');
-              card.classList.add('estado-preparado');
-              if(label) { label.textContent = "Preparado"; label.style.color = preparadoColor; }
-          } else {
-              card.classList.remove('estado-preparado');
-              card.classList.add('estado-armando');
-              if(label) { label.textContent = "Armando"; label.style.color = armandoColor; }
-          }
-      }
-  }
-
-  function buildPedidoHTML(pedido, index, groupOrUserName) {
-    const items = pedido.items;
-    const pedidoId = pedido.id ?? `${pedido.user}-${index}`;
-    
-    // Recuperar estado (Default: armando)
-    const storedState = estadosPedidos[pedidoId]?.estado || 'armando';
-    const isPreparado = storedState === 'preparado';
-    
-    const total = items.reduce((sum, p) => sum + p.subtotal, 0);
-    const { formattedDate, formattedTime } = formatDateTime(pedido.fecha);
-
-    // CACHÉ DE ORIGINAL (Solo guarda si no existe)
-    if (pedido.id && !originalPedidosCache[pedidoId]) {
-      originalPedidosCache[pedidoId] = {
-          items: structuredClone(items),
-          timestamp: Date.now() 
-      };
-      guardarOriginalCache();
-    }
-
-    const subUserHeader = (groupOrUserName !== pedido.user) ? `<div class="sub-user-label">👤 ${pedido.user}</div>` : '';
-    const negocioHeader = (pedido.nombre_negocio) ? `<div class="business-label">🏢 ${pedido.nombre_negocio}</div>` : '';
-
-    const estadoClass = isPreparado ? 'estado-preparado' : 'estado-armando';
-    const labelText = isPreparado ? 'Preparado' : 'Armando';
-    const labelColor = isPreparado ? 'var(--state-preparado-text)' : 'var(--state-armando-text)';
-
-    return `
-      <li>
-        ${negocioHeader}
-        ${subUserHeader}
-        <div class="pedido-item ${estadoClass}" id="pedido-${pedidoId}" 
-             data-items='${JSON.stringify(items)}' 
-             data-veryOriginalItems='${JSON.stringify((originalPedidosCache[pedidoId] && originalPedidosCache[pedidoId].items) ? originalPedidosCache[pedidoId].items : items)}'>
-          
-          <div class="pedido-line" style="display:flex; gap:10px; align-items:flex-start;">
-            <input type="checkbox" class="pedido-check" value="${pedidoId}" onclick="event.stopPropagation(); togglePedidoSelection('${pedidoId}', this)">
-            <div style="flex:1;">
-                <strong>Pedido</strong> <small>(ID: ${pedidoId})</small><br> 
-                ${formattedDate} ${formattedTime} <br> 
-                <b>Total: <span id="total-${pedidoId}">${formatMoney(total)}</span></b>
-            </div>
-          </div>
-
-          <div class="switch-container">
-            <span id="status-label-${pedidoId}" class="switch-label" style="color: ${labelColor}">${labelText}</span>
-            <label class="switch">
-              <input type="checkbox" ${isPreparado ? 'checked' : ''} onchange="syncStatus('${pedidoId}', this.checked)">
-              <span class="slider"></span>
-            </label>
-          </div>
-
-          <div class="peticion-items" id="items-${pedidoId}">
-           ${renderItemsHTML(pedidoId, items)}
-          </div>
-
-          <div class="pedido-actions">
-            <button class="guardar-btn" data-pedidoid="${pedidoId}">Cloud (Guardar)</button>
-            <button class="preview-pdf" onclick="previewPDFPedido('${pedidoId}')">PDF + 3%</button>
-            
-            <button class="add-product" onclick="openAddModal('${pedidoId}')">+ Prod</button>
-            <button class="ver-original" onclick="toggleViewOriginal('${pedidoId}')">Original</button>
-            
-            <button class="actualizar-precios" onclick="actualizarPreciosPedido('${pedidoId}', false)">$ Act</button>
-            <button class="actualizar-precios" onclick="actualizarPreciosPedido('${pedidoId}', true)">$ -3%</button>
-            
-            <button class="confirmar" onclick="guardarCambiosPedido('${pedidoId}')">Confirmar</button>
-            <button class="enfocar" onclick="enfocarPedido('${pedidoId}')">Enfocar</button>
-            
-            <button class="delete" style="grid-column: span 2; margin-top:5px;" onclick="eliminarPedido('${pedidoId}', '${pedido.user}', ${index})">Eliminar Pedido</button>
-            
-            <span class="guardar-status" id="guardar-status-${pedidoId}" style="grid-column: span 2; text-align:center; font-size:1.2em;"></span>
-          </div>
-        </div>
-      </li>`;
-  }
-
-  function addGuardarBtnListener(btn) {
-    btn.addEventListener('click', async () => {
-      const pedidoId = btn.dataset.pedidoid;
-      const statusSpan = document.getElementById(`guardar-status-${pedidoId}`);
-      if (statusSpan) statusSpan.textContent = '⏳';
-      try {
-        await guardarPedido(pedidoId);
-        if (statusSpan) statusSpan.textContent = '✅';
-      } catch (err) {
-        if (statusSpan) statusSpan.textContent = '❌';
-        alert(err.message);
-      }
-    });
-  }
-
-  // ==================== LÓGICA DE ELIMINAR ====================
-  async function eliminarPedido(pedidoId, usuario, index) {
-    // 1. Verificar Estado
-    const state = estadosPedidos[pedidoId]?.estado || 'armando';
-    const isPreparado = state === 'preparado';
-    
-    let msg = `¿Eliminar pedido permanentemente?`;
-    if (isPreparado) {
-        msg += `\n\n⚠️ ESTÁ EN 'PREPARADO': NO se devolverá el stock.`;
-    } else {
-        msg += `\n\n✅ ESTÁ EN 'ARMANDO': Se devolverá el stock automáticamente.`;
-    }
-
-    if (!confirm(msg)) return;
-
-    try {
-      const res = await fetch(`${apiBase}/eliminar-pedido/${pedidoId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        // Aquí pasamos "recibido" como true si está preparado (para NO restaurar stock)
-        body: JSON.stringify({ recibido: isPreparado }) 
-      });
-      if (!res.ok) throw new Error(await res.text());
-      alert('Pedido eliminado correctamente.');
-      location.reload();
-    } catch (e) {
-      mostrarError(e.message);
-    }
-  }
-
-  // ==================== ORIGINAL / EDICIÓN ====================
-  function toggleViewOriginal(pedidoId) {
-    const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-    const isViewingOriginal = pedidoDiv.classList.toggle('viewing-original');
-    
-    let itemsToShow;
-    if (isViewingOriginal) {
-        // Cargar desde cache profunda
-        const raw = pedidoDiv.dataset.veryOriginalItems;
-        itemsToShow = raw ? JSON.parse(raw) : JSON.parse(pedidoDiv.dataset.items);
-    } else {
-        // Cargar actual
-        itemsToShow = JSON.parse(pedidoDiv.dataset.items);
-    }
-
-    updatePedidoItems(pedidoId, itemsToShow, !isViewingOriginal);
-
-    const btn = pedidoDiv.querySelector('.ver-original');
-    btn.textContent = isViewingOriginal ? 'Volver a Editado' : 'Original';
-    
-    pedidoDiv.querySelectorAll('button').forEach(b => {
-      if (!b.classList.contains('ver-original')) b.disabled = isViewingOriginal;
-    });
-    
-    if (isViewingOriginal) {
-        pedidoDiv.style.border = "2px dashed #7b1fa2";
-    } else {
-        const isPrep = pedidoDiv.classList.contains('estado-preparado');
-        pedidoDiv.style.border = isPrep ? "2px solid #76ff03" : "2px solid #eee";
-    }
-  }
-
-  // ==================== CARGA DE DATOS ====================
-  async function cargarUsuarios() {
-    try {
-      const listaPedidos = document.getElementById('listaUsuarios');
-      listaPedidos.innerHTML = '<p style="text-align:center">Cargando pedidos...</p>';
-      
-      const res = await fetch(`${apiBase}/pedidos`, { cache: 'no-store' });
-      if (!res.ok) throw new Error('Error al cargar pedidos.');
-      const pedidosRaw = await res.json();
-      
-      const processedPedidos = pedidosRaw.map(p => {
-        let items = Array.isArray(p.items) ? p.items : JSON.parse(p.items || '[]');
-        items = items.map(item => ({
-          id: item.id || 'unknown',
-          nombre: String(item.nombre || 'Sin nombre'),
-          cantidad: Number(item.cantidad) || 1,
-          precio_unitario: Number(item.precio_unitario || item.precio) || 0,
-          subtotal: Number(item.subtotal) || (Number(item.cantidad) * Number(item.precio_unitario || item.precio)) || 0
-        }));
-        return { ...p, items, user: p.user || 'Invitado' };
-      });
-
-      // Agrupación
-      const userToGroupMap = {};
-      Object.entries(groupsConfig).forEach(([groupName, members]) => {
-          members.forEach(member => userToGroupMap[member] = groupName);
-      });
-      const pedidosOrganizados = {};
-      processedPedidos.forEach(pedido => {
-          const key = userToGroupMap[pedido.user] || pedido.user;
-          if (!pedidosOrganizados[key]) pedidosOrganizados[key] = [];
-          pedidosOrganizados[key].push(pedido);
-      });
-      window.usersPedidos = pedidosOrganizados;
-
-      listaPedidos.innerHTML = '';
-      if (Object.keys(pedidosOrganizados).length === 0) {
-        listaPedidos.innerHTML = '<p style="text-align:center">No hay pedidos registrados.</p>';
-        return;
-      }
-
-      Object.entries(pedidosOrganizados).forEach(([displayName, userPedidos]) => {
-        userPedidos.sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
-        
-        let pedidosHTML = '<ul>';
-        userPedidos.forEach((pedido, index) => {
-           pedidosHTML += buildPedidoHTML(pedido, index, displayName);
-        });
-        pedidosHTML += '</ul>';
-
-        const userDiv = document.createElement('details');
-        userDiv.className = 'user-details';
-        userDiv.dataset.searchName = displayName;
-        
-        const isGroup = !!groupsConfig[displayName];
-        const disolverBtn = isGroup ? `<button class="btn-disolver" onclick="event.preventDefault(); disolverGrupo('${displayName}')" style="margin-left:auto; font-size:0.7em; background:transparent; border:1px solid #999;">Disolver Grupo</button>` : '';
-        const groupTag = isGroup ? ` <span style="font-size:0.6em; background:#333; color:#fff; padding:2px 6px; border-radius:4px; margin-left:8px;">GRUPO</span>` : '';
-        
-        userDiv.innerHTML = `
-            <summary>
-                <div style="display:flex; align-items:center; gap:10px; flex:1;">
-                    <input type="checkbox" class="user-select-check" onclick="event.stopPropagation(); toggleUserSelection('${displayName}', this)">
-                    <span>${displayName} ${groupTag}</span>
-                    ${disolverBtn}
-                </div>
-                <div class="focus-dot" onclick="enfocarUsuario(this, '${displayName}')" title="Enfocar"></div>
-            </summary>
-            <div class='usuario-item'>${pedidosHTML}</div>
-        `;
-        listaPedidos.appendChild(userDiv);
-        userDiv.querySelectorAll('.guardar-btn').forEach(addGuardarBtnListener);
-      });
-    } catch (err) {
-      console.error(err);
-      mostrarError('Error inesperado al cargar usuarios.');
-    }
-  }
-
-  // --- SELECCIÓN Y MASIVOS ---
-  function toggleUserSelection(userName, checkbox) {
-      if (checkbox.checked) selectedUsersForGroup.add(userName);
-      else selectedUsersForGroup.delete(userName);
-      updateGroupToolbar();
-  }
-  function togglePedidoSelection(pedidoId, checkbox) {
-      if (checkbox.checked) selectedPedidoIds.add(pedidoId);
-      else selectedPedidoIds.delete(pedidoId);
-      updateGroupToolbar();
-  }
-  function clearSelection() {
-      selectedUsersForGroup.clear();
-      selectedPedidoIds.clear();
-      document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-          if(cb.classList.contains('user-select-check') || cb.classList.contains('pedido-check')) cb.checked = false;
-      });
-      updateGroupToolbar();
-  }
-  function updateGroupToolbar() {
-      const toolbar = document.getElementById('groupToolbar');
-      const countSpan = document.getElementById('selectedCount');
-      const btnGroup = document.getElementById('btnGroupAction');
-      const btnCloud = document.querySelector('.bulk-cloud');
-      const btnPdf = document.querySelector('.bulk-pdf');
-      
-      const userCount = selectedUsersForGroup.size;
-      const pedidoCount = selectedPedidoIds.size;
-
-      if (pedidoCount > 0) {
-          toolbar.classList.add('visible');
-          countSpan.textContent = `${pedidoCount} pedidos`;
-          btnCloud.style.display = 'inline-block';
-          btnPdf.style.display = 'inline-block';
-          btnGroup.style.display = 'none';
-      } else if (userCount > 0) {
-          toolbar.classList.add('visible');
-          countSpan.textContent = `${userCount} usuarios`;
-          btnCloud.style.display = 'none';
-          btnPdf.style.display = 'none';
-          btnGroup.style.display = 'inline-block';
-          
-          let groupCount = 0; let uCount = 0;
-          selectedUsersForGroup.forEach(name => {
-              if (groupsConfig[name]) groupCount++; else uCount++;
-          });
-          if (groupCount === 1 && uCount > 0) btnGroup.textContent = "Unir al Grupo";
-          else if (groupCount === 0 && uCount > 1) btnGroup.textContent = "Crear Grupo";
-          else btnGroup.textContent = "Selección inválida";
-      } else {
-          toolbar.classList.remove('visible');
-      }
-  }
-
-  async function procesarPedidosMasivos(modo) {
-      if(selectedPedidoIds.size === 0) return alert('Selecciona al menos un pedido.');
-      const accionTexto = (modo === 'cloud') ? 'GUARDAR CLOUD' : 'PDF + 3%';
-      if(!confirm(`¿${accionTexto} para ${selectedPedidoIds.size} pedidos?\nSe abrirán ventanas emergentes.`)) return;
-      
-      const pedidos = Array.from(selectedPedidoIds);
-      for(const pid of pedidos) {
-          try {
-              if (modo === 'cloud') {
-                  await guardarPedido(pid);
-                  const statusSpan = document.getElementById(`guardar-status-${pid}`);
-                  if (statusSpan) statusSpan.textContent = '✅';
-              } else {
-                  await previewPDFPedido(pid); 
-              }
-              await new Promise(r => setTimeout(r, 800)); 
-          } catch(e) { console.error(e); }
-      }
-  }
-
-  // --- GRUPOS ---
-  function handleGroupAction() {
-      let groupNames = []; let normalUsers = [];
-      selectedUsersForGroup.forEach(name => {
-          if (groupsConfig[name]) groupNames.push(name); else normalUsers.push(name);
-      });
-      if (groupNames.length === 0 && normalUsers.length > 1) {
-          const newName = prompt("Nombre para el nuevo grupo:");
-          if (newName && !groupsConfig[newName]) {
-             groupsConfig[newName] = normalUsers;
-             saveGroups(); location.reload();
-          }
-      } else if (groupNames.length === 1 && normalUsers.length > 0) {
-          groupsConfig[groupNames[0]] = [...groupsConfig[groupNames[0]], ...normalUsers];
-          saveGroups(); location.reload();
-      }
-  }
-  function disolverGrupo(name) {
-      if(confirm(`¿Disolver grupo ${name}?`)) { delete groupsConfig[name]; saveGroups(); location.reload(); }
-  }
-  function enfocarUsuario(dot, userName) {
-      event.preventDefault(); event.stopPropagation();
-      const container = dot.closest('.user-details');
-      const yaEnfocado = container.classList.contains('usuario-enfocado');
-      
-      document.querySelectorAll('.user-details').forEach(ud => {
-          ud.style.display = yaEnfocado ? '' : (ud === container ? '' : 'none');
-          ud.classList.remove('usuario-enfocado');
-          const d = ud.querySelector('.focus-dot'); if(d) d.classList.remove('active');
-      });
-      if (!yaEnfocado) {
-          container.classList.add('usuario-enfocado');
-          container.open = true;
-          dot.classList.add('active');
-      }
-      filtrarUsuarios();
-  }
-  
-  // --- EDICIÓN DE PEDIDO ---
-  function modificarCantidadPedido(pedidoId, itemIndex, change) {
-    const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-    if (pedidoDiv.classList.contains('viewing-original')) return;
-    let items = JSON.parse(pedidoDiv.dataset.items || '[]');
-    items[itemIndex].cantidad = Math.max(1, items[itemIndex].cantidad + change);
-    items[itemIndex].subtotal = items[itemIndex].cantidad * items[itemIndex].precio_unitario;
-    pedidoDiv.dataset.items = JSON.stringify(items);
-    updatePedidoItems(pedidoId, items);
-  }
-  function eliminarItemPedido(pedidoId, itemIndex) {
-    if (!confirm('¿Eliminar item?')) return;
-    const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-    if (pedidoDiv.classList.contains('viewing-original')) return;
-    let items = JSON.parse(pedidoDiv.dataset.items || '[]');
-    items = items.filter((_, idx) => idx !== itemIndex);
-    pedidoDiv.dataset.items = JSON.stringify(items);
-    updatePedidoItems(pedidoId, items);
-  }
-  async function actualizarPreciosPedido(pedidoId, applyDiscount) {
-      const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-      if (pedidoDiv.classList.contains('viewing-original')) return alert('Estás viendo el original.');
-      if (!confirm(`¿Actualizar precios${applyDiscount?' con -3%':''} a valor actual?`)) return;
-      try {
-          const res = await fetch(`${apiBase}/productos`);
-          const currentProductos = await res.json();
-          const precioMap = new Map(currentProductos.map(p => [p.id, p.precio]));
-          let items = JSON.parse(pedidoDiv.dataset.items);
-          const multiplier = applyDiscount ? 1.10 * 0.97 : 1.10;
-          
-          let changed = false;
-          const updated = items.map(item => {
-              const base = precioMap.get(item.id);
-              if (base !== undefined) {
-                  const nuevo = Number((base * multiplier).toFixed(2));
-                  if(nuevo !== item.precio_unitario) changed = true;
-                  return { ...item, precio_unitario: nuevo, subtotal: nuevo * item.cantidad };
-              }
-              return item;
-          });
-          if(!changed) return alert('Precios ya actualizados.');
-          pedidoDiv.dataset.items = JSON.stringify(updated);
-          updatePedidoItems(pedidoId, updated);
-      } catch(e) { console.error(e); }
-  }
-  async function guardarCambiosPedido(pedidoId) {
-    const pedidoDiv = document.getElementById(`pedido-${pedidoId}`);
-    if (pedidoDiv.classList.contains('viewing-original')) return alert('Estás en vista original.');
-    if (!confirm('¿Guardar cambios permanentemente?')) return;
-    try {
-      const items = JSON.parse(pedidoDiv.dataset.items);
-      const originalItems = JSON.parse(pedidoDiv.dataset.veryOriginalItems || '[]');
-      
-      const deltaMap = new Map();
-      originalItems.forEach(oi => deltaMap.set(oi.id, -Number(oi.cantidad||0)));
-      items.forEach(i => deltaMap.set(i.id, (deltaMap.get(i.id)||0) + Number(i.cantidad||0)));
-      
-      const stockUpdates = [];
-      // Lógica de servidor: enviamos cantidad positiva si queremos RESTAR stock (se vendió más)
-      for(const [id, delta] of deltaMap.entries()) {
-          if (delta > 0) stockUpdates.push({id, cantidad: delta});
-      }
-
-      const res = await fetch(`${apiBase}/actualizar-pedido/${pedidoId}`, {
-          method: 'PUT', headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ 
-              items: items.map(i => ({...i, subtotal: i.cantidad * i.precio_unitario})),
-              stockUpdates 
-          })
-      });
-      if(!res.ok) throw new Error();
-      
-      // Actualizamos referencia "original"
-      originalPedidosCache[pedidoId] = { items: items, timestamp: Date.now() };
-      guardarOriginalCache();
-      pedidoDiv.dataset.veryOriginalItems = JSON.stringify(items);
-      
-      alert('Guardado con éxito.');
-    } catch(e) { mostrarError('Error al guardar.'); }
-  }
-
-  // --- API CALLS ---
-  async function guardarPedido(pedidoId) {
-      const res = await fetch(`${apiBase}/pedidos/${pedidoId}/pdf`);
-      if(!res.ok) throw new Error('Error generando PDF Cloud');
-      const d = await res.json(); if(d.pdf) window.open(d.pdf, '_blank');
-  }
-  async function previewPDFPedido(pedidoId) {
-      const div = document.getElementById(`pedido-${pedidoId}`);
-      const items = JSON.parse(div.dataset.items);
-      const user = div.closest('.user-details').querySelector('summary').innerText.split('\n')[0].trim();
-      const payload = {
-          user: user, items: items, total: items.reduce((s,i)=>s+i.subtotal,0), fecha: new Date().toISOString()
-      };
-      const res = await fetch(`${apiBase}/generar-pdf-peticion`, {
-          method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
-      });
-      const d = await res.json(); if(d.pdf) window.open(d.pdf, '_blank');
-  }
-
-  // --- AÑADIR PRODUCTO ---
-  function openAddModal(pid) { currentPedidoId = pid; document.getElementById('addProductModal').showModal(); }
-  function closeAddModal() { document.getElementById('addProductModal').close(); }
-  async function addProductsToPedido() {
-      const input = document.getElementById('productsInput').value;
-      if(!productos.length) { const r = await fetch(`${apiBase}/productos`); productos = await r.json(); }
-      const apply3 = document.getElementById('apply3percent').checked;
-      const parts = input.split(',');
-      let newItems = [];
-      for(let p of parts) {
-          const [id, qty] = p.trim().split('x');
-          const prod = productos.find(x => x.id == id);
-          if(prod) {
-              let pr = prod.precio * 1.10; if(apply3) pr *= 0.97;
-              newItems.push({id:prod.id, nombre:prod.nombre, cantidad:parseInt(qty), precio_unitario:pr, subtotal: parseInt(qty)*pr});
-          }
-      }
-      if(newItems.length) {
-          const div = document.getElementById(`pedido-${currentPedidoId}`);
-          let items = JSON.parse(div.dataset.items);
-          newItems.forEach(ni => {
-              const idx = items.findIndex(i => i.id == ni.id);
-              if(idx >= 0) { items[idx].cantidad += ni.cantidad; items[idx].subtotal = items[idx].cantidad * items[idx].precio_unitario; }
-              else items.push(ni);
-          });
-          div.dataset.items = JSON.stringify(items);
-          updatePedidoItems(currentPedidoId, items);
-          closeAddModal();
-      }
-  }
-
-  // --- PETICIONES ---
-  function renderPeticionItemsHTML(items, peticionId) {
-    return items.map((item, index) => {
-        let stockWarning = '';
-        const product = productos.find(p => p.id === item.id);
-        if (product && item.cantidad > (product.stock || 0)) {
-            stockWarning = '<span style="color: #d32f2f; font-weight:bold; font-size:0.8em; margin-left:5px;">⚠️ Falta stock</span>';
-        }
-        return `
-        <div class="item" data-item-index="${index}">
-        <span id="item-text-${peticionId}-${index}" style="flex:1;">
-            ${item.nombre}: <b><span id="cantidad-${peticionId}-${index}">${item.cantidad}</span></b> x ${formatMoney(item.precio_unitario)} = ${formatMoney(item.subtotal)}${stockWarning}
-        </span>
-        <div style="display:flex; gap:2px;">
-            <button class="increase" style="padding:2px 6px; background:#dcedc8;" onclick="modificarCantidad('${peticionId}', ${index}, 1)">+</button>
-            <button class="decrease" style="padding:2px 6px; background:#fff9c4;" onclick="modificarCantidad('${peticionId}', ${index}, -1)" ${item.cantidad <= 1 ? 'disabled' : ''}>-</button>
-            <button class="delete" style="padding:2px 6px;" onclick="eliminarItemPeticion('${peticionId}', ${index})">×</button>
-        </div>
-        </div>
-        `;
-    }).join('');
-  }
-
-  function modificarCantidad(peticionId, itemIndex, change) {
-    const peticionDiv = document.getElementById(`peticion-${peticionId}`);
-    if (!peticionDiv) return;
-    let items = JSON.parse(peticionDiv.dataset.items || '[]');
-    items[itemIndex].cantidad = Math.max(1, items[itemIndex].cantidad + change);
-    items[itemIndex].subtotal = items[itemIndex].cantidad * items[itemIndex].precio_unitario;
-    peticionDiv.dataset.items = JSON.stringify(items);
-    
-    const total = items.reduce((sum, it) => sum + it.subtotal, 0);
-    document.getElementById(`total-${peticionId}`).textContent = formatMoney(total);
-    const cantSpan = document.getElementById(`cantidad-${peticionId}-${itemIndex}`);
-    const txtSpan = document.getElementById(`item-text-${peticionId}-${itemIndex}`);
-    if(cantSpan) {
-        cantSpan.textContent = items[itemIndex].cantidad;
-        txtSpan.innerHTML = `${items[itemIndex].nombre}: <b><span id="cantidad-${peticionId}-${itemIndex}">${items[itemIndex].cantidad}</span></b> x ${formatMoney(items[itemIndex].precio_unitario)} = ${formatMoney(items[itemIndex].subtotal)}`;
-    }
-  }
-
-  function eliminarItemPeticion(peticionId, itemIndex) {
-    if (!confirm('¿Eliminar item?')) return;
-    const peticionDiv = document.getElementById(`peticion-${peticionId}`);
-    let items = JSON.parse(peticionDiv.dataset.items || '[]');
-    items = items.filter((_, idx) => idx !== itemIndex);
-    peticionDiv.dataset.items = JSON.stringify(items);
-    
-    const container = document.getElementById(`items-${peticionId}`);
-    if(container) container.innerHTML = renderPeticionItemsHTML(items, peticionId);
-    
-    const total = items.reduce((sum, it) => sum + it.subtotal, 0);
-    const totalLabel = document.getElementById(`total-${peticionId}`).textContent = formatMoney(total);
-  }
-
-  async function cargarPeticiones() {
-      const lista = document.getElementById('listaPeticiones');
-      try {
-          const res = await fetch(`${apiBase}/peticiones`, { cache: 'no-store' });
-          const peticiones = await res.json();
-          lista.innerHTML = '';
-          if(!peticiones.length) { lista.innerHTML = '<p>No hay peticiones.</p>'; return; }
-          
-          peticiones.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
-          peticiones.forEach(p => {
-              const isUsed = usedButtons[p.id];
-              const { formattedDate, formattedTime } = formatDateTime(p.fecha);
-              
-              const div = document.createElement('div');
-              // Usamos estilo pedido-item para mantener grilla consistente
-              div.className = 'pedido-item';
-              div.id = `peticion-${p.id}`;
-              div.dataset.items = JSON.stringify(p.items);
-              div.dataset.nombre = p.nombre;
-              div.dataset.userId = p.user_id || '';
-              div.dataset.nombreNegocio = p.nombre_negocio || '';
-              
-              const itemsHTML = renderPeticionItemsHTML(p.items, p.id);
-              
-              // Botonera de peticiones
-              let buttonsHTML = '';
-              if (isUsed) {
-                  buttonsHTML = `<div style="margin-top:10px; padding:10px; background:#e8f5e9; color:#2e7d32; border-radius:6px; text-align:center; font-weight:bold;">
-                    Estado: ${isUsed === 'plus7' ? '✅ Confirmado -3%' : '✅ Confirmado'}
-                 </div>`;
-              } else {
-                  buttonsHTML = `
-                  <div class="pedido-actions">
-                      <button class="confirmar" onclick="confirmarPeticion(${p.id}, false)">Confirmar</button>
-                      <button class="confirmar" style="color:#00838f; border-color:#b2ebf2;" onclick="confirmarPeticion(${p.id}, true)">Confirmar -3%</button>
-                      <button class="preview-pdf" onclick="previewPDF(${p.id})">Preview PDF</button>
-                      <button class="add-product" onclick="copiarFaltantes(${p.id})">Copiar Faltantes</button>
-                      <button class="delete" style="grid-column: span 2;" onclick="eliminarPeticion(${p.id})">Eliminar Petición</button>
-                  </div>`;
-              }
-
-              div.innerHTML = `
-                 <div class="pedido-line" style="display:flex; gap:10px; align-items:flex-start;">
-                    <input type="checkbox" class="peticion-check" value="${p.id}" onclick="event.stopPropagation(); updatePeticionSelection()">
-                    <div style="flex:1;">
-                        <strong>${p.nombre}</strong> <small>(ID: ${p.id})</small><br>
-                        ${formattedDate} ${formattedTime}<br>
-                        Tel: ${p.telefono || '-'}<br>
-                        <b>Total Est: <span id="total-${p.id}">${formatMoney(p.total)}</span></b>
-                    </div>
-                 </div>
-                 <div class="peticion-items" id="items-${p.id}">${itemsHTML}</div>
-                 ${buttonsHTML}
-              `;
-              lista.appendChild(div);
-          });
-      } catch(e) { console.error(e); }
-  }
-
-  function updatePeticionSelection() {
-      const checks = document.querySelectorAll('.peticion-check:checked');
-      const span = document.getElementById('peticionesSelectedCount');
-      if(span) span.textContent = `${checks.length} seleccionados`;
-  }
-
-  async function confirmarPeticion(peticionId, subtractThreePercent, isBulk = false) {
-    if (!isBulk && !confirm(`¿Confirmar esta petición${subtractThreePercent ? ' con -3%' : ''}?`)) return;
-    const peticionDiv = document.getElementById(`peticion-${peticionId}`);
-    const botones = peticionDiv.querySelectorAll('button');
-    botones.forEach(btn => { btn.disabled = true; });
-
-    try {
-      if (usedButtons[peticionId]) throw new Error('Ya fue confirmado.');
-      const items = JSON.parse(peticionDiv.dataset.items || '[]');
-      if (items.length === 0) throw new Error('No hay items');
-      
-      const nombre = peticionDiv.dataset.nombre;
-      const userId = peticionDiv.dataset.userId || null;
-      const nombreNegocio = peticionDiv.dataset.nombreNegocio || null;
-      
-      const pedidoItems = items.map(item => ({
-        id: item.id, cantidad: item.cantidad,
-        precio: subtractThreePercent ? item.precio_unitario * 0.97 : item.precio_unitario
-      }));
-
-      const res = await fetch(`${apiBase}/guardar-pedidos`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user: nombre, pedido: pedidoItems, user_id: userId, nombre_negocio: nombreNegocio })
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      
-      await fetch(`${apiBase}/peticiones/${peticionId}`, { method: 'DELETE' });
-      usedButtons[peticionId] = subtractThreePercent ? 'plus7' : 'normal';
-      saveUsedButtons();
-      
-      if (!isBulk) { alert('Petición confirmada.'); location.reload(); }
-      return true;
-    } catch (err) {
-      if (!isBulk) { alert(err.message); botones.forEach(btn => btn.disabled = false); }
-      return false;
-    }
-  }
-
-  async function procesarPeticionesMasivas(applyDiscount) {
-      const checks = document.querySelectorAll('.peticion-check:checked');
-      if(checks.length === 0) return alert('Selecciona al menos una petición.');
-      if(!confirm(`¿Aceptar ${checks.length} peticiones?`)) return;
-      let procesados = 0;
-      for (const chk of checks) {
-          const exito = await confirmarPeticion(chk.value, applyDiscount, true); 
-          if(exito) procesados++;
-      }
-      alert(`Proceso finalizado. ${procesados} aceptados.`);
-      location.reload();
-  }
-
-  async function eliminarPeticion(id) {
-    if(!confirm('¿Eliminar petición?')) return;
-    try {
-        await fetch(`${apiBase}/peticiones/${id}`, { method: 'DELETE' });
-        cargarPeticiones();
-    } catch(e) { mostrarError(e.message); }
-  }
-
-  // --- FALTANTES ---
-  function copiarFaltantes(peticionId) {
-    const peticionDiv = document.getElementById(`peticion-${peticionId}`);
-    if (!peticionDiv) return alert('Petición no encontrada');
-    const items = JSON.parse(peticionDiv.dataset.items);
-    let faltantes = [];
-    for (const item of items) {
-      const product = productos.find(p => p.id === item.id);
-      const stock = product ? Math.max(product.stock || 0, 0) : 0;
-      const missing = Math.max(0, item.cantidad - stock);
-      if (missing > 0) faltantes.push(`${missing} ${item.nombre}`);
-    }
-    const textToCopy = faltantes.join('\n');
-    navigator.clipboard.writeText(textToCopy).then(() => alert('Copiado:\n' + textToCopy));
-  }
-  function copiarFaltantesGrupo() {
-    const checks = document.querySelectorAll('.peticion-check:checked');
-    if(checks.length === 0) return alert('Selecciona peticiones.');
-    const aggregated = new Map();
-    checks.forEach(chk => {
-        const div = document.getElementById(`peticion-${chk.value}`);
-        const items = JSON.parse(div.dataset.items);
-        items.forEach(item => {
-            const idKey = String(item.id); 
-            if(!aggregated.has(idKey)) aggregated.set(idKey, { nombre: item.nombre, cantidad: 0 });
-            aggregated.get(idKey).cantidad += Number(item.cantidad);
-        });
-    });
-    const faltantes = [];
-    for (const [idKey, data] of aggregated) {
-        const product = productos.find(p => p.id == idKey);
-        let stock = product ? Number(product.stock) : 0;
-        if (isNaN(stock) || stock < 0) stock = 0;
-        const missing = data.cantidad - stock;
-        if(missing > 0) faltantes.push(`${missing} ${data.nombre}`);
-    }
-    const text = faltantes.join('\n') || 'No faltan productos.';
-    navigator.clipboard.writeText(text).then(() => alert('Copiado:\n' + text));
-  }
-
-  async function previewPDF(peticionId) {
-      const peticionDiv = document.getElementById(`peticion-${peticionId}`);
-      const items = JSON.parse(peticionDiv.dataset.items);
-      const nombre = peticionDiv.dataset.nombre;
-      const payload = {
-          user: nombre,
-          items: items.map(i => ({
-              id: i.id, nombre: i.nombre, cantidad: i.cantidad,
-              precio_unitario: i.precio_unitario * 0.97 * 1.10,
-              subtotal: i.cantidad * (i.precio_unitario * 0.97 * 1.10)
-        })),
-        total: 0, fecha: new Date().toISOString()
-      };
-      payload.total = payload.items.reduce((s, i) => s + i.subtotal, 0);
-      const res = await fetch(`${apiBase}/generar-pdf-peticion`, {
-          method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
-      });
-      const data = await res.json(); if(data.pdf) window.open(data.pdf, '_blank');
-  }
-
-  // --- INIT ---
-  async function cargarProductos() {
-    try {
-        const res = await fetch(`${apiBase}/productos`);
-        productos = await res.json();
-    } catch(e) { console.error(e); }
-  }
-
-  window.addEventListener('DOMContentLoaded', async () => {
-    cleanOldCache(); // Limpiar caché vieja (1 semana)
-    await cargarProductos();
-    await cargarUsuarios();
-    await cargarPeticiones();
-  });
-
-  </script>
+    <script>
+        const { createApp, nextTick } = Vue;
+        const apiBase = 'https://distribuidorafunaz-a2o6.onrender.com/api';
+
+        // --- SEGURIDAD: CHECK LOGIN ---
+        const currentUser = localStorage.getItem('loggedUser');
+        if (currentUser !== 'admin') { window.location.href = 'index.html'; }
+
+        createApp({
+            data() {
+                return {
+                    // Datos API
+                    rawPedidos: [],
+                    peticiones: [],
+                    productos: [],
+                    
+                    // Persistencia y Configuración Local
+                    estadosPedidos: JSON.parse(localStorage.getItem('estadosPedidos') || '{}'),
+                    groupsConfig: JSON.parse(localStorage.getItem('groupsConfig') || '{}'),
+                    originalCache: JSON.parse(localStorage.getItem('originalPedidosCache') || '{}'),
+                    originalCacheTime: JSON.parse(localStorage.getItem('originalPedidosCacheTime') || '{}'),
+                    usedButtons: JSON.parse(localStorage.getItem('usedButtons') || '{}'),
+                    
+                    // Estado de la Interfaz
+                    search: '',
+                    focusedUser: null,
+                    loadedCounts: {}, 
+                    selectedUsers: [], // Para grupos
+                    selectedOrders: [], // Para acción masiva pedidos (IDs)
+                    selectedPeticiones: [], // Para acción masiva peticiones
+                    
+                    // UI Modals y Feedbacks
+                    mensaje: '',
+                    mensajeTipo: 'info',
+                    loadingOrders: {},
+                    modalOpen: false,
+                    modalPedidoId: null,
+                    modalInput: '',
+                    modalApplyDiscount: false
+                }
+            },
+            computed: {
+                // MÉTRICAS
+                ordersArmando() { return this.rawPedidos.filter(p => !this.estadosPedidos[p.uid]?.recibido).length; },
+                ordersPreparado() { return this.rawPedidos.filter(p => this.estadosPedidos[p.uid]?.recibido).length; },
+                
+                // LÓGICA DE AGRUPACIÓN
+                groupedUsers() {
+                    const groups = {};
+                    const userToGroup = {};
+                    // Mapa inverso Usuario -> Grupo
+                    Object.entries(this.groupsConfig).forEach(([gName, members]) => {
+                        members.forEach(m => userToGroup[m] = gName);
+                    });
+
+                    this.rawPedidos.forEach((p, index) => {
+                        // Generación de UID único y estable
+                        p.uid = p.id ? String(p.id) : `${p.user}-${index}`;
+                        const key = userToGroup[p.user] || p.user || 'Invitado';
+                        if (!groups[key]) groups[key] = [];
+                        groups[key].push(p);
+                    });
+
+                    // Ordenar por fecha (más reciente arriba)
+                    for (const key in groups) {
+                        groups[key].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+                    }
+                    return groups;
+                },
+                // FILTRADO INTELIGENTE
+                filteredGroups() {
+                    if (!this.search) return this.groupedUsers;
+                    const q = this.search.toLowerCase();
+                    const result = {};
+                    
+                    for (const [name, orders] of Object.entries(this.groupedUsers)) {
+                        // Buscar en: Nombre Grupo, Nombre Cliente, ID Pedido, Negocio, Items
+                        const match = name.toLowerCase().includes(q) || 
+                                      orders.some(o => 
+                                          String(o.id).includes(q) || 
+                                          (o.nombre_negocio && o.nombre_negocio.toLowerCase().includes(q)) ||
+                                          (o.user && o.user.toLowerCase().includes(q)) ||
+                                          o.items.some(i => i.nombre.toLowerCase().includes(q))
+                                      );
+                        if (match) result[name] = orders;
+                    }
+                    return result;
+                }
+            },
+            methods: {
+                // --- UTILIDADES ---
+                formatMoney(val) { return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(val || 0); },
+                formatDate(iso) { 
+                    if (!iso) return '';
+                    const d = new Date(iso);
+                    return d.toLocaleDateString('es-AR', {day:'2-digit', month:'2-digit'}) + ' ' + d.toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
+                },
+                showMsg(msg, type='info') {
+                    this.mensaje = msg; this.mensajeTipo = type;
+                    setTimeout(() => this.mensaje = '', 4000);
+                },
+                saveStorage() {
+                    localStorage.setItem('estadosPedidos', JSON.stringify(this.estadosPedidos));
+                    localStorage.setItem('groupsConfig', JSON.stringify(this.groupsConfig));
+                    localStorage.setItem('originalPedidosCache', JSON.stringify(this.originalCache));
+                    localStorage.setItem('originalPedidosCacheTime', JSON.stringify(this.originalCacheTime));
+                    localStorage.setItem('usedButtons', JSON.stringify(this.usedButtons));
+                },
+
+                // --- CARGA INICIAL DE DATOS ---
+                async loadAll() {
+                    try {
+                        const [resProd, resPed, resPet] = await Promise.all([
+                            fetch(`${apiBase}/productos`),
+                            fetch(`${apiBase}/pedidos`),
+                            fetch(`${apiBase}/peticiones`)
+                        ]);
+                        this.productos = await resProd.json();
+                        this.rawPedidos = await resPed.json();
+                        this.peticiones = await resPet.json();
+                        
+                        // Parseo de seguridad para JSONs anidados
+                        const parser = (list) => list.forEach(p => { 
+                            if(typeof p.items === 'string') { try { p.items = JSON.parse(p.items); } catch { p.items = []; } }
+                        });
+                        parser(this.rawPedidos);
+                        parser(this.peticiones);
+
+                        // Limpieza de caché antigua (> 7 días)
+                        const now = Date.now();
+                        const sevenDays = 604800000;
+                        for(const uid in this.originalCacheTime) {
+                            if(now - this.originalCacheTime[uid] > sevenDays) {
+                                delete this.originalCache[uid]; delete this.originalCacheTime[uid];
+                            }
+                        }
+                        this.saveStorage();
+                        nextTick(() => lucide.createIcons());
+
+                    } catch (e) { console.error(e); this.showMsg('Error conectando con el servidor', 'error'); }
+                },
+
+                // --- ESTADOS Y LÓGICA DE NEGOCIO ---
+                getEstado(uid) {
+                    if (!this.estadosPedidos[uid]) this.estadosPedidos[uid] = { recibido: false, guardado: false };
+                    return this.estadosPedidos[uid];
+                },
+                toggleEstado(uid, val) {
+                    // Solo cambiamos el estado visual/lógico local
+                    this.getEstado(uid).recibido = val;
+                    this.saveStorage();
+                },
+
+                // --- VISTA ORIGINAL (CACHE) ---
+                isOriginalView(uid) { return this.estadosPedidos[uid]?.viewOriginal || false; },
+                toggleOriginal(uid) {
+                    const st = this.getEstado(uid);
+                    st.viewOriginal = !st.viewOriginal;
+                    
+                    // Fallback: Si activamos vista original y no hay caché, guardamos estado actual como original
+                    if (st.viewOriginal && !this.originalCache[uid]) {
+                        const pedido = this.rawPedidos.find(p => p.uid === uid);
+                        if(pedido) {
+                            this.originalCache[uid] = JSON.parse(JSON.stringify(pedido.items));
+                            this.originalCacheTime[uid] = Date.now();
+                            this.saveStorage();
+                        }
+                    }
+                },
+                getItemsToShow(pedido) {
+                    // Si vista original activa y existe caché, mostramos caché. Si no, actual.
+                    if (this.isOriginalView(pedido.uid) && this.originalCache[pedido.uid]) return this.originalCache[pedido.uid];
+                    return pedido.items;
+                },
+                calculateTotal(pedido) {
+                    return this.getItemsToShow(pedido).reduce((acc, item) => acc + (Number(item.subtotal)||0), 0);
+                },
+
+                // --- UI HELPERS ---
+                shouldShowGroup(name) { return true; }, 
+                isGroup(name) { return !!this.groupsConfig[name]; },
+                toggleFocus(name) { 
+                    this.focusedUser = this.focusedUser === name ? null : name; 
+                    window.scrollTo({top: 0, behavior: 'smooth'});
+                },
+                shouldShowLoadMore(name, group) { return group.length > (this.loadedCounts[name] || 5); },
+                loadMore(name) { this.loadedCounts[name] = (this.loadedCounts[name] || 5) + 5; },
+                getItemsSlice(name, group) {
+                    const initial = this.focusedUser === name ? 50 : 5;
+                    const limit = Math.max(this.loadedCounts[name] || 0, initial);
+                    return group.slice(0, limit);
+                },
+
+                // --- ACCIONES DE PEDIDO ---
+                async guardarCloud(pedido) { 
+                    this.loadingOrders[pedido.uid] = true;
+                    try {
+                        const res = await fetch(`${apiBase}/pedidos/${pedido.id}/pdf`);
+                        if(!res.ok) throw new Error('Error generando PDF en servidor');
+                        const data = await res.json();
+                        if(data.pdf) window.open(data.pdf, '_blank');
+                        // Marcamos como guardado visualmente
+                        this.getEstado(pedido.uid).guardado = true;
+                        this.saveStorage();
+                    } catch(e) { this.showMsg(e.message, 'error'); } 
+                    finally { this.loadingOrders[pedido.uid] = false; }
+                },
+                async previewPDF(pedido) { 
+                    this.loadingOrders[pedido.uid] = true;
+                    try {
+                        const payload = {
+                            user: pedido.user, items: pedido.items,
+                            total: this.calculateTotal(pedido),
+                            fecha: new Date().toISOString(), nombre_negocio: pedido.nombre_negocio
+                        };
+                        const res = await fetch(`${apiBase}/generar-pdf-peticion`, {
+                            method: 'POST', headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(payload)
+                        });
+                        const data = await res.json();
+                        if(data.pdf) window.open(data.pdf, '_blank');
+                    } catch(e) { this.showMsg(e.message, 'error'); } 
+                    finally { this.loadingOrders[pedido.uid] = false; }
+                },
+
+                // --- GUARDAR CAMBIOS (Lógica Crítica de Delta) ---
+                async guardarCambios(uid) {
+                    if(!confirm('¿Confirmar cambios permanentemente en BD?')) return;
+                    const pedido = this.rawPedidos.find(p => p.uid === uid);
+                    const estado = this.getEstado(uid);
+
+                    // Si no hay snapshot original, asumimos que antes de editar, los items eran los originales
+                    if(!this.originalCache[uid]) {
+                        this.originalCache[uid] = JSON.parse(JSON.stringify(pedido.items)); 
+                        this.originalCacheTime[uid] = Date.now();
+                    }
+
+                    // Calculamos DELTA (Diferencia) para stockUpdates
+                    const deltaMap = new Map();
+                    const oldItems = this.originalCache[uid];
+                    const newItems = pedido.items;
+                    
+                    // Restamos lo viejo (devolver virtual) y Sumamos lo nuevo (consumir)
+                    oldItems.forEach(i => deltaMap.set(i.id, (deltaMap.get(i.id)||0) - Number(i.cantidad))); 
+                    newItems.forEach(i => deltaMap.set(i.id, (deltaMap.get(i.id)||0) + Number(i.cantidad))); 
+                    
+                    const stockUpdates = [];
+                    // LOGICA DE "MODO DEVOLUCIÓN" AUTOMATIZADA:
+                    // Si estado.recibido es FALSE (Armando) -> Permitimos devolver stock (deltas negativos).
+                    // Si estado.recibido es TRUE (Preparado) -> NO permitimos devolver stock (ignoramos deltas negativos).
+                    
+                    for(const [id, delta] of deltaMap.entries()) {
+                         if(delta > 0) {
+                             // Siempre consumimos stock si agregamos items
+                             stockUpdates.push({id, cantidad: delta});
+                         } else if (delta < 0 && !estado.recibido) {
+                             // Solo devolvemos stock si NO está Preparado (Armando)
+                             stockUpdates.push({id, cantidad: delta});
+                         }
+                         // Si delta < 0 y está Preparado, lo ignoramos (no devuelve stock)
+                    }
+
+                    this.loadingOrders[uid] = true;
+                    try {
+                        const res = await fetch(`${apiBase}/actualizar-pedido/${pedido.id}`, {
+                            method: 'PUT', headers: {'Content-Type':'application/json'},
+                            body: JSON.stringify({ items: newItems, stockUpdates })
+                        });
+                        if(!res.ok) throw new Error(await res.text());
+                        
+                        // Nuevo estado se convierte en el "Original"
+                        this.originalCache[uid] = JSON.parse(JSON.stringify(newItems));
+                        this.saveStorage();
+                        this.showMsg('Pedido actualizado correctamente', 'success');
+                    } catch(e) { this.showMsg(e.message, 'error'); } 
+                    finally { this.loadingOrders[uid] = false; }
+                },
+
+                async eliminarPedido(pedido) {
+                    const estado = this.getEstado(pedido.uid);
+                    const msg = estado.recibido 
+                        ? 'ESTADO: PREPARADO (VERDE). El stock NO se devolverá.'
+                        : 'ESTADO: ARMANDO (NARANJA). El stock SE DEVUELVE a inventario.';
+                    
+                    if(!confirm(`¿Eliminar pedido?\n\n${msg}`)) return;
+
+                    try {
+                        await fetch(`${apiBase}/eliminar-pedido/${pedido.id}`, {
+                            method: 'DELETE', headers: {'Content-Type':'application/json'},
+                            body: JSON.stringify({ recibido: estado.recibido })
+                        });
+                        this.rawPedidos = this.rawPedidos.filter(p => p.uid !== pedido.uid);
+                        this.showMsg('Pedido eliminado');
+                    } catch(e) { this.showMsg(e.message, 'error'); }
+                },
+
+                // --- EDICIÓN DE ITEMS ---
+                modItem(uid, idx, chg) {
+                    const item = this.rawPedidos.find(p => p.uid === uid).items[idx];
+                    item.cantidad = Math.max(1, Number(item.cantidad) + chg);
+                    item.subtotal = item.cantidad * item.precio_unitario;
+                },
+                delItem(uid, idx) {
+                    if(!confirm('¿Quitar este item?')) return;
+                    this.rawPedidos.find(p => p.uid === uid).items.splice(idx, 1);
+                },
+                async actualizarPrecios(uid, discount) {
+                    if(this.isOriginalView(uid)) return alert('Sal de la vista original primero.');
+                    if(!confirm('¿Actualizar precios a valores actuales?')) return;
+                    
+                    const pedido = this.rawPedidos.find(p => p.uid === uid);
+                    const precioMap = new Map(this.productos.map(p => [p.id, p.precio]));
+                    const mult = discount ? 1.10 * 0.97 : 1.10;
+                    
+                    let changes = 0;
+                    pedido.items.forEach(i => {
+                        const base = precioMap.get(i.id);
+                        if(base) {
+                            i.precio_unitario = Number((base * mult).toFixed(2));
+                            i.subtotal = i.cantidad * i.precio_unitario;
+                            changes++;
+                        }
+                    });
+                    this.showMsg(`${changes} precios actualizados`);
+                },
+
+                // --- MODAL AÑADIR ---
+                openAddModal(uid) { this.modalPedidoId = uid; this.modalInput = ''; this.modalOpen = true; nextTick(() => this.$refs.modalInputRef?.focus()); },
+                addProducts() {
+                    const pedido = this.rawPedidos.find(p => p.uid === this.modalPedidoId);
+                    if(!pedido) return;
+                    const parts = this.modalInput.split(',').map(s=>s.trim());
+                    
+                    parts.forEach(part => {
+                        const [idStr, qtyStr] = part.split('x');
+                        const p = this.productos.find(pr => pr.id == idStr);
+                        if(p) {
+                            let precio = p.precio * 1.10;
+                            if(this.modalApplyDiscount) precio *= 0.97;
+                            const qty = parseInt(qtyStr)||1;
+                            const exist = pedido.items.find(i => i.id == p.id);
+                            if(exist) {
+                                exist.cantidad += qty;
+                                exist.precio_unitario = precio;
+                                exist.subtotal = exist.cantidad * precio;
+                            } else {
+                                pedido.items.push({ id: p.id, nombre: p.nombre, cantidad: qty, precio_unitario: precio, subtotal: qty*precio });
+                            }
+                        }
+                    });
+                    this.modalOpen = false;
+                },
+
+                // --- PETICIONES ---
+                parseItems(items) { return Array.isArray(items) ? items : JSON.parse(items || '[]'); },
+                getStockWarning(item) {
+                     const prod = this.productos.find(p => p.id === item.id);
+                     return prod && item.cantidad > (prod.stock || 0);
+                },
+                async confirmarPeticion(peticion, discount) {
+                    if(!confirm('¿Aceptar petición y convertir en pedido?')) return;
+                    try {
+                        const items = this.parseItems(peticion.items);
+                        const finalItems = items.map(i => ({
+                            id: i.id, cantidad: i.cantidad,
+                            precio: discount ? i.precio_unitario * 0.97 : i.precio_unitario
+                        }));
+                        
+                        await fetch(`${apiBase}/guardar-pedidos`, {
+                            method: 'POST', headers: {'Content-Type':'application/json'},
+                            body: JSON.stringify({
+                                user: peticion.nombre, pedido: finalItems,
+                                user_id: peticion.user_id, nombre_negocio: peticion.nombre_negocio
+                            })
+                        });
+                        await fetch(`${apiBase}/peticiones/${peticion.id}`, { method: 'DELETE' });
+                        
+                        this.usedButtons[peticion.id] = discount ? 'plus7' : 'normal';
+                        this.saveStorage();
+                        this.peticiones = this.peticiones.filter(p => p.id !== peticion.id);
+                        this.loadAll(); 
+                        this.showMsg('Petición procesada', 'success');
+                    } catch(e) { this.showMsg(e.message, 'error'); }
+                },
+                async eliminarPeticion(id) {
+                    if(!confirm('¿Borrar petición definitivamente?')) return;
+                    await fetch(`${apiBase}/peticiones/${id}`, { method: 'DELETE' });
+                    this.peticiones = this.peticiones.filter(p => p.id !== id);
+                },
+                previewPDFPeticion(p) {
+                    this.previewPDF({ user: p.nombre, items: this.parseItems(p.items), fecha: p.fecha, nombre_negocio: p.nombre_negocio });
+                },
+
+                // --- CÁLCULO DE FALTANTES (INDIVIDUAL/MASIVO) ---
+                copiarFaltantesIndividual(peticion) {
+                    const items = this.parseItems(peticion.items);
+                    let text = "";
+                    items.forEach(i => {
+                        const prod = this.productos.find(p => p.id === i.id);
+                        const stock = prod ? Number(prod.stock || 0) : 0;
+                        const faltante = Math.max(0, i.cantidad - stock);
+                        if(faltante > 0) text += `${faltante} ${i.nombre}\n`;
+                    });
+                    if(!text) text = "Hay stock suficiente.";
+                    navigator.clipboard.writeText(text).then(() => alert('Copiado:\n' + text));
+                },
+                copiarFaltantesPeticionesMasivo() {
+                    const selected = this.peticiones.filter(p => this.selectedPeticiones.includes(p.id));
+                    if(selected.length === 0) return;
+                    const agg = {};
+                    selected.forEach(p => {
+                        this.parseItems(p.items).forEach(i => {
+                            if(!agg[i.id]) agg[i.id] = { nombre: i.nombre, cantidad: 0 };
+                            agg[i.id].cantidad += Number(i.cantidad);
+                        });
+                    });
+                    let text = "";
+                    for(const id in agg) {
+                        const prod = this.productos.find(p => p.id == id);
+                        const stock = prod ? Number(prod.stock || 0) : 0;
+                        const faltante = Math.max(0, agg[id].cantidad - stock);
+                        if(faltante > 0) text += `${faltante} ${agg[id].nombre}\n`;
+                    }
+                    if(!text) text = "Stock suficiente para la selección.";
+                    navigator.clipboard.writeText(text).then(() => alert('Faltantes Agrupados Copiados:\n' + text));
+                },
+                copiarFaltantesGlobal() {
+                    // Solo toma pedidos NO recibidos (Armando)
+                    const pendientes = this.rawPedidos.filter(p => !this.getEstado(p.uid).recibido);
+                    const agg = {};
+                    pendientes.forEach(p => p.items.forEach(i => {
+                        if(!agg[i.id]) agg[i.id] = { nombre: i.nombre, cantidad: 0 };
+                        agg[i.id].cantidad += Number(i.cantidad);
+                    }));
+                    let text = "LISTA DE ARMADO GLOBAL (FALTANTES):\n";
+                    Object.values(agg).forEach(v => text += `${v.cantidad} ${v.nombre}\n`);
+                    navigator.clipboard.writeText(text).then(() => alert('Lista global copiada.'));
+                },
+
+                // --- ACCIONES MASIVAS ---
+                crearGrupo() {
+                    if(this.selectedUsers.length < 2) return alert('Elige al menos 2 clientes.');
+                    const name = prompt('Nombre del Grupo:');
+                    if(name) { this.groupsConfig[name] = [...this.selectedUsers]; this.selectedUsers=[]; this.saveStorage(); }
+                },
+                disolverGrupo(name) {
+                    if(confirm(`¿Disolver grupo "${name}"?`)) { delete this.groupsConfig[name]; this.saveStorage(); }
+                },
+                clearSelection() { this.selectedUsers=[]; this.selectedOrders=[]; },
+                async accionMasivaPedidos(modo) {
+                    if(!confirm(`¿Procesar ${this.selectedOrders.length} pedidos?\nSe abrirán múltiples pestañas.`)) return;
+                    for(const uid of this.selectedOrders) {
+                        const p = this.rawPedidos.find(o => o.uid === uid);
+                        if(p) {
+                            if(modo === 'cloud') await this.guardarCloud(p);
+                            else await this.previewPDF(p);
+                            await new Promise(r => setTimeout(r, 600)); // Pausa para evitar bloqueo de popup
+                        }
+                    }
+                    this.clearSelection();
+                },
+                async procesarPeticionesMasivo(discount) {
+                    if(this.selectedPeticiones.length === 0) return alert('Selecciona peticiones');
+                    if(!confirm(`¿Aceptar ${this.selectedPeticiones.length} peticiones?`)) return;
+                    for(const pid of this.selectedPeticiones) {
+                        const p = this.peticiones.find(pet => pet.id === pid);
+                        if(p) await this.confirmarPeticion(p, discount);
+                    }
+                    this.selectedPeticiones = [];
+                }
+            },
+            mounted() {
+                this.loadAll();
+                nextTick(() => lucide.createIcons());
+            }
+        }).mount('#app');
+    </script>
 </body>
 </html>
