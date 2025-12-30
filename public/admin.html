@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Funaz (Edición Navideña)</title>
+    <title>Admin Panel - Funaz (Edición Completa)</title>
     
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -91,7 +91,7 @@
             </transition>
 
             <section v-if="focusMode && focusedItem" class="flex justify-center">
-                <div class="w-full max-w-3xl">
+                <div class="w-full max-w-4xl">
                     <div v-if="focusType === 'pedido'" 
                          :class="['bg-white rounded-2xl shadow-2xl border-4 overflow-hidden flex flex-col relative transform scale-100 transition-all', 
                                   getEstado(focusedItem.uid).recibido ? 'border-green-500 bg-green-50/20' : 'border-orange-400 bg-orange-50/20']">
@@ -115,7 +115,7 @@
                             </div>
                          </div>
 
-                         <div class="p-4 bg-white max-h-[60vh] overflow-y-auto custom-scroll">
+                         <div class="p-4 bg-white max-h-[50vh] overflow-y-auto custom-scroll">
                              <div v-for="(item, iIdx) in getItemsToShow(focusedItem)" :key="iIdx" class="flex justify-between items-center py-3 border-b border-dashed border-slate-200 last:border-0 text-lg px-2 group/focus">
                                 <div class="flex-1 pr-4 flex items-center">
                                     <span class="font-bold bg-slate-100 border border-slate-200 px-3 py-1 rounded text-slate-900 mr-3">{{ item.cantidad }}</span>
@@ -123,8 +123,7 @@
                                 </div>
                                 <div class="flex items-center gap-4">
                                     <div class="font-bold text-slate-700">{{ formatMoney(item.subtotal) }}</div>
-                                    
-                                    <div v-if="!isOriginalView(focusedItem.uid)" class="flex gap-1 opacity-100 bg-slate-50 shadow-sm rounded border border-slate-200 p-1">
+                                    <div v-if="!isOriginalView(focusedItem.uid)" class="flex gap-1 bg-slate-50 shadow-sm rounded border border-slate-200 p-1">
                                         <button @click="modItem(focusedItem.uid, iIdx, 1)" class="w-8 h-8 flex items-center justify-center bg-green-50 text-green-600 rounded hover:bg-green-100"><i data-lucide="plus" class="w-4 h-4"></i></button>
                                         <button @click="modItem(focusedItem.uid, iIdx, -1)" class="w-8 h-8 flex items-center justify-center bg-orange-50 text-orange-600 rounded hover:bg-orange-100"><i data-lucide="minus" class="w-4 h-4"></i></button>
                                         <button @click="delItem(focusedItem.uid, iIdx)" class="w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 rounded hover:bg-red-100"><i data-lucide="x" class="w-4 h-4"></i></button>
@@ -133,29 +132,54 @@
                              </div>
                          </div>
                          
-                         <div class="p-4 bg-slate-50 border-t border-slate-200 grid grid-cols-2 gap-4">
-                             <button @click="guardarCloud(focusedItem)" class="bg-slate-800 text-white py-3 rounded-xl font-bold hover:bg-slate-900">Guardar Cloud (PDF)</button>
-                             <button @click="previewPDF(focusedItem)" class="bg-orange-500 text-white py-3 rounded-xl font-bold hover:bg-orange-600">PDF +10%</button>
+                         <div class="p-5 bg-slate-50 border-t border-slate-200 space-y-4">
                              
-                             <button @click="openAddModal(focusedItem.uid)" class="bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 py-3 rounded-xl font-bold transition">
-                                + Añadir Productos
-                             </button>
-                             <button @click="guardarCambios(focusedItem.uid)" :disabled="isOriginalView(focusedItem.uid)" class="bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 shadow-sm transition disabled:opacity-50">
-                                Confirmar Cambios
-                             </button>
+                             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <button @click="guardarCloud(focusedItem)" class="bg-slate-800 text-white py-2 rounded-lg font-bold text-sm hover:bg-slate-900 flex items-center justify-center gap-2">
+                                    <i data-lucide="cloud" class="w-4 h-4"></i> Guardar Cloud
+                                </button>
+                                <button @click="previewPDF(focusedItem)" class="bg-orange-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-orange-600 flex items-center justify-center gap-2">
+                                    <i data-lucide="file-search" class="w-4 h-4"></i> PDF +10%
+                                </button>
+                                <button @click="openAddModal(focusedItem.uid)" class="bg-white border border-blue-300 text-blue-600 hover:bg-blue-50 py-2 rounded-lg font-bold text-sm flex items-center justify-center gap-2">
+                                    <i data-lucide="package-plus" class="w-4 h-4"></i> Añadir Prod
+                                </button>
+                                <button @click="toggleOriginal(focusedItem.uid)" :class="['py-2 rounded-lg font-bold text-sm flex items-center justify-center gap-2 border transition', isOriginalView(focusedItem.uid) ? 'bg-purple-100 text-purple-700 border-purple-300' : 'bg-white text-purple-600 border-purple-200 hover:bg-purple-50']">
+                                    <i data-lucide="history" class="w-4 h-4"></i> {{ isOriginalView(focusedItem.uid) ? 'Volver' : 'Ver Original' }}
+                                </button>
+                             </div>
 
-                             <div class="col-span-2 flex justify-between items-center bg-white p-3 rounded-xl border shadow-sm">
-                                <span class="font-bold uppercase">{{ getEstado(focusedItem.uid).recibido ? 'Preparado' : 'Armando' }}</span>
-                                <div class="flex items-center gap-2">
-                                    <input type="checkbox" :id="'sw-f-'+focusedItem.uid" class="toggle-input"
-                                           :checked="getEstado(focusedItem.uid).recibido"
-                                           @change="toggleEstado(focusedItem.uid, $event.target.checked)">
-                                    <label :for="'sw-f-'+focusedItem.uid" class="toggle-switch"></label>
-                                </div>
+                             <div class="grid grid-cols-2 gap-3">
+                                 <button @click="actualizarPrecios(focusedItem.uid, false)" class="bg-white border border-slate-300 text-slate-600 hover:bg-slate-50 py-2 rounded-lg font-bold text-sm">
+                                     $ Actualizar Precios (Hoy)
+                                 </button>
+                                 <button @click="actualizarPrecios(focusedItem.uid, true)" class="bg-white border border-teal-300 text-teal-600 hover:bg-teal-50 py-2 rounded-lg font-bold text-sm">
+                                     $ Actualizar con -3% Desc
+                                 </button>
+                             </div>
+
+                             <div class="flex flex-col md:flex-row gap-3 items-stretch md:items-center pt-2 border-t border-slate-200">
+                                 <div class="flex-1 flex justify-between items-center bg-white px-4 py-2 rounded-xl border shadow-sm">
+                                    <span class="font-bold uppercase text-sm">{{ getEstado(focusedItem.uid).recibido ? 'Preparado' : 'Armando' }}</span>
+                                    <div class="flex items-center gap-2">
+                                        <input type="checkbox" :id="'sw-f-'+focusedItem.uid" class="toggle-input"
+                                               :checked="getEstado(focusedItem.uid).recibido"
+                                               @change="toggleEstado(focusedItem.uid, $event.target.checked)">
+                                        <label :for="'sw-f-'+focusedItem.uid" class="toggle-switch"></label>
+                                    </div>
+                                 </div>
+                                 
+                                 <button @click="guardarCambios(focusedItem.uid)" :disabled="isOriginalView(focusedItem.uid)" class="flex-[2] bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 shadow-md transition disabled:opacity-50 text-lg">
+                                    Confirmar Cambios
+                                 </button>
+
+                                 <button @click="eliminarPedido(focusedItem)" class="bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 px-4 py-3 rounded-xl transition shadow-sm" title="Eliminar Pedido Completamente">
+                                     <i data-lucide="trash-2" class="w-6 h-6"></i>
+                                 </button>
                              </div>
                          </div>
                     </div>
-                    </div>
+                </div>
             </section>
 
             <div v-else>
@@ -581,7 +605,7 @@
                     }
                 },
                 toggleDevolucion(uid) {
-                    // ARREGLO 1: Acceder directamente al objeto reactivo, no al resultado de getEstado()
+                    // CORREGIDO: Acceso directo reactivo
                     if (!this.estadosPedidos[uid]) {
                         this.estadosPedidos[uid] = { guardado: false, modoDevolucion: false };
                     }
@@ -592,11 +616,8 @@
                 // ORIGINAL
                 isOriginalView(uid) { return this.estadosPedidos[uid]?.viewOriginal || false; },
                 toggleOriginal(uid) {
-                    // Usamos getEstado para asegurar init, pero modificamos el objeto real luego
                     if (!this.estadosPedidos[uid]) this.getEstado(uid); 
-                    
                     this.estadosPedidos[uid].viewOriginal = !this.estadosPedidos[uid].viewOriginal;
-                    
                     if (this.estadosPedidos[uid].viewOriginal && !this.originalCache[uid]) {
                         const p = this.rawPedidos.find(x => x.uid === uid);
                         if(p) { this.originalCache[uid] = JSON.parse(JSON.stringify(p.items)); this.saveStorage(); }
@@ -657,13 +678,10 @@
                     // Logica de Devolución
                     for(const [id, delta] of deltaMap.entries()) {
                          if(delta > 0) {
-                             // Si delta > 0, se consumió stock (se agregaron items), siempre actualizamos
                              stockUpdates.push({id, cantidad: delta});
                          } else if (delta < 0 && estado.modoDevolucion) {
-                             // Si delta < 0 (se quitaron items) Y modoDevolucion está activo, devolvemos stock
                              stockUpdates.push({id, cantidad: delta});
                          }
-                         // Si delta < 0 y NO está activo modoDevolucion, ignoramos (no devuelve stock)
                     }
 
                     try {
@@ -678,11 +696,6 @@
 
                 async eliminarPedido(pedido) {
                     const estado = this.getEstado(pedido.uid);
-                    // Solo devuelve stock si modoDevolucion está activo (similar a la lógica antigua)
-                    // O si prefieres mantener la lógica anterior de Armando/Preparado para borrar completo:
-                    // Asumiremos que al borrar TODO el pedido, si está en "Armando" devuelve stock, si "Preparado" no.
-                    // Pero para cambios parciales usamos la cajita.
-                    
                     const msg = estado.recibido 
                         ? 'PREPARADO (VERDE). NO SE DEVOLVERÁ STOCK.' 
                         : 'ARMANDO (NARANJA). SE DEVOLVERÁ EL STOCK.';
@@ -751,12 +764,6 @@
                 getStockWarning(item) { const p = this.productos.find(pr => pr.id === item.id); return p && item.cantidad > (p.stock||0); },
                 
                 async confirmarPeticion(peticion, discount) {
-                    // if(!confirm('¿Aceptar petición?')) return; 
-                    // ARREGLO 2: Quitamos confirmación si es masivo.
-                    // Pero espera, esta funcion es individual. El masivo llama a esta.
-                    // Si queremos quitar la confirmacion individual tambien:
-                    // Lo dejare comentado para que funcione rapido.
-                    
                     const items = this.parseItems(peticion.items).map(i => ({
                         id: i.id, cantidad: i.cantidad, precio: discount ? i.precio_unitario * 0.97 : i.precio_unitario
                     }));
@@ -773,10 +780,9 @@
                 },
                 async eliminarPeticion(id) { if(confirm('¿Borrar?')) { await fetch(`${apiBase}/peticiones/${id}`, { method:'DELETE' }); this.peticiones=this.peticiones.filter(p=>p.id!==id); if(this.focusMode) this.clearFocus(); } },
                 previewPDFPeticion(p) { this.previewPDF({ user:p.nombre, items:this.parseItems(p.items), fecha:p.fecha, nombre_negocio:p.nombre_negocio }); },
-                // COPIAR INDIVIDUAL (Corregido)
+                // COPIAR INDIVIDUAL
                 async copiarFaltantesIndividual(p) {
                     this.showMsg('Verificando stock actualizado...', 'info');
-                    // 1. Refrescar productos para tener stock real al momento
                     try {
                         const res = await fetch(`${apiBase}/productos`);
                         this.productos = await res.json();
@@ -784,29 +790,22 @@
 
                     const items = this.parseItems(p.items);
                     let txt = "";
-                    
                     items.forEach(i => {
                         const pr = this.productos.find(x => x.id === i.id);
-                        
-                        // 2. Si el stock es negativo, lo tratamos como 0
                         const stockReal = pr ? Math.max(0, Number(pr.stock)) : 0;
-                        
-                        // Calculamos faltante
                         const falt = Math.max(0, i.cantidad - stockReal);
-                        
                         if(falt > 0) txt += `${falt} ${i.nombre}\n`;
                     });
                     navigator.clipboard.writeText(txt || "Hay stock de todo");
                     this.showMsg('Faltantes copiados (Stock actualizado)', 'success');
                 },
                 
-                // COPIAR MASIVO (Corregido)
+                // COPIAR MASIVO
                 async copiarFaltantesPeticionesMasivo() {
                     const selected = this.peticiones.filter(p => this.selectedPeticiones.includes(p.id));
                     if(selected.length === 0) return alert('Selecciona peticiones');
                     
                     this.showMsg('Verificando stock actualizado...', 'info');
-                    // 1. Refrescar productos
                     try {
                         const res = await fetch(`${apiBase}/productos`);
                         this.productos = await res.json();
@@ -822,13 +821,10 @@
                     let txt = "";
                     for(const id in agg) {
                         const pr = this.productos.find(x => x.id == id);
-                        // 2. Si el stock es negativo, cuenta como 0
                         const stockReal = pr ? Math.max(0, Number(pr.stock)) : 0;
-                        
                         const falt = Math.max(0, agg[id].cantidad - stockReal);
                         if(falt > 0) txt += `${falt} ${agg[id].nombre}\n`;
                     }
-                    
                     navigator.clipboard.writeText(txt || "Hay stock de todo");
                     this.showMsg('Faltantes Masivos Copiados', 'success');
                 },
@@ -870,6 +866,7 @@
                     this.selectedOrders = [];
                 },
                 async procesarPeticionesMasivo(discount) {
+                    // CORREGIDO: Sin confirmación extra
                     for(const pid of this.selectedPeticiones) {
                         const p = this.peticiones.find(x => x.id === pid);
                         if(p) await this.confirmarPeticion(p, discount);
