@@ -36,8 +36,8 @@
         .toggle-input { display: none; }
 
         /* Animaciones */
-        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
-        .fade-enter-from, .fade-leave-to { opacity: 0; }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease, transform 0.3s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(20px); }
 
         [v-cloak] { display: none; }
     </style>
@@ -124,7 +124,7 @@
                          </div>
                          <div class="p-4 bg-slate-50 border-t border-slate-200 grid grid-cols-2 gap-4">
                              <!-- Controles Enfocados -->
-                             <button @click="guardarCloud(focusedItem)" class="bg-slate-800 text-white py-3 rounded-xl font-bold hover:bg-slate-900">Guardar PDF</button>
+                             <button @click="guardarCloud(focusedItem)" class="bg-slate-800 text-white py-3 rounded-xl font-bold hover:bg-slate-900">Guardar Cloud (PDF)</button>
                              <button @click="previewPDF(focusedItem)" class="bg-orange-500 text-white py-3 rounded-xl font-bold hover:bg-orange-600">PDF +10%</button>
                              <div class="col-span-2 flex justify-between items-center bg-white p-3 rounded-xl border shadow-sm">
                                 <span class="font-bold uppercase">{{ getEstado(focusedItem.uid).recibido ? 'Preparado' : 'Armando' }}</span>
@@ -242,24 +242,6 @@
                     <!-- Header Clientes (Oculto si hay un cliente activo para maximizar espacio) -->
                     <div class="flex items-center justify-between mb-4 px-2" v-if="!activeClient">
                         <h2 class="text-xl font-bold text-slate-800">Clientes Activos</h2>
-                        
-                        <!-- Toolbar Flotante -->
-                        <transition name="fade">
-                            <div v-if="selectedOrders.length > 0" class="flex items-center gap-3 bg-slate-900 text-white px-4 py-2 rounded-full shadow-xl text-xs sm:text-sm">
-                                <span class="font-bold text-orange-300">{{ selectedOrders.length }} seleccionados</span>
-                                <div class="h-4 w-px bg-slate-700"></div>
-                                <button @click="accionMasivaPedidos('cloud')" class="hover:text-green-400 font-bold transition flex items-center gap-1">
-                                    <i data-lucide="cloud" class="w-3 h-3"></i> Guardar (PDF)
-                                </button>
-                                <button @click="accionMasivaPedidos('pdf')" class="hover:text-orange-400 font-bold transition flex items-center gap-1">
-                                    <i data-lucide="file-text" class="w-3 h-3"></i> Ver PDF+10%
-                                </button>
-                                <button @click="accionMasivaPedidos('pdf-normal')" class="hover:text-blue-400 font-bold transition flex items-center gap-1">
-                                    <i data-lucide="file" class="w-3 h-3"></i> Ver PDF
-                                </button>
-                                <button @click="selectedOrders = []" class="ml-2 hover:bg-slate-700 rounded-full p-1 transition"><i data-lucide="x" class="w-3 h-3"></i></button>
-                            </div>
-                        </transition>
                     </div>
                     <!-- Botón Volver cuando hay Cliente Activo -->
                     <div v-else class="mb-4 flex items-center justify-between">
@@ -281,9 +263,6 @@
                             <div v-if="!activeClient" @click="toggleClient(clientName)" 
                                  class="p-4 cursor-pointer flex justify-between items-center transition-colors select-none rounded-xl bg-white hover:bg-slate-50">
                                 <div class="flex items-center gap-3 overflow-hidden">
-                                    <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-sm shrink-0 border border-slate-200">
-                                        {{ clientName.charAt(0).toUpperCase() }}
-                                    </div>
                                     <div class="truncate">
                                         <h3 class="font-bold text-lg leading-tight truncate text-slate-800">{{ clientName }}</h3>
                                         <span class="text-xs font-medium text-slate-500">{{ orders.length }} pedidos</span>
@@ -314,7 +293,8 @@
                                                 <input type="checkbox" v-model="selectedOrders" :value="pedido.uid" class="mt-1 w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer shrink-0">
                                                 <div class="flex-1 min-w-0">
                                                     <div class="flex flex-wrap gap-1 mb-1">
-                                                        <span v-if="pedido.nombre_negocio" class="text-[9px] font-bold uppercase tracking-wide text-orange-700 bg-orange-100 px-1.5 py-0.5 rounded truncate max-w-full">{{ pedido.nombre_negocio }}</span>
+                                                        <!-- NOMBRE NEGOCIO MÁS GRANDE (CORREGIDO) -->
+                                                        <span v-if="pedido.nombre_negocio" class="text-base font-bold uppercase tracking-wide text-orange-800 bg-orange-100 px-2 py-0.5 rounded truncate max-w-full border border-orange-200 shadow-sm">{{ pedido.nombre_negocio }}</span>
                                                         <span v-if="pedido.user !== clientName" class="text-[9px] font-bold uppercase tracking-wide text-teal-700 bg-teal-100 px-1.5 py-0.5 rounded truncate max-w-full">{{ pedido.user }}</span>
                                                     </div>
                                                     <div class="text-[10px] text-slate-500 font-mono mb-0.5">{{ formatDate(pedido.fecha) }}</div>
@@ -368,10 +348,10 @@
                                         <div class="p-2 bg-slate-50 border-t border-slate-200 space-y-2">
                                             <div class="grid grid-cols-2 gap-1.5">
                                                 <button @click="guardarCloud(pedido)" class="bg-slate-800 text-white py-1.5 rounded hover:bg-slate-900 transition text-[10px] font-bold flex items-center justify-center gap-1">
-                                                    <i data-lucide="cloud" class="w-3 h-3"></i> PDF
+                                                    <i data-lucide="cloud" class="w-3 h-3"></i> Guardar Cloud
                                                 </button>
                                                 <button @click="previewPDF(pedido)" class="bg-orange-500 text-white py-1.5 rounded hover:bg-orange-600 transition text-[10px] font-bold flex items-center justify-center gap-1">
-                                                    <i data-lucide="file-search" class="w-3 h-3"></i> +10%
+                                                    <i data-lucide="file-search" class="w-3 h-3"></i> PDF +10%
                                                 </button>
                                                 
                                                 <button @click="openAddModal(pedido.uid)" class="bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 py-1.5 rounded text-[10px] font-bold transition">
@@ -407,6 +387,24 @@
                 </section>
             </div>
         </main>
+
+        <!-- TOOLBAR FLOTANTE FIJA -->
+        <transition name="fade">
+            <div v-if="selectedOrders.length > 0" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl border border-slate-700">
+                <span class="font-bold text-orange-300 text-sm whitespace-nowrap">{{ selectedOrders.length }} seleccionados</span>
+                <div class="h-6 w-px bg-slate-700"></div>
+                <button @click="accionMasivaPedidos('cloud')" class="hover:text-green-400 font-bold transition flex items-center gap-2 text-sm whitespace-nowrap">
+                    <i data-lucide="cloud" class="w-4 h-4"></i> Guardar Cloud (PDF)
+                </button>
+                <button @click="accionMasivaPedidos('pdf')" class="hover:text-orange-400 font-bold transition flex items-center gap-2 text-sm whitespace-nowrap">
+                    <i data-lucide="file-text" class="w-4 h-4"></i> Ver PDF +10%
+                </button>
+                <div class="h-6 w-px bg-slate-700"></div>
+                <button @click="selectedOrders = []" class="hover:text-red-400 hover:bg-slate-800 p-1 rounded-full transition" title="Cancelar selección">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </transition>
 
         <!-- MODAL: AÑADIR PRODUCTO -->
         <div v-if="modalOpen" class="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200" @click.self="modalOpen = false">
@@ -778,19 +776,6 @@
                         if(p) {
                             if(mode==='cloud') await this.guardarCloud(p); 
                             else if(mode==='pdf') await this.previewPDF(p);
-                            else if(mode==='pdf-normal') {
-                                // Reutilizamos lógica de preview pero sin aumento
-                                const payload = {
-                                    user: p.user, items: p.items,
-                                    total: p.items.reduce((a,b)=>a+(Number(b.subtotal)||0),0),
-                                    fecha: new Date().toISOString(), nombre_negocio: p.nombre_negocio
-                                };
-                                const res = await fetch(`${apiBase}/generar-pdf-peticion`, {
-                                    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
-                                });
-                                const data = await res.json();
-                                if(data.pdf) window.open(data.pdf, '_blank');
-                            }
                             await new Promise(r=>setTimeout(r,500));
                         }
                     }
