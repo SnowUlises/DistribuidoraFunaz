@@ -418,7 +418,34 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
    RESTO DE ENDPOINTS (PDF, PETICIONES, LISTADOS)
    ========================================================= */
 
-// GENERAR PDF DE PETICIÓN (PREVIEW) - 🔥 MODIFICADO PARA INCLUIR NEGOCIO
+// NUEVO: GENERAR PDF MASIVO (Concatenado)
+app.post('/api/generar-pdf-masivo', async (req, res) => {
+  try {
+    const { pedidos } = req.body; // Array de pedidos completos
+    if (!Array.isArray(pedidos) || pedidos.length === 0) {
+      return res.status(400).json({ error: 'Lista de pedidos inválida' });
+    }
+
+    console.log(`📚 Generando PDF Masivo con ${pedidos.length} pedidos...`);
+    const pdfBuffer = await generarPDFMasivo(pedidos);
+    const fileName = `giant_${Date.now()}.pdf`;
+
+    // Subir a Supabase
+    const { error: uploadErr } = await supabase.storage.from('pedidos-pdf').upload(fileName, pdfBuffer, { contentType: 'application/pdf', upsert: true });
+    if (uploadErr) return res.status(500).json({ error: 'Error subiendo PDF masivo' });
+
+    // Obtener URL firmada (valida por 1 hora)
+    const { data: signed, error: signedErr } = await supabase.storage.from('pedidos-pdf').createSignedUrl(fileName, 3600);
+    if (signedErr) return res.status(500).json({ error: 'Error firmando URL masiva' });
+
+    res.json({ ok: true, pdf: signed.signedUrl });
+
+  } catch (err) {
+    console.error('❌ Error generando PDF Masivo:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GENERAR PDF DE PETICIÓN (PREVIEW) - 🔥 AHORA SÍ MUESTRA EL NEGOCIO
 app.post('/api/generar-pdf-peticion', async (req, res) => {
   try {
@@ -667,34 +694,19 @@ app.post('/api/Enviar-Peticion', async (req, res) => {
 });
 
 /* =========================================================
-   GENERADOR DE PDF (USADO POR TODOS)
+   GENERADOR DE PDF (LÓGICA COMPARTIDA)
    ========================================================= */
-async function generarPDF(pedido) {
-  return new Promise(async (resolve, reject) => {
-    const items = Array.isArray(pedido.items) ? pedido.items : [];
-    const doc = new PDFDocument({
-      size: [267, 862], 
-      margins: { top: 20, bottom: 20, left: 20, right: 20 },
-    });
-    const chunks = [];
-    doc.on('data', c => chunks.push(c));
-    doc.on('end', () => resolve(Buffer.concat(chunks)));
-    doc.on('error', reject);
-    
-    // Logo
-    const { data: logoBlob, error: logoError } = await supabase.storage.from('imagenes').download('logo.png');
-    if (logoError) {
-      console.error('Error downloading logo:', logoError);
-    } else {
-      const logoBuffer = Buffer.from(await logoBlob.arrayBuffer());
+
+// Función auxiliar para dibujar el contenido de UN pedido en el documento PDF
+async function dibujarPedidoEnDoc(doc, pedido, logoBuffer) {
+    if (logoBuffer) {
       doc.image(logoBuffer, 100, 20, { width: 100 });
-      doc.moveDown(8);
     }
+    doc.moveDown(8);
     
     // 🔥 CAMBIO: Encabezado con Nombre y debajo el Negocio centrado
     doc.font('Helvetica-Bold').fontSize(16).text(`${pedido.user || 'Invitado'}`, { align: 'center' });
     
-    // Si existe nombre del negocio, lo mostramos justo debajo, centrado
     if (pedido.nombre_negocio) {
         doc.fontSize(14).font('Helvetica-Bold').text(`${pedido.nombre_negocio}`, { align: 'center' });
     }
@@ -704,7 +716,6 @@ async function generarPDF(pedido) {
     doc.font('Helvetica').fontSize(14);
     doc.text(`Dirección: Calle Colon 1740 Norte`);
     doc.text(`Factura N°: ${pedido.id || ''}`);
-    
     doc.text(`Pedidos: 2645583761`);
     doc.text(`Consultas: 2645156933`);
     doc.moveDown(1.5);
@@ -721,6 +732,7 @@ async function generarPDF(pedido) {
     
     // Ítems
     let total = 0;
+    const items = Array.isArray(pedido.items) ? pedido.items : [];
     items.forEach(item => {
       const cant = Number(item.cantidad) || 0;
       const precio = Number(item.precio_unitario ?? item.precio) || 0;
@@ -740,7 +752,62 @@ async function generarPDF(pedido) {
     doc.fontSize(20).font('Helvetica-Bold').text(`TOTAL: $${total.toFixed(2)}`, { align: 'center' });
     doc.moveDown(3);
     doc.fontSize(14).text('¡Gracias por su compra!', { align: 'center' });
-    doc.end();
+}
+
+// Función para generar PDF individual (usa la lógica compartida)
+async function generarPDF(pedido) {
+  return new Promise(async (resolve, reject) => {
+    const doc = new PDFDocument({
+      size: [267, 862], 
+      margins: { top: 20, bottom: 20, left: 20, right: 20 },
+    });
+    const chunks = [];
+    doc.on('data', c => chunks.push(c));
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
+    
+    try {
+        const { data: logoBlob } = await supabase.storage.from('imagenes').download('logo.png');
+        const logoBuffer = logoBlob ? Buffer.from(await logoBlob.arrayBuffer()) : null;
+        
+        await dibujarPedidoEnDoc(doc, pedido, logoBuffer);
+        doc.end();
+    } catch (e) {
+        reject(e);
+    }
+  });
+}
+
+// Función para generar PDF MASIVO (concatenado)
+async function generarPDFMasivo(pedidos) {
+  return new Promise(async (resolve, reject) => {
+    // autoFirstPage: false permite agregar páginas manualmente en el bucle
+    const doc = new PDFDocument({
+      size: [267, 862], 
+      margins: { top: 20, bottom: 20, left: 20, right: 20 },
+      autoFirstPage: false 
+    });
+    
+    const chunks = [];
+    doc.on('data', c => chunks.push(c));
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
+    
+    try {
+        // Cargar logo una sola vez
+        const { data: logoBlob } = await supabase.storage.from('imagenes').download('logo.png');
+        const logoBuffer = logoBlob ? Buffer.from(await logoBlob.arrayBuffer()) : null;
+        
+        // Iterar y agregar páginas
+        for (const pedido of pedidos) {
+            doc.addPage({ size: [267, 862], margins: { top: 20, bottom: 20, left: 20, right: 20 } });
+            await dibujarPedidoEnDoc(doc, pedido, logoBuffer);
+        }
+        
+        doc.end();
+    } catch (e) {
+        reject(e);
+    }
   });
 }
 
@@ -748,6 +815,3 @@ async function generarPDF(pedido) {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
-
-
-
