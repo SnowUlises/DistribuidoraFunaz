@@ -811,7 +811,28 @@ async function generarPDFMasivo(pedidos) {
   });
 }
 
+
+/* --- NUEVO: ACTUALIZAR ESTADO (Armando / Preparado) --- */
+app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { estado } = req.body; // Esperamos "Armando" o "Preparado"
+
+    const { error } = await supabase
+      .from('pedidos')
+      .update({ estado })
+      .eq('id', id);
+
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Error actualizando estado:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ⚠️ PUERTO CONFIGURADO PARA RENDER
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
