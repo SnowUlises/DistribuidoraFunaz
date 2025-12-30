@@ -571,8 +571,8 @@
                         ...localState,     // Mantiene guardado y modoDevolucion del LS
                         recibido: isPreparado // Sobrescribe recibido con el dato de la DB
                     };
-                },,
-                ggleEstado(uid, val) {
+                },
+                async toggleEstado(uid, val) {
                     // val viene del checkbox: true = Preparado, false = Armando
                     const pedido = this.rawPedidos.find(p => p.uid === uid);
                     if (!pedido) return;
@@ -860,4 +860,5 @@
     </script>
 </body>
 </html>
+
 
