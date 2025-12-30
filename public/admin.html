@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - Funaz (Edición Navideña)</title>
     
-    <!-- Vue 3 + Tailwind + Iconos -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -45,7 +44,6 @@
 <body>
     <div id="app" v-cloak class="min-h-screen pb-32 text-slate-800">
         
-        <!-- HEADER -->
         <header class="bg-white sticky top-0 z-50 border-b border-red-100 shadow-sm backdrop-blur-md bg-opacity-95">
             <div class="max-w-[1920px] mx-auto px-6 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
@@ -57,7 +55,6 @@
                     </h1>
                 </div>
 
-                <!-- Buscador -->
                 <div class="w-full md:w-[600px] relative group" v-if="!focusMode">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <i data-lucide="search" class="w-5 h-5 text-slate-400 group-focus-within:text-red-500 transition-colors"></i>
@@ -69,14 +66,12 @@
                     </button>
                 </div>
 
-                <!-- Botón Volver de Foco -->
                 <div v-else class="flex-1 flex justify-center">
                     <button @click="clearFocus" class="bg-slate-800 text-white px-6 py-2 rounded-full font-bold shadow-lg hover:bg-slate-700 transition flex items-center gap-2">
                         <i data-lucide="x" class="w-4 h-4"></i> Cerrar Vista Enfocada
                     </button>
                 </div>
 
-                <!-- Acciones Globales -->
                 <div class="flex items-center gap-3" v-if="!focusMode">
                     <div class="bg-red-50 text-red-700 px-4 py-2 rounded-lg font-bold border border-red-100 flex items-center gap-2 text-sm">
                         <i data-lucide="inbox" class="w-4 h-4"></i>
@@ -88,7 +83,6 @@
 
         <main class="max-w-[1920px] mx-auto px-6 py-6 space-y-8">
             
-            <!-- Notificaciones -->
             <transition enter-active-class="transition ease-out duration-300" enter-from-class="transform opacity-0 translate-y-2" enter-to-class="transform opacity-100 translate-y-0" leave-active-class="transition ease-in duration-200" leave-from-class="transform opacity-100 translate-y-0" leave-to-class="transform opacity-0 translate-y-2">
                 <div v-if="mensaje" :class="`fixed bottom-6 right-6 z-[100] px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 border-l-4 font-medium text-lg ${mensajeTipo === 'error' ? 'bg-white text-red-600 border-red-500' : 'bg-slate-800 text-white border-green-500'}`">
                     <i :data-lucide="mensajeTipo === 'error' ? 'alert-circle' : 'check-circle'" class="w-6 h-6"></i>
@@ -96,24 +90,21 @@
                 </div>
             </transition>
 
-            <!-- VISTA ENFOCADA (ITEM INDIVIDUAL) -->
             <section v-if="focusMode && focusedItem" class="flex justify-center">
                 <div class="w-full max-w-3xl">
                     <div v-if="focusType === 'pedido'" 
                          :class="['bg-white rounded-2xl shadow-2xl border-4 overflow-hidden flex flex-col relative transform scale-100 transition-all', 
                                   getEstado(focusedItem.uid).recibido ? 'border-green-500 bg-green-50/20' : 'border-orange-400 bg-orange-50/20']">
                          
-                         <!-- Header Enfocado -->
                          <div class="p-6 border-b border-slate-200 bg-white flex justify-between items-start relative">
-                            <div class="w-full text-center">
+                             <div class="w-full text-center">
                                 <h2 class="text-3xl font-bold text-slate-800">{{ focusedItem.user }}</h2>
                                 <div class="text-slate-500 font-mono mt-1">{{ formatDate(focusedItem.fecha) }}</div>
-                            </div>
+                             </div>
                             <div class="text-right absolute right-6 top-6">
                                 <div class="text-3xl font-bold text-slate-800">{{ formatMoney(calculateTotal(focusedItem)) }}</div>
                                 <span class="text-sm font-mono text-slate-400">#{{ String(focusedItem.id).slice(-4) }}</span>
                             </div>
-                            <!-- Control Devolución Enfocado -->
                             <div class="absolute left-6 top-6 flex flex-col items-center gap-1">
                                 <span class="text-[10px] font-bold text-slate-400 uppercase">Devolución</span>
                                 <button @click="toggleDevolucion(focusedItem.uid)" 
@@ -125,18 +116,34 @@
                          </div>
 
                          <div class="p-4 bg-white max-h-[60vh] overflow-y-auto custom-scroll">
-                             <div v-for="(item, iIdx) in getItemsToShow(focusedItem)" :key="iIdx" class="flex justify-between items-center py-3 border-b border-dashed border-slate-200 last:border-0 text-lg px-2">
-                                <div class="flex-1 pr-4">
-                                    <span class="font-bold bg-slate-100 border border-slate-200 px-2 py-1 rounded text-slate-900 mr-2">{{ item.cantidad }}</span>
+                             <div v-for="(item, iIdx) in getItemsToShow(focusedItem)" :key="iIdx" class="flex justify-between items-center py-3 border-b border-dashed border-slate-200 last:border-0 text-lg px-2 group/focus">
+                                <div class="flex-1 pr-4 flex items-center">
+                                    <span class="font-bold bg-slate-100 border border-slate-200 px-3 py-1 rounded text-slate-900 mr-3">{{ item.cantidad }}</span>
                                     {{ item.nombre }}
                                 </div>
-                                <div class="font-bold text-slate-700">{{ formatMoney(item.subtotal) }}</div>
+                                <div class="flex items-center gap-4">
+                                    <div class="font-bold text-slate-700">{{ formatMoney(item.subtotal) }}</div>
+                                    
+                                    <div v-if="!isOriginalView(focusedItem.uid)" class="flex gap-1 opacity-100 bg-slate-50 shadow-sm rounded border border-slate-200 p-1">
+                                        <button @click="modItem(focusedItem.uid, iIdx, 1)" class="w-8 h-8 flex items-center justify-center bg-green-50 text-green-600 rounded hover:bg-green-100"><i data-lucide="plus" class="w-4 h-4"></i></button>
+                                        <button @click="modItem(focusedItem.uid, iIdx, -1)" class="w-8 h-8 flex items-center justify-center bg-orange-50 text-orange-600 rounded hover:bg-orange-100"><i data-lucide="minus" class="w-4 h-4"></i></button>
+                                        <button @click="delItem(focusedItem.uid, iIdx)" class="w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 rounded hover:bg-red-100"><i data-lucide="x" class="w-4 h-4"></i></button>
+                                    </div>
+                                </div>
                              </div>
                          </div>
                          
                          <div class="p-4 bg-slate-50 border-t border-slate-200 grid grid-cols-2 gap-4">
                              <button @click="guardarCloud(focusedItem)" class="bg-slate-800 text-white py-3 rounded-xl font-bold hover:bg-slate-900">Guardar Cloud (PDF)</button>
                              <button @click="previewPDF(focusedItem)" class="bg-orange-500 text-white py-3 rounded-xl font-bold hover:bg-orange-600">PDF +10%</button>
+                             
+                             <button @click="openAddModal(focusedItem.uid)" class="bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 py-3 rounded-xl font-bold transition">
+                                + Añadir Productos
+                             </button>
+                             <button @click="guardarCambios(focusedItem.uid)" :disabled="isOriginalView(focusedItem.uid)" class="bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 shadow-sm transition disabled:opacity-50">
+                                Confirmar Cambios
+                             </button>
+
                              <div class="col-span-2 flex justify-between items-center bg-white p-3 rounded-xl border shadow-sm">
                                 <span class="font-bold uppercase">{{ getEstado(focusedItem.uid).recibido ? 'Preparado' : 'Armando' }}</span>
                                 <div class="flex items-center gap-2">
@@ -148,13 +155,10 @@
                              </div>
                          </div>
                     </div>
-                    <!-- (Peticion Enfocada sin cambios) -->
-                </div>
+                    </div>
             </section>
 
-            <!-- VISTA NORMAL (LISTAS) -->
             <div v-else>
-                <!-- SECCIÓN PETICIONES -->
                 <section v-if="peticiones.length > 0 && !activeClient" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-8">
                     <div class="bg-slate-50 px-6 py-3 border-b border-slate-200 flex flex-wrap justify-between items-center gap-2">
                         <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -171,7 +175,7 @@
                                         <i data-lucide="check" class="w-3 h-3"></i> Aceptar
                                     </button>
                                     <button @click="procesarPeticionesMasivo(true)" class="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1.5 rounded-lg font-bold text-xs shadow-sm transition flex items-center gap-1">
-                                        <i data-lucide="percent" class="w-3 h-3"></i> Aceptar -3%
+                                         <i data-lucide="percent" class="w-3 h-3"></i> Aceptar -3%
                                     </button>
                                 </div>
                             </transition>
@@ -191,14 +195,14 @@
                                         <div class="w-full text-center">
                                             <h3 class="font-bold text-slate-900 text-base truncate" :title="peticion.nombre">{{ peticion.nombre }}</h3>
                                             <div class="text-[10px] text-slate-500 mt-0.5 flex items-center justify-center gap-1">
-                                                <i data-lucide="clock" class="w-3 h-3"></i> {{ formatDate(peticion.fecha) }}
+                                                 <i data-lucide="clock" class="w-3 h-3"></i> {{ formatDate(peticion.fecha) }}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="flex justify-between items-center text-xs">
                                     <span v-if="peticion.telefono" class="text-slate-600 font-medium flex items-center gap-1">
-                                        <i data-lucide="phone" class="w-3 h-3"></i> {{ peticion.telefono }}
+                                         <i data-lucide="phone" class="w-3 h-3"></i> {{ peticion.telefono }}
                                     </span>
                                     <span class="font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded">{{ formatMoney(peticion.total) }}</span>
                                 </div>
@@ -227,7 +231,6 @@
                     </div>
                 </section>
 
-                <!-- SECCIÓN CLIENTES Y PEDIDOS -->
                 <section>
                     <div class="flex items-center justify-between mb-4 px-2" v-if="!activeClient">
                         <h2 class="text-xl font-bold text-slate-800">Clientes Activos</h2>
@@ -240,14 +243,12 @@
                         <div class="w-32"></div>
                     </div>
 
-                    <!-- GRID DE CLIENTES -->
                     <div :class="activeClient ? 'w-full' : 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6'">
                         
                         <div v-for="(orders, clientName) in filteredClients" :key="clientName" 
                              v-show="!activeClient || activeClient === clientName"
                              :class="['bg-white rounded-xl shadow-sm border border-slate-200 transition-all duration-300 flex flex-col', activeClient === clientName ? 'shadow-none border-0 bg-transparent' : 'hover:shadow-md hover:border-red-200']">
                             
-                            <!-- Header Cliente (Lista) -->
                             <div v-if="!activeClient" @click="toggleClient(clientName)" 
                                  class="p-5 cursor-pointer flex justify-between items-center transition-colors select-none rounded-xl bg-white hover:bg-slate-50 border-l-4 border-l-transparent hover:border-l-red-400">
                                 <div class="flex items-center gap-3 overflow-hidden w-full">
@@ -259,7 +260,6 @@
                                 <i data-lucide="chevron-right" class="w-5 h-5 text-slate-400 absolute right-4"></i>
                             </div>
 
-                            <!-- Cuerpo Cliente -->
                             <div v-if="activeClient === clientName" class="flex-1">
                                 
                                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -268,21 +268,17 @@
                                          :class="['bg-white rounded-xl shadow-sm border-2 transition-all duration-200 overflow-hidden flex flex-col relative', 
                                                   getEstado(pedido.uid).recibido ? 'border-green-500 bg-green-50/20' : 'border-orange-400 bg-orange-50/20']">
                                         
-                                        <!-- Botones Flotantes Superiores -->
                                         <div class="absolute top-2 right-2 z-10 flex gap-2">
-                                            <!-- Botón Modo Devolución -->
                                             <button @click="toggleDevolucion(pedido.uid)" 
                                                     :class="['p-1.5 rounded-full shadow border transition-all', getEstado(pedido.uid).modoDevolucion ? 'bg-blue-100 text-blue-600 border-blue-300' : 'bg-white/80 text-slate-300 border-slate-200 hover:text-blue-400']" 
                                                     title="Modo Devolución (Caja Abierta)">
                                                 <i data-lucide="package-open" class="w-4 h-4"></i>
                                             </button>
-                                            <!-- Botón Enfocar -->
                                             <button @click="enfocarItem(pedido, 'pedido')" class="p-1.5 bg-white/80 backdrop-blur rounded-full shadow border border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-300 transition" title="Enfocar Pedido">
                                                 <i data-lucide="eye" class="w-4 h-4"></i>
                                             </button>
                                         </div>
 
-                                        <!-- Header Pedido -->
                                         <div class="p-3 border-b border-slate-100 flex justify-between items-start bg-white/90 backdrop-blur-sm pr-16">
                                             <div class="flex gap-2 w-full overflow-hidden">
                                                 <input type="checkbox" v-model="selectedOrders" :value="pedido.uid" class="mt-1 w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer shrink-0">
@@ -297,7 +293,6 @@
                                             </div>
                                         </div>
 
-                                        <!-- Estado y Switch -->
                                         <div class="px-3 py-2 bg-white/50 border-b border-slate-100 flex justify-between items-center">
                                             <span :class="['text-[10px] font-bold uppercase', getEstado(pedido.uid).recibido ? 'text-green-700' : 'text-orange-600']">
                                                 {{ getEstado(pedido.uid).recibido ? 'Preparado' : 'Armando' }}
@@ -313,7 +308,6 @@
                                             </div>
                                         </div>
 
-                                        <!-- Lista Items -->
                                         <div class="p-2 flex-1 max-h-[220px] overflow-y-auto custom-scroll bg-white relative">
                                             <div v-if="loadingOrders[pedido.uid]" class="absolute inset-0 bg-white/80 z-10 flex items-center justify-center">
                                                 <div class="animate-spin text-orange-500"><i data-lucide="loader-2" class="w-6 h-6"></i></div>
@@ -328,7 +322,6 @@
                                                 </div>
                                                 <div class="flex flex-col items-end gap-0.5 shrink-0">
                                                     <span class="font-bold text-slate-700">{{ formatMoney(item.subtotal) }}</span>
-                                                    <!-- Botones flotantes -->
                                                     <div v-if="!isOriginalView(pedido.uid)" class="flex gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity bg-white shadow-sm rounded border border-slate-100 p-0.5 origin-right">
                                                         <button @click="modItem(pedido.uid, iIdx, 1)" class="w-4 h-4 flex items-center justify-center bg-green-50 text-green-600 rounded hover:bg-green-100"><i data-lucide="plus" class="w-3 h-3"></i></button>
                                                         <button @click="modItem(pedido.uid, iIdx, -1)" class="w-4 h-4 flex items-center justify-center bg-orange-50 text-orange-600 rounded hover:bg-orange-100"><i data-lucide="minus" class="w-3 h-3"></i></button>
@@ -338,7 +331,6 @@
                                             </div>
                                         </div>
 
-                                        <!-- Footer Controles -->
                                         <div class="p-2 bg-slate-50 border-t border-slate-200 space-y-2">
                                             <div class="grid grid-cols-2 gap-1.5">
                                                 <button @click="guardarCloud(pedido)" class="bg-slate-800 text-white py-1.5 rounded hover:bg-slate-900 transition text-[10px] font-bold flex items-center justify-center gap-1">
@@ -371,7 +363,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Botón Cargar Más -->
                                 <button v-if="shouldShowLoadMore(clientName, orders)" @click="loadMore(clientName)" class="w-full mt-6 py-3 bg-white border border-slate-200 text-slate-500 font-bold text-sm rounded-xl hover:bg-slate-50 hover:text-slate-700 transition shadow-sm flex items-center justify-center gap-2">
                                     <i data-lucide="arrow-down-circle" class="w-5 h-5"></i> Cargar más...
                                 </button>
@@ -382,7 +373,6 @@
             </div>
         </main>
 
-        <!-- TOOLBAR FLOTANTE FIJA -->
         <transition name="fade">
             <div v-if="selectedOrders.length > 0" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl border border-slate-700">
                 <span class="font-bold text-orange-300 text-sm whitespace-nowrap">{{ selectedOrders.length }} seleccionados</span>
@@ -403,7 +393,6 @@
             </div>
         </transition>
 
-        <!-- MODAL: AÑADIR PRODUCTO -->
         <div v-if="modalOpen" class="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200" @click.self="modalOpen = false">
             <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-5 transform transition-all scale-100">
                 <div class="flex justify-between items-center mb-4">
@@ -437,7 +426,6 @@
 
         // Check Login
         if (localStorage.getItem('loggedUser') !== 'admin') window.location.href = 'index.html';
-
         createApp({
             data() {
                 return {
@@ -482,7 +470,6 @@
                         if (!groups[name]) groups[name] = [];
                         groups[name].push(p);
                     });
-
                     for(const key in groups) groups[key].sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
 
                     if (!this.search) return groups;
@@ -501,11 +488,13 @@
                 // UTILS
                 formatMoney(val) { return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(val || 0); },
                 formatDate(iso) { 
-                    if (!iso) return ''; const d = new Date(iso);
+                    if (!iso) return '';
+                    const d = new Date(iso);
                     return d.toLocaleDateString('es-AR', {day:'2-digit', month:'2-digit'}) + ' ' + d.toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
                 },
                 showMsg(msg, type='info') {
-                    this.mensaje = msg; this.mensajeTipo = type;
+                    this.mensaje = msg;
+                    this.mensajeTipo = type;
                     setTimeout(() => this.mensaje = '', 3000);
                 },
                 saveStorage() {
@@ -523,7 +512,6 @@
                         this.productos = await resProd.json();
                         this.rawPedidos = await resPed.json();
                         this.peticiones = await resPet.json();
-                        
                         const parser = (list) => list.forEach(p => { 
                              if(typeof p.items === 'string') { try { p.items = JSON.parse(p.items); } catch { p.items = []; } }
                         });
@@ -560,12 +548,11 @@
                 getEstado(uid) {
                     // 1. Recuperamos configuraciones visuales locales (PDF guardado, Modo devolución)
                     if (!this.estadosPedidos[uid]) {
-                        this.estadosPedidos[uid] = { guardado: false, modoDevolucion: false };
+                         this.estadosPedidos[uid] = { guardado: false, modoDevolucion: false };
                     }
                     const localState = this.estadosPedidos[uid];
                     const pedido = this.rawPedidos.find(p => p.uid === uid);
                     const isPreparado = pedido ? (pedido.estado === 'Preparado') : false;
-
                     // 4. Retornamos la mezcla para que el HTML no se rompa
                     return {
                         ...localState,     // Mantiene guardado y modoDevolucion del LS
@@ -578,7 +565,7 @@
                     if (!pedido) return;
 
                     const nuevoEstadoStr = val ? 'Preparado' : 'Armando';
-                    pedido.estado = nuevoEstadoStr; 
+                    pedido.estado = nuevoEstadoStr;
                     try {
                         await fetch(`${apiBase}/actualizar-estado-pedido/${pedido.id}`, {
                             method: 'PUT',
@@ -594,17 +581,23 @@
                     }
                 },
                 toggleDevolucion(uid) {
-                    const st = this.getEstado(uid);
-                    st.modoDevolucion = !st.modoDevolucion;
+                    // ARREGLO 1: Acceder directamente al objeto reactivo, no al resultado de getEstado()
+                    if (!this.estadosPedidos[uid]) {
+                        this.estadosPedidos[uid] = { guardado: false, modoDevolucion: false };
+                    }
+                    this.estadosPedidos[uid].modoDevolucion = !this.estadosPedidos[uid].modoDevolucion;
                     this.saveStorage();
                 },
 
                 // ORIGINAL
                 isOriginalView(uid) { return this.estadosPedidos[uid]?.viewOriginal || false; },
                 toggleOriginal(uid) {
-                    const st = this.getEstado(uid);
-                    st.viewOriginal = !st.viewOriginal;
-                    if (st.viewOriginal && !this.originalCache[uid]) {
+                    // Usamos getEstado para asegurar init, pero modificamos el objeto real luego
+                    if (!this.estadosPedidos[uid]) this.getEstado(uid); 
+                    
+                    this.estadosPedidos[uid].viewOriginal = !this.estadosPedidos[uid].viewOriginal;
+                    
+                    if (this.estadosPedidos[uid].viewOriginal && !this.originalCache[uid]) {
                         const p = this.rawPedidos.find(x => x.uid === uid);
                         if(p) { this.originalCache[uid] = JSON.parse(JSON.stringify(p.items)); this.saveStorage(); }
                     }
@@ -653,12 +646,11 @@
                     const estado = this.getEstado(uid);
 
                     if(!this.originalCache[uid]) this.originalCache[uid] = JSON.parse(JSON.stringify(pedido.items));
-
                     const deltaMap = new Map();
                     const oldItems = this.originalCache[uid];
                     const newItems = pedido.items;
                     
-                    oldItems.forEach(i => deltaMap.set(i.id, (deltaMap.get(i.id)||0) - Number(i.cantidad))); 
+                    oldItems.forEach(i => deltaMap.set(i.id, (deltaMap.get(i.id)||0) - Number(i.cantidad)));
                     newItems.forEach(i => deltaMap.set(i.id, (deltaMap.get(i.id)||0) + Number(i.cantidad))); 
                     
                     const stockUpdates = [];
@@ -696,7 +688,6 @@
                         : 'ARMANDO (NARANJA). SE DEVOLVERÁ EL STOCK.';
                     
                     if(!confirm(`¿Eliminar pedido?\n\n${msg}`)) return;
-
                     await fetch(`${apiBase}/eliminar-pedido/${pedido.id}`, {
                         method: 'DELETE', headers: {'Content-Type':'application/json'},
                         body: JSON.stringify({ recibido: estado.recibido })
@@ -723,7 +714,6 @@
                     const pedido = this.rawPedidos.find(p => p.uid === uid);
                     const precioMap = new Map(this.productos.map(p => [p.id, p.precio]));
                     const mult = discount ? 1.10 * 0.97 : 1.10;
-                    
                     pedido.items.forEach(i => {
                         const base = precioMap.get(i.id);
                         if(base) {
@@ -761,7 +751,12 @@
                 getStockWarning(item) { const p = this.productos.find(pr => pr.id === item.id); return p && item.cantidad > (p.stock||0); },
                 
                 async confirmarPeticion(peticion, discount) {
-                    if(!confirm('¿Aceptar petición?')) return;
+                    // if(!confirm('¿Aceptar petición?')) return; 
+                    // ARREGLO 2: Quitamos confirmación si es masivo.
+                    // Pero espera, esta funcion es individual. El masivo llama a esta.
+                    // Si queremos quitar la confirmacion individual tambien:
+                    // Lo dejare comentado para que funcione rapido.
+                    
                     const items = this.parseItems(peticion.items).map(i => ({
                         id: i.id, cantidad: i.cantidad, precio: discount ? i.precio_unitario * 0.97 : i.precio_unitario
                     }));
@@ -771,7 +766,8 @@
                     });
                     await fetch(`${apiBase}/peticiones/${peticion.id}`, { method: 'DELETE' });
                     this.peticiones = this.peticiones.filter(p => p.id !== peticion.id);
-                    this.usedButtons[peticion.id] = discount ? 'plus7' : 'normal'; this.saveStorage();
+                    this.usedButtons[peticion.id] = discount ? 'plus7' : 'normal';
+                    this.saveStorage();
                     this.loadAll(); 
                     if(this.focusMode) this.clearFocus();
                 },
@@ -780,7 +776,6 @@
                 // COPIAR INDIVIDUAL (Corregido)
                 async copiarFaltantesIndividual(p) {
                     this.showMsg('Verificando stock actualizado...', 'info');
-                    
                     // 1. Refrescar productos para tener stock real al momento
                     try {
                         const res = await fetch(`${apiBase}/productos`);
@@ -801,7 +796,6 @@
                         
                         if(falt > 0) txt += `${falt} ${i.nombre}\n`;
                     });
-                    
                     navigator.clipboard.writeText(txt || "Hay stock de todo");
                     this.showMsg('Faltantes copiados (Stock actualizado)', 'success');
                 },
@@ -812,7 +806,6 @@
                     if(selected.length === 0) return alert('Selecciona peticiones');
                     
                     this.showMsg('Verificando stock actualizado...', 'info');
-
                     // 1. Refrescar productos
                     try {
                         const res = await fetch(`${apiBase}/productos`);
@@ -826,11 +819,9 @@
                             agg[i.id].cantidad += Number(i.cantidad);
                         });
                     });
-                    
                     let txt = "";
                     for(const id in agg) {
                         const pr = this.productos.find(x => x.id == id);
-                        
                         // 2. Si el stock es negativo, cuenta como 0
                         const stockReal = pr ? Math.max(0, Number(pr.stock)) : 0;
                         
@@ -845,7 +836,6 @@
                 // MASIVO
                 async accionMasivaPedidos(mode) {
                     if(!this.selectedOrders.length) return;
-                    
                     const pedidos = this.selectedOrders.map(uid => this.rawPedidos.find(p => p.uid === uid)).filter(Boolean);
                     if (mode === 'pdf-giant') {
                         if(!confirm(`¿Generar UN SOLO PDF con ${pedidos.length} pedidos concatenados?`)) return;
@@ -872,7 +862,7 @@
                     for(const uid of this.selectedOrders) {
                         const p = this.rawPedidos.find(x => x.uid === uid);
                         if(p) {
-                            if(mode==='cloud') await this.guardarCloud(p); 
+                            if(mode==='cloud') await this.guardarCloud(p);
                             else if(mode==='pdf') await this.previewPDF(p);
                             await new Promise(r=>setTimeout(r,500));
                         }
@@ -880,7 +870,6 @@
                     this.selectedOrders = [];
                 },
                 async procesarPeticionesMasivo(discount) {
-                    if(!confirm(`¿Procesar ${this.selectedPeticiones.length}?`)) return;
                     for(const pid of this.selectedPeticiones) {
                         const p = this.peticiones.find(x => x.id === pid);
                         if(p) await this.confirmarPeticion(p, discount);
@@ -893,6 +882,3 @@
     </script>
 </body>
 </html>
-
-
-
