@@ -9,8 +9,6 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- PDF-Lib para concatenar PDFs -->
-    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
     <style>
@@ -768,32 +766,16 @@
                     if (mode === 'pdf-giant') {
                         if(!confirm(`¿Generar UN SOLO PDF con ${pedidos.length} pedidos concatenados?`)) return;
                         try {
-                            const { PDFDocument } = PDFLib;
-                            const mergedPdf = await PDFDocument.create();
-                            
-                            for (const p of pedidos) {
-                                const items = p.items; 
-                                const payload = {
-                                    user: p.user, items: items,
-                                    total: items.reduce((a,b)=>a+(Number(b.subtotal)||0),0),
-                                    fecha: new Date().toISOString(), nombre_negocio: p.nombre_negocio
-                                };
-                                // Generamos PDF temporal en servidor
-                                const res = await fetch(`${apiBase}/generar-pdf-peticion`, {
-                                    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
-                                });
-                                const data = await res.json();
-                                if(data.pdf) {
-                                    const pdfBytes = await fetch(data.pdf).then(res => res.arrayBuffer());
-                                    const pdf = await PDFDocument.load(pdfBytes);
-                                    const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-                                    copiedPages.forEach((page) => mergedPdf.addPage(page));
-                                }
-                            }
-                            const mergedPdfBytes = await mergedPdf.save();
-                            const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
-                            const url = URL.createObjectURL(blob);
-                            window.open(url, '_blank');
+                            const itemsForGiant = pedidos.map(p => ({
+                                user: p.user, items: p.items,
+                                total: p.items.reduce((a,b)=>a+(Number(b.subtotal)||0),0),
+                                fecha: p.fecha || new Date().toISOString(), nombre_negocio: p.nombre_negocio
+                            }));
+                            const res = await fetch(`${apiBase}/generar-pdf-masivo`, {
+                                method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ pedidos: itemsForGiant })
+                            });
+                            const data = await res.json();
+                            if(data.pdf) window.open(data.pdf, '_blank');
                         } catch (e) {
                             console.error(e);
                             this.showMsg('Error generando PDF Gigante', 'error');
