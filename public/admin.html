@@ -558,12 +558,40 @@
 
                 // ESTADOS
                 getEstado(uid) {
-                    if (!this.estadosPedidos[uid]) this.estadosPedidos[uid] = { recibido: false, guardado: false, modoDevolucion: false };
-                    return this.estadosPedidos[uid];
-                },
-                toggleEstado(uid, val) {
-                    this.getEstado(uid).recibido = val;
-                    this.saveStorage();
+                    // 1. Recuperamos configuraciones visuales locales (PDF guardado, Modo devolución)
+                    if (!this.estadosPedidos[uid]) {
+                        this.estadosPedidos[uid] = { guardado: false, modoDevolucion: false };
+                    }
+                    const localState = this.estadosPedidos[uid];
+                    const pedido = this.rawPedidos.find(p => p.uid === uid);
+                    const isPreparado = pedido ? (pedido.estado === 'Preparado') : false;
+
+                    // 4. Retornamos la mezcla para que el HTML no se rompa
+                    return {
+                        ...localState,     // Mantiene guardado y modoDevolucion del LS
+                        recibido: isPreparado // Sobrescribe recibido con el dato de la DB
+                    };
+                },,
+                ggleEstado(uid, val) {
+                    // val viene del checkbox: true = Preparado, false = Armando
+                    const pedido = this.rawPedidos.find(p => p.uid === uid);
+                    if (!pedido) return;
+
+                    const nuevoEstadoStr = val ? 'Preparado' : 'Armando';
+                    pedido.estado = nuevoEstadoStr; 
+                    try {
+                        await fetch(`${apiBase}/actualizar-estado-pedido/${pedido.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ estado: nuevoEstadoStr })
+                        });
+                        // No guardamos 'recibido' en saveStorage() porque ya vive en la DB
+                    } catch (e) {
+                        console.error(e);
+                        this.showMsg('Error al cambiar estado', 'error');
+                        // Revertir en caso de error
+                        pedido.estado = val ? 'Armando' : 'Preparado';
+                    }
                 },
                 toggleDevolucion(uid) {
                     const st = this.getEstado(uid);
@@ -832,3 +860,4 @@
     </script>
 </body>
 </html>
+
