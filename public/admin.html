@@ -777,21 +777,48 @@
                 },
                 async eliminarPeticion(id) { if(confirm('¿Borrar?')) { await fetch(`${apiBase}/peticiones/${id}`, { method:'DELETE' }); this.peticiones=this.peticiones.filter(p=>p.id!==id); if(this.focusMode) this.clearFocus(); } },
                 previewPDFPeticion(p) { this.previewPDF({ user:p.nombre, items:this.parseItems(p.items), fecha:p.fecha, nombre_negocio:p.nombre_negocio }); },
-                copiarFaltantesIndividual(p) {
+                // COPIAR INDIVIDUAL (Corregido)
+                async copiarFaltantesIndividual(p) {
+                    this.showMsg('Verificando stock actualizado...', 'info');
+                    
+                    // 1. Refrescar productos para tener stock real al momento
+                    try {
+                        const res = await fetch(`${apiBase}/productos`);
+                        this.productos = await res.json();
+                    } catch(e) { console.error(e); }
+
                     const items = this.parseItems(p.items);
                     let txt = "";
+                    
                     items.forEach(i => {
                         const pr = this.productos.find(x => x.id === i.id);
-                        const falt = Math.max(0, i.cantidad - (pr ? pr.stock : 0));
-                        if(falt>0) txt += `${falt} ${i.nombre}\n`;
+                        
+                        // 2. Si el stock es negativo, lo tratamos como 0
+                        const stockReal = pr ? Math.max(0, Number(pr.stock)) : 0;
+                        
+                        // Calculamos faltante
+                        const falt = Math.max(0, i.cantidad - stockReal);
+                        
+                        if(falt > 0) txt += `${falt} ${i.nombre}\n`;
                     });
-                    navigator.clipboard.writeText(txt || "Hay stock");
-                    this.showMsg('Copiado', 'success');
+                    
+                    navigator.clipboard.writeText(txt || "Hay stock de todo");
+                    this.showMsg('Faltantes copiados (Stock actualizado)', 'success');
                 },
                 
-                copiarFaltantesPeticionesMasivo() {
+                // COPIAR MASIVO (Corregido)
+                async copiarFaltantesPeticionesMasivo() {
                     const selected = this.peticiones.filter(p => this.selectedPeticiones.includes(p.id));
                     if(selected.length === 0) return alert('Selecciona peticiones');
+                    
+                    this.showMsg('Verificando stock actualizado...', 'info');
+
+                    // 1. Refrescar productos
+                    try {
+                        const res = await fetch(`${apiBase}/productos`);
+                        this.productos = await res.json();
+                    } catch(e) { console.error(e); }
+
                     const agg = {};
                     selected.forEach(p => {
                         this.parseItems(p.items).forEach(i => {
@@ -799,13 +826,19 @@
                             agg[i.id].cantidad += Number(i.cantidad);
                         });
                     });
+                    
                     let txt = "";
                     for(const id in agg) {
                         const pr = this.productos.find(x => x.id == id);
-                        const falt = Math.max(0, agg[id].cantidad - (pr ? pr.stock : 0));
+                        
+                        // 2. Si el stock es negativo, cuenta como 0
+                        const stockReal = pr ? Math.max(0, Number(pr.stock)) : 0;
+                        
+                        const falt = Math.max(0, agg[id].cantidad - stockReal);
                         if(falt > 0) txt += `${falt} ${agg[id].nombre}\n`;
                     }
-                    navigator.clipboard.writeText(txt || "Hay stock");
+                    
+                    navigator.clipboard.writeText(txt || "Hay stock de todo");
                     this.showMsg('Faltantes Masivos Copiados', 'success');
                 },
 
@@ -860,5 +893,6 @@
     </script>
 </body>
 </html>
+
 
 
