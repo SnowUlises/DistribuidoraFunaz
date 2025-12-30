@@ -249,10 +249,13 @@
                                 <span class="font-bold text-orange-300">{{ selectedOrders.length }} seleccionados</span>
                                 <div class="h-4 w-px bg-slate-700"></div>
                                 <button @click="accionMasivaPedidos('cloud')" class="hover:text-green-400 font-bold transition flex items-center gap-1">
-                                    <i data-lucide="cloud" class="w-3 h-3"></i> Guardar
+                                    <i data-lucide="cloud" class="w-3 h-3"></i> Guardar (PDF)
                                 </button>
                                 <button @click="accionMasivaPedidos('pdf')" class="hover:text-orange-400 font-bold transition flex items-center gap-1">
-                                    <i data-lucide="file-text" class="w-3 h-3"></i> PDF
+                                    <i data-lucide="file-text" class="w-3 h-3"></i> Ver PDF+10%
+                                </button>
+                                <button @click="accionMasivaPedidos('pdf-normal')" class="hover:text-blue-400 font-bold transition flex items-center gap-1">
+                                    <i data-lucide="file" class="w-3 h-3"></i> Ver PDF
                                 </button>
                                 <button @click="selectedOrders = []" class="ml-2 hover:bg-slate-700 rounded-full p-1 transition"><i data-lucide="x" class="w-3 h-3"></i></button>
                             </div>
@@ -773,7 +776,21 @@
                     for(const uid of this.selectedOrders) {
                         const p = this.rawPedidos.find(x => x.uid === uid);
                         if(p) {
-                            if(mode==='cloud') await this.guardarCloud(p); else await this.previewPDF(p);
+                            if(mode==='cloud') await this.guardarCloud(p); 
+                            else if(mode==='pdf') await this.previewPDF(p);
+                            else if(mode==='pdf-normal') {
+                                // Reutilizamos lógica de preview pero sin aumento
+                                const payload = {
+                                    user: p.user, items: p.items,
+                                    total: p.items.reduce((a,b)=>a+(Number(b.subtotal)||0),0),
+                                    fecha: new Date().toISOString(), nombre_negocio: p.nombre_negocio
+                                };
+                                const res = await fetch(`${apiBase}/generar-pdf-peticion`, {
+                                    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
+                                });
+                                const data = await res.json();
+                                if(data.pdf) window.open(data.pdf, '_blank');
+                            }
                             await new Promise(r=>setTimeout(r,500));
                         }
                     }
