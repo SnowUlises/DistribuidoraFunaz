@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Funaz</title>
+    <title>Admin Panel - Funaz (Edición Navideña)</title>
     
     <!-- Vue 3 + Tailwind + Iconos -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- PDF-Lib para concatenar PDFs en el cliente -->
+    <!-- PDF-Lib para concatenar PDFs -->
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; } /* Fondo nieve muy suave */
         
         /* Scrollbar Fina */
         .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -33,7 +33,7 @@
             width: 16px; height: 16px; background-color: white; border-radius: 50%;
             transition: transform 0.3s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
-        .toggle-input:checked + .toggle-switch { background-color: #65a30d; /* Lime/Green */ }
+        .toggle-input:checked + .toggle-switch { background-color: #16a34a; /* Green Christmas */ }
         .toggle-input:checked + .toggle-switch::after { transform: translateX(16px); }
         .toggle-input { display: none; }
 
@@ -48,22 +48,24 @@
     <div id="app" v-cloak class="min-h-screen pb-32 text-slate-800">
         
         <!-- HEADER -->
-        <header class="bg-white sticky top-0 z-50 border-b border-slate-200 shadow-sm backdrop-blur-md bg-opacity-95">
+        <header class="bg-white sticky top-0 z-50 border-b border-red-100 shadow-sm backdrop-blur-md bg-opacity-95">
             <div class="max-w-[1920px] mx-auto px-6 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
-                    <a href="/" class="p-2 -ml-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition">
+                    <a href="/" class="p-2 -ml-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition">
                         <i data-lucide="arrow-left" class="w-6 h-6"></i>
                     </a>
-                    <h1 class="text-xl font-bold tracking-tight text-slate-800">Panel de Control</h1>
+                    <h1 class="text-xl font-bold tracking-tight text-slate-800 flex items-center gap-2">
+                        <i data-lucide="gift" class="w-5 h-5 text-red-500"></i> Panel de Control
+                    </h1>
                 </div>
 
                 <!-- Buscador -->
                 <div class="w-full md:w-[600px] relative group" v-if="!focusMode">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <i data-lucide="search" class="w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors"></i>
+                        <i data-lucide="search" class="w-5 h-5 text-slate-400 group-focus-within:text-red-500 transition-colors"></i>
                     </div>
                     <input v-model="search" type="text" placeholder="Buscar cliente, ID, producto..." 
-                        class="w-full pl-11 pr-4 py-2.5 bg-slate-100 border border-transparent rounded-xl text-base focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all shadow-sm">
+                        class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base focus:bg-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all shadow-sm">
                     <button v-if="search" @click="search = ''" class="absolute right-3 top-2.5 text-slate-400 hover:text-red-500 transition">
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
@@ -78,7 +80,7 @@
 
                 <!-- Acciones Globales -->
                 <div class="flex items-center gap-3" v-if="!focusMode">
-                    <div class="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-bold border border-blue-100 flex items-center gap-2 text-sm">
+                    <div class="bg-red-50 text-red-700 px-4 py-2 rounded-lg font-bold border border-red-100 flex items-center gap-2 text-sm">
                         <i data-lucide="inbox" class="w-4 h-4"></i>
                         <span>{{ peticiones.length }} Peticiones</span>
                     </div>
@@ -99,23 +101,20 @@
             <!-- VISTA ENFOCADA (ITEM INDIVIDUAL) -->
             <section v-if="focusMode && focusedItem" class="flex justify-center">
                 <div class="w-full max-w-3xl">
-                    <!-- Renderizado condicional del item enfocado (reutilizando componentes lógicos) -->
                     <div v-if="focusType === 'pedido'" 
                          :class="['bg-white rounded-2xl shadow-2xl border-4 overflow-hidden flex flex-col relative transform scale-100 transition-all', 
-                                  getEstado(focusedItem.uid).recibido ? 'border-green-400 bg-green-50/20' : 'border-orange-400 bg-orange-50/20']">
-                         <!-- (Contenido del Pedido Enfocado - Reutilizado abajo) -->
+                                  getEstado(focusedItem.uid).recibido ? 'border-green-500 bg-green-50/20' : 'border-orange-400 bg-orange-50/20']">
                          <div class="p-6 border-b border-slate-200 bg-white flex justify-between items-start">
-                            <div>
-                                <h2 class="text-3xl font-bold text-slate-800 text-center w-full">{{ focusedItem.user }}</h2>
-                                <div class="text-slate-500 font-mono text-center w-full mt-1">{{ formatDate(focusedItem.fecha) }}</div>
+                            <div class="w-full text-center">
+                                <h2 class="text-3xl font-bold text-slate-800">{{ focusedItem.user }}</h2>
+                                <div class="text-slate-500 font-mono mt-1">{{ formatDate(focusedItem.fecha) }}</div>
                             </div>
-                            <div class="text-right">
+                            <div class="text-right absolute right-6 top-6">
                                 <div class="text-3xl font-bold text-slate-800">{{ formatMoney(calculateTotal(focusedItem)) }}</div>
                                 <span class="text-sm font-mono text-slate-400">#{{ String(focusedItem.id).slice(-4) }}</span>
                             </div>
                          </div>
                          <div class="p-4 bg-white max-h-[60vh] overflow-y-auto custom-scroll">
-                             <!-- Lista Items Enfocados -->
                              <div v-for="(item, iIdx) in getItemsToShow(focusedItem)" :key="iIdx" class="flex justify-between items-center py-3 border-b border-dashed border-slate-200 last:border-0 text-lg px-2">
                                 <div class="flex-1 pr-4">
                                     <span class="font-bold bg-slate-100 border border-slate-200 px-2 py-1 rounded text-slate-900 mr-2">{{ item.cantidad }}</span>
@@ -125,7 +124,6 @@
                              </div>
                          </div>
                          <div class="p-4 bg-slate-50 border-t border-slate-200 grid grid-cols-2 gap-4">
-                             <!-- Controles Enfocados -->
                              <button @click="guardarCloud(focusedItem)" class="bg-slate-800 text-white py-3 rounded-xl font-bold hover:bg-slate-900">Guardar Cloud (PDF)</button>
                              <button @click="previewPDF(focusedItem)" class="bg-orange-500 text-white py-3 rounded-xl font-bold hover:bg-orange-600">PDF +10%</button>
                              <div class="col-span-2 flex justify-between items-center bg-white p-3 rounded-xl border shadow-sm">
@@ -141,7 +139,6 @@
                     </div>
 
                     <div v-else-if="focusType === 'peticion'" class="bg-white rounded-2xl shadow-2xl border border-blue-200 overflow-hidden">
-                        <!-- (Contenido Petición Enfocada) -->
                         <div class="p-6 border-b border-blue-100 bg-blue-50 text-center">
                             <h2 class="text-3xl font-bold text-slate-800">{{ focusedItem.nombre }}</h2>
                             <div class="text-slate-500 mt-1">{{ focusedItem.telefono }}</div>
@@ -166,7 +163,7 @@
                 <section v-if="peticiones.length > 0 && !activeClient" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-8">
                     <div class="bg-slate-50 px-6 py-3 border-b border-slate-200 flex flex-wrap justify-between items-center gap-2">
                         <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                            <span class="bg-blue-100 text-blue-600 p-1.5 rounded-lg"><i data-lucide="bell" class="w-4 h-4"></i></span>
+                            <span class="bg-red-100 text-red-600 p-1.5 rounded-lg"><i data-lucide="bell" class="w-4 h-4"></i></span>
                             Solicitudes Nuevas
                         </h2>
                         <div class="flex gap-2">
@@ -175,7 +172,7 @@
                                     <button @click="copiarFaltantesPeticionesMasivo" class="bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg font-bold text-xs shadow-sm transition flex items-center gap-1">
                                         <i data-lucide="copy" class="w-3 h-3"></i> Copiar Faltantes
                                     </button>
-                                    <button @click="procesarPeticionesMasivo(false)" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-bold text-xs shadow-sm transition flex items-center gap-1">
+                                    <button @click="procesarPeticionesMasivo(false)" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg font-bold text-xs shadow-sm transition flex items-center gap-1">
                                         <i data-lucide="check" class="w-3 h-3"></i> Aceptar
                                     </button>
                                     <button @click="procesarPeticionesMasivo(true)" class="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1.5 rounded-lg font-bold text-xs shadow-sm transition flex items-center gap-1">
@@ -188,16 +185,14 @@
                     
                     <div class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 bg-slate-50/50">
                         <div v-for="peticion in peticiones" :key="peticion.id" class="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow duration-200 flex flex-col group relative">
-                            <!-- Botón Enfocar Petición -->
-                            <button @click="enfocarItem(peticion, 'peticion')" class="absolute top-2 right-2 p-1.5 bg-white rounded-full shadow border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-300 z-10 transition" title="Enfocar Petición">
+                            <button @click="enfocarItem(peticion, 'peticion')" class="absolute top-2 right-2 p-1.5 bg-white rounded-full shadow border border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-300 z-10 transition" title="Enfocar Petición">
                                 <i data-lucide="eye" class="w-4 h-4"></i>
                             </button>
 
-                            <!-- Header Petición -->
                             <div class="p-3 border-b border-slate-100 bg-white rounded-t-xl pr-10">
                                 <div class="flex justify-between items-start mb-2">
                                     <div class="flex items-center gap-2 overflow-hidden w-full">
-                                        <input type="checkbox" v-model="selectedPeticiones" :value="peticion.id" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer flex-shrink-0">
+                                        <input type="checkbox" v-model="selectedPeticiones" :value="peticion.id" class="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500 cursor-pointer flex-shrink-0">
                                         <div class="w-full text-center">
                                             <h3 class="font-bold text-slate-900 text-base truncate" :title="peticion.nombre">{{ peticion.nombre }}</h3>
                                             <div class="text-[10px] text-slate-500 mt-0.5 flex items-center justify-center gap-1">
@@ -210,11 +205,10 @@
                                     <span v-if="peticion.telefono" class="text-slate-600 font-medium flex items-center gap-1">
                                         <i data-lucide="phone" class="w-3 h-3"></i> {{ peticion.telefono }}
                                     </span>
-                                    <span class="font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">{{ formatMoney(peticion.total) }}</span>
+                                    <span class="font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded">{{ formatMoney(peticion.total) }}</span>
                                 </div>
                             </div>
 
-                            <!-- Body Petición -->
                             <div class="p-2 flex-1 bg-white relative">
                                 <div class="bg-slate-50 rounded-lg p-2 max-h-[150px] overflow-y-auto custom-scroll border border-slate-100 space-y-1">
                                     <div v-for="item in parseItems(peticion.items)" class="flex justify-between text-xs py-1 border-b border-slate-100 last:border-0 border-dashed">
@@ -228,7 +222,6 @@
                                 </div>
                             </div>
 
-                            <!-- Footer Petición -->
                             <div class="p-2 bg-slate-50 border-t border-slate-100 rounded-b-xl grid grid-cols-2 gap-2">
                                 <button @click="confirmarPeticion(peticion, false)" class="bg-white border border-green-200 text-green-700 hover:bg-green-50 py-1 rounded text-[10px] font-bold transition">Confirmar</button>
                                 <button @click="confirmarPeticion(peticion, true)" class="bg-white border border-teal-200 text-teal-700 hover:bg-teal-50 py-1 rounded text-[10px] font-bold transition">-3% Desc</button>
@@ -241,52 +234,46 @@
 
                 <!-- SECCIÓN CLIENTES Y PEDIDOS -->
                 <section>
-                    <!-- Header Clientes (Oculto si hay un cliente activo para maximizar espacio) -->
                     <div class="flex items-center justify-between mb-4 px-2" v-if="!activeClient">
                         <h2 class="text-xl font-bold text-slate-800">Clientes Activos</h2>
                     </div>
-                    <!-- Botón Volver cuando hay Cliente Activo -->
                     <div v-else class="mb-4 flex items-center justify-between">
                         <button @click="toggleClient(null)" class="flex items-center gap-2 text-slate-500 hover:text-slate-800 font-bold transition bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200">
-                            <i data-lucide="arrow-left" class="w-5 h-5"></i> Volver a Clientes
+                            <i data-lucide="arrow-left" class="w-5 h-5"></i> Volver
                         </button>
                         <h2 class="text-3xl font-bold text-slate-800 text-center flex-1">{{ activeClient }}</h2>
-                        <div class="w-32"></div> <!-- Spacer para centrar el titulo -->
+                        <div class="w-32"></div>
                     </div>
 
                     <!-- GRID DE CLIENTES -->
-                    <!-- Si hay cliente activo, solo se muestra ese contenedor expandido -->
                     <div :class="activeClient ? 'w-full' : 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6'">
                         
                         <div v-for="(orders, clientName) in filteredClients" :key="clientName" 
                              v-show="!activeClient || activeClient === clientName"
-                             :class="['bg-white rounded-xl shadow-sm border border-slate-200 transition-all duration-300 flex flex-col', activeClient === clientName ? 'shadow-none border-0 bg-transparent' : 'hover:shadow-md']">
+                             :class="['bg-white rounded-xl shadow-sm border border-slate-200 transition-all duration-300 flex flex-col', activeClient === clientName ? 'shadow-none border-0 bg-transparent' : 'hover:shadow-md hover:border-red-200']">
                             
-                            <!-- Header Cliente (Solo visible en lista) -->
+                            <!-- Header Cliente (Lista) -->
                             <div v-if="!activeClient" @click="toggleClient(clientName)" 
-                                 class="p-4 cursor-pointer flex justify-between items-center transition-colors select-none rounded-xl bg-white hover:bg-slate-50">
+                                 class="p-5 cursor-pointer flex justify-between items-center transition-colors select-none rounded-xl bg-white hover:bg-slate-50 border-l-4 border-l-transparent hover:border-l-red-400">
                                 <div class="flex items-center gap-3 overflow-hidden w-full">
-                                    <div class="truncate w-full text-center">
-                                        <h3 class="font-bold text-xl leading-tight truncate text-slate-800">{{ clientName }}</h3>
-                                        <span class="text-xs font-medium text-slate-500">{{ orders.length }} pedidos</span>
+                                    <div class="truncate w-full text-center flex items-center justify-center gap-2">
+                                        <i data-lucide="gift" class="w-4 h-4 text-red-400"></i>
+                                        <h3 class="font-bold text-lg leading-tight truncate text-slate-800">{{ clientName }}</h3>
                                     </div>
                                 </div>
                                 <i data-lucide="chevron-right" class="w-5 h-5 text-slate-400 absolute right-4"></i>
                             </div>
 
-                            <!-- Cuerpo Cliente (Visible solo si activo) -->
+                            <!-- Cuerpo Cliente -->
                             <div v-if="activeClient === clientName" class="flex-1">
                                 
-                                <!-- GRID DE PEDIDOS DEL CLIENTE (FULL SCREEN) -->
-                                <!-- Aquí ajustamos las columnas para ocupar toda la pantalla -->
                                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                     
                                     <div v-for="(pedido, idx) in getItemsSlice(clientName, orders)" :key="pedido.uid"
                                          :class="['bg-white rounded-xl shadow-sm border-2 transition-all duration-200 overflow-hidden flex flex-col relative', 
-                                                  getEstado(pedido.uid).recibido ? 'border-green-400 bg-green-50/20' : 'border-orange-400 bg-orange-50/20']">
+                                                  getEstado(pedido.uid).recibido ? 'border-green-500 bg-green-50/20' : 'border-orange-400 bg-orange-50/20']">
                                         
-                                        <!-- Botón Enfocar Pedido -->
-                                        <button @click="enfocarItem(pedido, 'pedido')" class="absolute top-2 right-2 p-1.5 bg-white/80 backdrop-blur rounded-full shadow border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-300 z-10 transition" title="Enfocar Pedido">
+                                        <button @click="enfocarItem(pedido, 'pedido')" class="absolute top-2 right-2 p-1.5 bg-white/80 backdrop-blur rounded-full shadow border border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-300 z-10 transition" title="Enfocar Pedido">
                                             <i data-lucide="eye" class="w-4 h-4"></i>
                                         </button>
 
@@ -296,9 +283,9 @@
                                                 <input type="checkbox" v-model="selectedOrders" :value="pedido.uid" class="mt-1 w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer shrink-0">
                                                 <div class="flex-1 min-w-0 flex flex-col items-center">
                                                     <div class="flex flex-wrap gap-1 mb-1 justify-center w-full">
-                                                        <!-- NOMBRE NEGOCIO MÁS GRANDE (CORREGIDO) -->
-                                                        <span v-if="pedido.nombre_negocio" class="text-xl font-bold uppercase tracking-wide text-orange-900 bg-orange-100 px-3 py-1 rounded truncate max-w-full border border-orange-200 shadow-sm block w-full text-center">{{ pedido.nombre_negocio }}</span>
-                                                        <span v-if="pedido.user !== clientName" class="text-[10px] font-bold uppercase tracking-wide text-teal-700 bg-teal-100 px-1.5 py-0.5 rounded truncate max-w-full">{{ pedido.user }}</span>
+                                                        <!-- NOMBRE NEGOCIO PEQUEÑO Y CENTRADO -->
+                                                        <span v-if="pedido.nombre_negocio" class="text-sm font-bold uppercase tracking-wide text-orange-900 bg-orange-50 px-2 py-0.5 rounded truncate max-w-full border border-orange-100 shadow-sm block w-full text-center mb-1">{{ pedido.nombre_negocio }}</span>
+                                                        <span v-if="pedido.user !== clientName" class="text-[9px] font-bold uppercase tracking-wide text-teal-700 bg-teal-100 px-1.5 py-0.5 rounded truncate max-w-full">{{ pedido.user }}</span>
                                                     </div>
                                                     <div class="text-[10px] text-slate-500 font-mono mb-0.5">{{ formatDate(pedido.fecha) }}</div>
                                                     <div class="text-xl font-bold text-slate-800">{{ formatMoney(calculateTotal(pedido)) }}</div>
@@ -306,7 +293,7 @@
                                             </div>
                                         </div>
 
-                                        <!-- Estado y Switch (Arriba, visible) -->
+                                        <!-- Estado y Switch -->
                                         <div class="px-3 py-2 bg-white/50 border-b border-slate-100 flex justify-between items-center">
                                             <span :class="['text-[10px] font-bold uppercase', getEstado(pedido.uid).recibido ? 'text-green-700' : 'text-orange-600']">
                                                 {{ getEstado(pedido.uid).recibido ? 'Preparado' : 'Armando' }}
@@ -322,7 +309,7 @@
                                             </div>
                                         </div>
 
-                                        <!-- Lista Items (Scrollable) -->
+                                        <!-- Lista Items -->
                                         <div class="p-2 flex-1 max-h-[220px] overflow-y-auto custom-scroll bg-white relative">
                                             <div v-if="loadingOrders[pedido.uid]" class="absolute inset-0 bg-white/80 z-10 flex items-center justify-center">
                                                 <div class="animate-spin text-orange-500"><i data-lucide="loader-2" class="w-6 h-6"></i></div>
@@ -397,12 +384,11 @@
                 <span class="font-bold text-orange-300 text-sm whitespace-nowrap">{{ selectedOrders.length }} seleccionados</span>
                 <div class="h-6 w-px bg-slate-700"></div>
                 <button @click="accionMasivaPedidos('cloud')" class="hover:text-green-400 font-bold transition flex items-center gap-2 text-sm whitespace-nowrap">
-                    <i data-lucide="cloud" class="w-4 h-4"></i> Guardar Cloud (PDF Normal)
+                    <i data-lucide="cloud" class="w-4 h-4"></i> Guardar Cloud (PDF)
                 </button>
                 <button @click="accionMasivaPedidos('pdf')" class="hover:text-orange-400 font-bold transition flex items-center gap-2 text-sm whitespace-nowrap">
                     <i data-lucide="file-text" class="w-4 h-4"></i> Ver PDF +10%
                 </button>
-                <!-- Botón PDF GIGANTE -->
                 <button @click="accionMasivaPedidos('pdf-giant')" class="hover:text-purple-400 font-bold transition flex items-center gap-2 text-sm whitespace-nowrap">
                     <i data-lucide="file-plus" class="w-4 h-4"></i> PDF GIGANTE
                 </button>
@@ -786,9 +772,6 @@
                             const mergedPdf = await PDFDocument.create();
                             
                             for (const p of pedidos) {
-                                // Obtenemos el PDF individual (usamos preview sin guardar en BD para rapidez, o Cloud si prefieres)
-                                // Usamos el endpoint de preview para obtener el binario (necesitaríamos modificar el backend para devolver buffer o blob)
-                                // Como el backend devuelve URL firmada, la descargamos.
                                 const items = p.items; 
                                 const payload = {
                                     user: p.user, items: items,
