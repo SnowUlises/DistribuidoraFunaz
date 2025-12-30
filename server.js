@@ -465,8 +465,7 @@ app.post('/api/generar-pdf-peticion', async (req, res) => {
         id: item.id,
         nombre: item.nombre,
         cantidad: Number(item.cantidad) || 0,
-        // Mantenemos el 10% extra
-        precio_unitario: Number(item.precio_unitario * 1.1) || 0, 
+        precio_unitario: Number(item.precio_unitario) || 0, 
         subtotal: Number(item.subtotal) || 0
       })),
       total: Number(total) || 0,
@@ -478,7 +477,7 @@ app.post('/api/generar-pdf-peticion', async (req, res) => {
     };
     
     const pdfBuffer = await generarPDF(pedido);
-    const pdfFileName = `preview_${pedido.id}.pdf`;
+    const pdfFileName = `_${pedido.id}.pdf`;
     
     const { error: uploadErr } = await supabase.storage.from('pedidos-pdf').upload(pdfFileName, pdfBuffer, { contentType: 'application/pdf', upsert: true });
     if (uploadErr) return res.status(500).json({ error: 'No se pudo subir el PDF' });
@@ -835,4 +834,5 @@ app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
