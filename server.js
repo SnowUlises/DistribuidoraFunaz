@@ -811,12 +811,29 @@ async function generarPDFMasivo(pedidos) {
 }
 
 
+/* =========================================================
+   SISTEMA DE COLAS (Pegar esto al inicio del archivo o antes de las rutas)
+   ========================================================= */
+const userQueues = {};
+
+function runInQueue(userId, task) {
+    if (!userQueues[userId]) {
+        userQueues[userId] = Promise.resolve();
+    }
+    const nextTask = userQueues[userId].then(() => task()).catch(err => console.error("Error en cola:", err));
+    userQueues[userId] = nextTask;
+    return nextTask;
+}
+
+/* =========================================================
+   ENDPOINT MODIFICADO (REEMPLAZAR EL TUYO POR ESTE)
+   ========================================================= */
 app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { estado } = req.body; 
 
-    // 1. Actualizar estado en pedidos
+    // 1. Actualizar estado en pedidos (Esto pasa inmediatamente)
     const { data: pedidoActualizado, error } = await supabase
       .from('pedidos')
       .update({ estado })
@@ -832,76 +849,83 @@ app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
 
         if (!pedido.user_id) {
             console.log(`⚠️ Pedido sin user_id. Se omite cobranza.`);
-            return res.json({ ok: true });
-        }
-
-        // 2. BUSCAR CLIENTE (Usando la columna user_id directa)
-        const { data: clientes, error: errBus } = await supabase
-            .from('clients_v2')
-            .select('*')
-            .eq('user_id', pedido.user_id); // <--- Búsqueda optimizada
-
-        if (clientes && clientes.length > 0) {
-            const cliente = clientes[0];
-            console.log(`✅ Sincronizando con cliente: ${cliente.name}`);
-
-            let items = cliente.data.items || [];
-
-            // ============================================================
-            // 🧹 ZONA DE LIMPIEZA (DELETE OLD)
-            // ============================================================
-            
-            // 1. Calculamos la fecha límite (Hoy - 3 Meses)
-            const fechaLimite = new Date();
-            fechaLimite.setMonth(fechaLimite.getMonth() - 3);
-
-            const itemsAntes = items.length;
-
-            items = items.filter(item => {
-                // A. Si no es deuda (es separador), se queda
-                if (item.type !== 'debt') return true;
-
-                // B. Si no tiene fecha válida, se queda (por seguridad)
-                if (!item.date) return true;
-
-                const fechaItem = new Date(item.date);
+            // No hacemos return para que el frontend reciba el OK de que cambió el estado
+        } else {
+            // 🔥 INICIO DE LA COLA: Protege contra clicks rápidos
+            runInQueue(pedido.user_id, async () => {
                 
-                // C. Si la fecha es inválida, se queda
-                if (isNaN(fechaItem.getTime())) return true;
-
-                return (fechaItem > fechaLimite) || ((item.amount - item.paid) > 0);
-            });
-
-            const borrados = itemsAntes - items.length;
-            if(borrados > 0) console.log(`🗑️ Se eliminaron ${borrados} deudas antiguas (+3 meses).`);
-
-            // ============================================================
-            // ➕ AGREGAR NUEVA DEUDA
-            // ============================================================
-            
-            const yaExiste = items.find(i => i.id === String(pedido.id));
-
-            if (!yaExiste) {
-                items.unshift({
-                    id: String(pedido.id),
-                    type: 'debt',
-                    amount: Math.round(pedido.total),
-                    paid: 0,
-                    date: pedido.fecha || new Date().toISOString(),
-                    notes: pedido.nombre_negocio || '', 
-                    color: 'orange'
-                });
-
-                // 3. Guardar cambios en DB
-                const nuevoData = { ...cliente.data, items: items };
-                
-                await supabase
+                // 2. BUSCAR CLIENTE (Dentro de la cola para tener datos frescos)
+                const { data: clientes, error: errBus } = await supabase
                     .from('clients_v2')
-                    .update({ data: nuevoData })
-                    .eq('id', cliente.id);
-                
-                console.log("💾 Cliente actualizado (Limpieza + Nueva Deuda).");
-            }
+                    .select('*')
+                    .eq('user_id', pedido.user_id);
+
+                if (clientes && clientes.length > 0) {
+                    const cliente = clientes[0];
+                    console.log(`✅ Sincronizando con cliente: ${cliente.name}`);
+
+                    let items = cliente.data.items || [];
+
+                    // ============================================================
+                    // 🧹 ZONA DE LIMPIEZA (Tu lógica original)
+                    // ============================================================
+                    const fechaLimite = new Date();
+                    fechaLimite.setMonth(fechaLimite.getMonth() - 3);
+
+                    const itemsAntes = items.length;
+
+                    items = items.filter(item => {
+                        // A. Si no es deuda (es separador), se queda
+                        if (item.type !== 'debt') return true;
+
+                        // B. Si no tiene fecha válida, se queda (por seguridad)
+                        if (!item.date) return true;
+
+                        const fechaItem = new Date(item.date);
+                        
+                        // C. Si la fecha es inválida, se queda
+                        if (isNaN(fechaItem.getTime())) return true;
+
+                        // D. Regla: Se queda si es nueva O si todavía debe dinero
+                        return (fechaItem > fechaLimite) || ((item.amount - item.paid) > 0);
+                    });
+
+                    const borrados = itemsAntes - items.length;
+                    if(borrados > 0) console.log(`🗑️ Se eliminaron ${borrados} deudas antiguas (+3 meses).`);
+
+                    // ============================================================
+                    // ➕ AGREGAR NUEVA DEUDA
+                    // ============================================================
+                    const yaExiste = items.find(i => i.id === String(pedido.id));
+
+                    if (!yaExiste) {
+                        items.unshift({
+                            id: String(pedido.id),
+                            type: 'debt',
+                            amount: Math.round(pedido.total),
+                            paid: 0,
+                            date: pedido.fecha || new Date().toISOString(),
+                            notes: pedido.nombre_negocio || '', 
+                            color: 'orange'
+                        });
+
+                        // 3. Guardar cambios en DB
+                        const nuevoData = { ...cliente.data, items: items };
+                        
+                        await supabase
+                            .from('clients_v2')
+                            .update({ data: nuevoData })
+                            .eq('id', cliente.id);
+                        
+                        console.log(`💾 Cliente actualizado (Pedido ${pedido.id} agregado).`);
+                    } else {
+                        console.log("ℹ️ La deuda ya existía, se omitió.");
+                    }
+                } else {
+                    console.log(`⚠️ No existe perfil de cobranzas para user_id: ${pedido.user_id}`);
+                }
+            });
+            // 🔥 FIN DE LA COLA
         }
     }
 
@@ -916,6 +940,7 @@ app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
