@@ -457,7 +457,7 @@ async function generarTicket() {
     if (!p) continue;
 
     const factorDescuento = esRegular ? 0.97 : 1;
-    const precioUnitarioEnviado = Number(p.precio) * factorDescuento;
+    const precioUnitarioEnviado = Number(p.precio) * factorDescuento * 1.1;
     // const precioFinal = precioUnitarioEnviado * 1.1; // Logica original comentada
     const subtotal = item.cantidad * (precioUnitarioEnviado * 1.1);
     total += subtotal;
@@ -516,3 +516,4 @@ btnGenerarTicket.addEventListener('click', generarTicket);
 </script>
 </body>
 </html>
+
