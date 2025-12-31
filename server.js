@@ -232,15 +232,17 @@ app.put('/api/historial-check/:id', async (req, res) => {
 });
 
 /* --- ACTUALIZAR PEDIDO (MODIFICAR) --- */
+/* --- ACTUALIZAR PEDIDO (MODIFICAR) --- */
 app.put('/api/actualizar-pedido/:id', async (req, res) => {
   try {
     const pedidoId = req.params.id;
     const { items, stockUpdates } = req.body;
+    
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Items inválidos' });
     }
     
-    // Actualizar stock
+    // 1. Actualizar stock (Lógica original)
     for (const update of stockUpdates) {
       const { data: prod } = await supabase.from('productos').select('*').eq('id', update.id).single();
       if (prod) {
@@ -252,50 +254,70 @@ app.put('/api/actualizar-pedido/:id', async (req, res) => {
         
         if (updErr) console.error('❌ Error actualizando stock:', updErr);
         else {
-            // REGISTRO Y ACTUALIZACION DE SNAPSHOT
             await registrarMovimiento(update.id, prod.nombre, -cantidadRestada, stockAnterior, newStock, 'MODIF_PEDIDO', pedidoId);
         }
       }
     }
     
-    // Actualizar pedido
+    // 2. Calcular nuevo total
     const total = items.reduce((sum, item) => sum + (item.cantidad * item.precio_unitario), 0);
+    
+    // 3. Actualizar tabla 'pedidos'
     const { error } = await supabase.from('pedidos').update({ items, total }).eq('id', pedidoId);
     
     if (error) {
       console.error('❌ Error actualizando pedido:', error);
       return res.status(500).json({ error: `Error al actualizar el pedido: ${error.message}` });
     }
-    // --- NUEVO: SINCRONIZAR CON DEUDAS (Si cambia el precio, cambia la deuda) ---
+
+    // =========================================================================
+    // --- NUEVO: SINCRONIZAR CON DEUDAS + REGISTRAR HISTORIAL ---
+    // =========================================================================
     try {
-        // Obtenemos info del pedido para saber de quién es y si está Preparado
         const { data: pedidoInfo } = await supabase.from('pedidos').select('user_id, estado').eq('id', pedidoId).single();
 
-        // Solo actualizamos la deuda si tiene dueño y el pedido ya estaba "Preparado" (o sea, ya estaba en deudas)
         if (pedidoInfo && pedidoInfo.user_id && pedidoInfo.estado === 'Preparado') {
             
-            // Usamos la cola (runInQueue) que ya tienes definida abajo en tu server para evitar conflictos
             runInQueue(pedidoInfo.user_id, async () => {
                 const { data: clients } = await supabase.from('clients_v2').select('*').eq('user_id', pedidoInfo.user_id);
                 
                 if (clients && clients.length > 0) {
                     const cliente = clients[0];
                     let deudaItems = cliente.data.items || [];
-                    
-                    // Buscamos el item que corresponde a este pedido
+               
+                    // B. BUSCAR Y ACTUALIZAR
                     const indexDeuda = deudaItems.findIndex(i => i.id === String(pedidoId) && i.type === 'debt');
                     
                     if (indexDeuda !== -1) {
                         const montoNuevo = Math.round(total);
-                        // Solo guardamos si el monto es diferente
-                        if (deudaItems[indexDeuda].amount !== montoNuevo) {
-                            console.log(`🔄 Actualizando deuda ID ${pedidoId}: $${deudaItems[indexDeuda].amount} -> $${montoNuevo}`);
-                            deudaItems[indexDeuda].amount = montoNuevo;
+                        const montoAnterior = deudaItems[indexDeuda].amount;
+                        
+                        // Solo si el monto cambió
+                        if (montoAnterior !== montoNuevo) {
+                            console.log(`🔄 Actualizando deuda ID ${pedidoId}: $${montoAnterior} -> $${montoNuevo}`);
                             
-                            // Guardamos en clients_v2
+                            // 1. Modificamos el monto en la lista actual
+                            deudaItems[indexDeuda].amount = montoNuevo;
+
+                            // 2. Preparamos el Historial
+                            let history = cliente.data.history || [];
+                            history.unshift({
+                                timestamp: Date.now(),
+                                items: oldItemsSnapshot, // Guardamos la foto vieja aquí
+                                action: `🔄 Sync Pedido: $${montoAnterior} ➔ $${montoNuevo}`
+                            });
+                            if (history.length > 50) history.pop();
+
+                            // 3. Guardamos TODO (Items nuevos + Historial nuevo)
                             await supabase
                                 .from('clients_v2')
-                                .update({ data: { ...cliente.data, items: deudaItems } })
+                                .update({ 
+                                    data: { 
+                                        ...cliente.data, 
+                                        items: deudaItems,
+                                        history: history 
+                                    } 
+                                })
                                 .eq('id', cliente.id);
                         }
                     }
@@ -304,10 +326,11 @@ app.put('/api/actualizar-pedido/:id', async (req, res) => {
         }
     } catch (errSync) {
         console.error("⚠️ Error menor sincronizando deuda:", errSync);
-        // No fallamos la request principal si esto falla, es secundario
     }
-     
-    res.json({ ok: true, mensaje: 'Pedido actualizado' });
+    // =========================================================================
+
+    res.json({ ok: true, mensaje: 'Pedido actualizado y sincronizado con historial' });
+
   } catch (err) {
     console.error('❌ Exception en actualizar-pedido:', err);
     res.status(500).json({ error: err.message || 'Error interno del servidor' });
@@ -981,6 +1004,7 @@ app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
