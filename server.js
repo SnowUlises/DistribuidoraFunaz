@@ -266,6 +266,47 @@ app.put('/api/actualizar-pedido/:id', async (req, res) => {
       console.error('❌ Error actualizando pedido:', error);
       return res.status(500).json({ error: `Error al actualizar el pedido: ${error.message}` });
     }
+    // --- NUEVO: SINCRONIZAR CON DEUDAS (Si cambia el precio, cambia la deuda) ---
+    try {
+        // Obtenemos info del pedido para saber de quién es y si está Preparado
+        const { data: pedidoInfo } = await supabase.from('pedidos').select('user_id, estado').eq('id', pedidoId).single();
+
+        // Solo actualizamos la deuda si tiene dueño y el pedido ya estaba "Preparado" (o sea, ya estaba en deudas)
+        if (pedidoInfo && pedidoInfo.user_id && pedidoInfo.estado === 'Preparado') {
+            
+            // Usamos la cola (runInQueue) que ya tienes definida abajo en tu server para evitar conflictos
+            runInQueue(pedidoInfo.user_id, async () => {
+                const { data: clients } = await supabase.from('clients_v2').select('*').eq('user_id', pedidoInfo.user_id);
+                
+                if (clients && clients.length > 0) {
+                    const cliente = clients[0];
+                    let deudaItems = cliente.data.items || [];
+                    
+                    // Buscamos el item que corresponde a este pedido
+                    const indexDeuda = deudaItems.findIndex(i => i.id === String(pedidoId) && i.type === 'debt');
+                    
+                    if (indexDeuda !== -1) {
+                        const montoNuevo = Math.round(total);
+                        // Solo guardamos si el monto es diferente
+                        if (deudaItems[indexDeuda].amount !== montoNuevo) {
+                            console.log(`🔄 Actualizando deuda ID ${pedidoId}: $${deudaItems[indexDeuda].amount} -> $${montoNuevo}`);
+                            deudaItems[indexDeuda].amount = montoNuevo;
+                            
+                            // Guardamos en clients_v2
+                            await supabase
+                                .from('clients_v2')
+                                .update({ data: { ...cliente.data, items: deudaItems } })
+                                .eq('id', cliente.id);
+                        }
+                    }
+                }
+            });
+        }
+    } catch (errSync) {
+        console.error("⚠️ Error menor sincronizando deuda:", errSync);
+        // No fallamos la request principal si esto falla, es secundario
+    }
+     
     res.json({ ok: true, mensaje: 'Pedido actualizado' });
   } catch (err) {
     console.error('❌ Exception en actualizar-pedido:', err);
@@ -940,6 +981,7 @@ app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
