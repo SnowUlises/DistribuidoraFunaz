@@ -511,7 +511,7 @@ app.post('/api/generar-pdf-masivo', async (req, res) => {
 
     // 1. Configurar cabeceras para que el navegador sepa que es un PDF
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=pedidos_masivos_${Date.now()}.pdf`);
+    res.setHeader('Content-Disposition', `inline; filename=pedidos_masivos_${Date.now()}.pdf`);
 
     const doc = new PDFDocument({
       size: [267, 862], 
@@ -1050,6 +1050,7 @@ app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
