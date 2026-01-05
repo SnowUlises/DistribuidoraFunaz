@@ -244,7 +244,6 @@ app.put('/api/historial-check/:id', async (req, res) => {
 });
 
 /* --- ACTUALIZAR PEDIDO (MODIFICAR) --- */
-/* --- ACTUALIZAR PEDIDO (MODIFICAR) --- */
 app.put('/api/actualizar-pedido/:id', async (req, res) => {
   try {
     const pedidoId = req.params.id;
@@ -299,25 +298,28 @@ app.put('/api/actualizar-pedido/:id', async (req, res) => {
                
                     // B. BUSCAR Y ACTUALIZAR
                     const indexDeuda = deudaItems.findIndex(i => i.id === String(pedidoId) && i.type === 'debt');
-                    
-                    if (indexDeuda !== -1) {
-                        const montoNuevo = Math.round(total);
-                        const montoAnterior = deudaItems[indexDeuda].amount;
-                        
-                        // Solo si el monto cambió
-                        if (montoAnterior !== montoNuevo) {
-                            console.log(`🔄 Actualizando deuda ID ${pedidoId}: $${montoAnterior} -> $${montoNuevo}`);
-                            
-                            // 1. Modificamos el monto en la lista actual
-                            deudaItems[indexDeuda].amount = montoNuevo;
-
-                            // 2. Preparamos el Historial
-                            let history = cliente.data.history || [];
-                            history.unshift({
-                                timestamp: Date.now(),
-                                items: oldItemsSnapshot, // Guardamos la foto vieja aquí
-                                action: `🔄 Sync Pedido: $${montoAnterior} ➔ $${montoNuevo}`
-                            });
+                     if (indexDeuda !== -1) {
+                         const montoNuevo = Math.round(total);
+                         const montoAnterior = deudaItems[indexDeuda].amount;
+                         
+                         // Solo si el monto cambió
+                         if (montoAnterior !== montoNuevo) {
+                             console.log(`🔄 Actualizando deuda ID ${pedidoId}: $${montoAnterior} -> $${montoNuevo}`);
+                             
+                             // --- AGREGAR ESTA LÍNEA AQUÍ ---
+                             const oldItemsSnapshot = JSON.parse(JSON.stringify(deudaItems)); 
+                             // -------------------------------
+                     
+                             // 1. Modificamos el monto en la lista actual
+                             deudaItems[indexDeuda].amount = montoNuevo;
+                     
+                             // 2. Preparamos el Historial
+                             let history = cliente.data.history || [];
+                             history.unshift({
+                                 timestamp: Date.now(),
+                                 items: oldItemsSnapshot, // Ahora esta variable SÍ existe y funcionará
+                                 action: `🔄 Sync Pedido: $${montoAnterior} ➔ $${montoNuevo}`
+                             });
                             if (history.length > 50) history.pop();
 
                             // 3. Guardamos TODO (Items nuevos + Historial nuevo)
