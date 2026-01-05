@@ -79,69 +79,104 @@
     <p style="text-align:center; color:#999; margin-top:2em;">Iniciando...</p>
   </main>
   
+<main id="contenedorHistorial">
+    <p style="text-align:center; color:#999; margin-top:2em;">Iniciando...</p>
+  </main>
+  
+  <div style="text-align: center; margin-bottom: 50px;">
+      <button id="btnServerLoad" onclick="cargarMesAnterior()" style="
+        background: #333; color: white; border: none; 
+        padding: 12px 20px; border-radius: 25px; 
+        cursor: pointer; font-weight: bold; display: none;">
+        📂 Descargar 1 mes más de antigüedad
+      </button>
+  </div>
+
 <script>
 // VARIABLES GLOBALES
-let historialDB = [];         // El historial "oficial" que viene del backend
-
+let historialDB = [];         
 let filtroActual = 'dia';
-let limiteCarga = 50;
+let limiteVisual = 50; // Paginación visual (scroll)
+
+// Variables para el control de fechas del servidor
+let fechaMasRecienteCargada = new Date(); // Hoy
+let fechaMasAntiguaCargada = new Date();  // Se calculará al iniciar
 
 // --- 1. INICIO ---
 async function iniciar() {
-    await cargarDatos();
-    // Ya no necesitamos setInterval aquí para "detectar" cosas.
-    // Simplemente recargamos el historial cada cierto tiempo para ver si el backend detectó algo
-    setInterval(cargarDatos, 60000); 
+    // 1. Configurar fechas iniciales: Últimos 3 MESES
+    fechaMasAntiguaCargada.setMonth(fechaMasAntiguaCargada.getMonth() - 3);
+    
+    console.log(`📅 Iniciando carga desde: ${fechaMasAntiguaCargada.toLocaleDateString()} hasta hoy.`);
+    
+    await cargarDatosServidor(fechaMasAntiguaCargada.toISOString(), fechaMasRecienteCargada.toISOString(), true);
+    
+    // Mostrar el botón de cargar antiguos
+    document.getElementById('btnServerLoad').style.display = 'inline-block';
 }
 
-// Carga del Historial (Ya procesado por el backend)
-async function cargarDatos() {
+// --- 2. CARGA DE DATOS (DEL SERVIDOR) ---
+async function cargarDatosServidor(fechaDesde, fechaHasta, esReinicio = false) {
+    const btn = document.getElementById('btnServerLoad');
+    const textoOriginal = btn.innerText;
+    btn.innerText = "⏳ Descargando del servidor...";
+    btn.disabled = true;
+
     try {
-        const res = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/historial');
+        // Petición con parámetros de fecha
+        const url = `https://distribuidorafunaz-a2o6.onrender.com/api/historial?desde=${fechaDesde}&hasta=${fechaHasta}`;
+        const res = await fetch(url);
+        
         if(res.ok) {
-            historialDB = await res.json();
-            // Formatear para visualización
-            historialDB = historialDB.map(h => ({
+            let nuevosDatos = await res.json();
+            
+            // Procesar datos
+            nuevosDatos = nuevosDatos.map(h => ({
                 ...h, 
                 esAjuste: h.tipo_movimiento === 'AJUSTE_DETECTADO_DB' || h.tipo_movimiento === 'AJUSTE_MANUAL',
                 sortKey: new Date(h.fecha).getTime()
             }));
+
+            if (esReinicio) {
+                historialDB = nuevosDatos;
+            } else {
+                // Si estamos cargando antiguos, los agregamos AL FINAL de la lista actual
+                // Filtramos para evitar duplicados exactos por ID si se solapan las horas
+                const idsExistentes = new Set(historialDB.map(h => h.id));
+                const limpios = nuevosDatos.filter(d => !idsExistentes.has(d.id));
+                historialDB = [...historialDB, ...limpios];
+            }
+
+            // Ordenar siempre: El más nuevo arriba
+            historialDB.sort((a, b) => b.sortKey - a.sortKey);
+            
             renderizar();
+            console.log(`✅ Total registros cargados: ${historialDB.length}`);
         }
-    } catch (err) { console.error(err); }
-}
-
-// --- 2. FORZAR MONITOR (Llamar al backend) ---
-async function forzarCheck() {
-    const btn = document.querySelector('.btn-check');
-    const txt = btn.innerText;
-    
-    // Feedback visual
-    btn.innerText = "⏳...";
-    btn.disabled = true;
-
-    try {
-        // 1. Pedimos al backend que revise AHORA
-        const res = await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/forzar-monitor', { method: 'POST' });
-        const data = await res.json();
-        
-        console.log("Resultado monitor:", data);
-
-        // 2. Recargamos la lista para ver si apareció algo nuevo
-        await cargarDatos();
-        
-        btn.innerText = "✅";
-    } catch (e) {
-        console.error(e);
-        btn.innerText = "❌";
+    } catch (err) { 
+        console.error("Error cargando historial:", err);
+        alert("Error de conexión al cargar historial antiguo");
+    } finally {
+        btn.innerText = textoOriginal;
+        btn.disabled = false;
     }
-
-    // Restaurar botón
-    setTimeout(() => { btn.innerText = txt; btn.disabled = false; }, 1000);
 }
 
+// --- 3. CARGAR MES ANTERIOR (BOTÓN NEGRO) ---
+async function cargarMesAnterior() {
+    // Guardamos la fecha antigua actual como el "hasta" del nuevo bloque
+    const hasta = new Date(fechaMasAntiguaCargada);
+    
+    // Restamos 1 mes para el nuevo "desde"
+    fechaMasAntiguaCargada.setMonth(fechaMasAntiguaCargada.getMonth() - 1);
+    
+    console.log(`📂 Pidiendo historial antiguo: ${fechaMasAntiguaCargada.toLocaleDateString()} -> ${hasta.toLocaleDateString()}`);
+    
+    // Llamamos a la API (false para NO borrar lo que ya tenemos)
+    await cargarDatosServidor(fechaMasAntiguaCargada.toISOString(), hasta.toISOString(), false);
+}
 
-// --- 3. RENDERIZADO (SIMPLE) ---
+// --- 4. RENDERIZADO (VISUAL) ---
 function renderizar() {
     const cont = document.getElementById('contenedorHistorial');
     const busq = document.getElementById('buscador').value.toLowerCase();
@@ -149,19 +184,20 @@ function renderizar() {
 
     cont.innerHTML = '';
 
-    // Filtrar
+    // Filtrado en memoria
     const listaFiltrada = historialDB.filter(i => {
         return i.producto_nombre.toLowerCase().includes(busq) && (!soloAjuste || i.esAjuste);
     });
 
     if(listaFiltrada.length === 0) {
-        cont.innerHTML = '<p style="text-align:center;color:#999">Sin movimientos</p>';
+        cont.innerHTML = '<p style="text-align:center;color:#999">Sin movimientos en las fechas cargadas</p>';
         return;
     }
 
-    const visible = listaFiltrada.slice(0, limiteCarga);
-    const grupos = {};
+    // Paginación VISUAL (Para no trabar el navegador al hacer scroll)
+    const visible = listaFiltrada.slice(0, limiteVisual);
     
+    const grupos = {};
     visible.forEach(i => {
         const k = formatearFecha(i.fecha);
         if(!grupos[k]) grupos[k] = [];
@@ -208,34 +244,49 @@ function renderizar() {
         cont.appendChild(div);
     });
 
-    if(limiteCarga < listaFiltrada.length) {
+    // Botón "Ver más" (Paginación local)
+    if(limiteVisual < listaFiltrada.length) {
         const btn = document.createElement('button');
         btn.className = 'btn-cargar-mas';
-        btn.innerText = 'Cargar más';
-        btn.onclick = cargarMas;
+        btn.innerText = 'Ver más movimientos (cargados)';
+        btn.onclick = () => { limiteVisual += 50; renderizar(); };
         cont.appendChild(btn);
     }
 }
 
-// Helpers
+// --- 5. FUNCIONES AUXILIARES ---
+async function forzarCheck() {
+    const btn = document.querySelector('.btn-check');
+    btn.innerText = "⏳..."; btn.disabled = true;
+    try {
+        await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/forzar-monitor', { method: 'POST' });
+        // Recargamos solo el rango actual para refrescar
+        await cargarDatosServidor(fechaMasAntiguaCargada.toISOString(), new Date().toISOString(), true);
+        btn.innerText = "✅";
+    } catch (e) { console.error(e); btn.innerText = "❌"; }
+    setTimeout(() => { btn.innerText = "↻ Check Ahora"; btn.disabled = false; }, 1000);
+}
+
 function filtrar(tipo, btn) {
     filtroActual = tipo;
     document.querySelectorAll('.filtros button').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    limiteCarga = 50;
+    limiteVisual = 50;
     renderizar();
 }
-function cargarMas() { limiteCarga += 50; renderizar(); }
 
 function formatearFecha(f) {
     const d = new Date(f);
+    // Ajuste zona horaria manual si es necesario, o dejar UTC local
     if(filtroActual === 'dia') return d.toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long'});
     if(filtroActual === 'semana') return "Semana del " + d.toLocaleDateString();
     if(filtroActual === 'mes') return d.toLocaleDateString('es-ES', {month:'long', year:'numeric'});
-    return d.getFullYear();
+    if(filtroActual === 'anio') return d.getFullYear();
 }
 
+// Iniciar al cargar
 iniciar();
+
 </script>
 </body>
 </html>
