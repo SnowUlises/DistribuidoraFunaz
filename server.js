@@ -200,13 +200,25 @@ app.post('/api/forzar-monitor', async (req, res) => {
 });
 
 /* --- LEER HISTORIAL --- */
+/* --- LEER HISTORIAL (CON RANGO DE FECHAS) --- */
 app.get('/api/historial', async (req, res) => {
   try {
-    const { data, error } = await supabase
+    // 1. Recibimos las fechas del frontend (si no envían, usamos valores por defecto)
+    const { desde, hasta } = req.query;
+
+    let query = supabase
       .from('historial_stock')
       .select('*')
-      .order('fecha', { ascending: false })
-      .limit(500);
+      .order('fecha', { ascending: false });
+
+    // 2. Si hay fechas, filtramos. Si no, limitamos a 500 por seguridad.
+    if (desde && hasta) {
+        query = query.gte('fecha', desde).lte('fecha', hasta);
+    } else {
+        query = query.limit(500);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
     res.json(data);
@@ -1010,6 +1022,7 @@ app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
