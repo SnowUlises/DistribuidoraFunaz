@@ -844,9 +844,22 @@
                     const pedidos = this.selectedOrders.map(uid => this.rawPedidos.find(p => p.uid === uid)).filter(Boolean);
                     if (mode === 'pdf-giant') {
                         if(!confirm(`¿Generar UN SOLO PDF con ${pedidos.length} pedidos concatenados?`)) return;
+                    
+                        // 1. ABRIR VENTANA INMEDIATAMENTE (Para evitar bloqueo de pop-ups)
+                        const pdfWindow = window.open('', '_blank');
                         
-                        // Feedback visual simple (opcional, podrías usar tu this.loadingOrders si quieres)
-                        this.showMsg('Generando PDF Gigante...', 'info');
+                        // Ponemos un mensaje de espera mientras el servidor trabaja
+                        if (pdfWindow) {
+                            pdfWindow.document.write(`
+                                <div style="font-family:sans-serif;text-align:center;margin-top:20%;">
+                                    <h1>⏳ Generando PDF...</h1>
+                                    <p>Por favor espera, estamos procesando ${pedidos.length} pedidos.</p>
+                                </div>
+                            `);
+                        } else {
+                            alert("⚠️ Habilita las ventanas emergentes para ver el PDF.");
+                            return;
+                        }
                     
                         try {
                             const itemsForGiant = pedidos.map(p => ({
@@ -855,33 +868,32 @@
                                 total: p.items.reduce((a,b)=>a+(Number(b.subtotal)||0),0),
                                 fecha: p.fecha || new Date().toISOString(), 
                                 nombre_negocio: p.nombre_negocio,
-                                id: p.id // Asegúrate de pasar el ID para que salga en el PDF
+                                id: p.id
                             }));
                     
-                            // 1. Hacemos el fetch
+                            // 2. PEDIR DATOS AL SERVIDOR
                             const res = await fetch(`${apiBase}/generar-pdf-masivo`, {
                                 method: 'POST', 
                                 headers: {'Content-Type': 'application/json'}, 
                                 body: JSON.stringify({ pedidos: itemsForGiant })
                             });
                     
-                            if (!res.ok) throw new Error("Error en servidor");
+                            if (!res.ok) throw new Error("Error generando PDF en servidor");
                     
-                            // 2. RECIBIMOS EL BLOB (ARCHIVO) DIRECTAMENTE
+                            // 3. RECIBIR EL BLOB (Los datos binarios del PDF)
                             const blob = await res.blob();
-                    
-                            // 3. CREAMOS UNA URL LOCAL Y ABRIMOS
-                            const url = window.URL.createObjectURL(blob);
-                            window.open(url, '_blank');
-                    
-                            // Limpieza de memoria después de un rato
-                            setTimeout(() => window.URL.revokeObjectURL(url), 10000);
                             
-                            this.showMsg('PDF Generado correctamente', 'success');
+                            // 4. CREAR URL LOCAL Y ASIGNARLA A LA VENTANA QUE ABRIMOS ANTES
+                            const url = window.URL.createObjectURL(blob);
+                            
+                            if (pdfWindow) {
+                                pdfWindow.location.href = url; // <--- AQUÍ SE CARGA EL PDF EN LA PESTAÑA
+                            }
                     
                         } catch (e) {
                             console.error(e);
-                            this.showMsg('Error generando PDF Gigante', 'error');
+                            this.showMsg('Error: ' + e.message, 'error');
+                            if (pdfWindow) pdfWindow.close(); // Si falló, cerramos la ventana
                         }
                         
                         this.selectedOrders = [];
@@ -913,5 +925,6 @@
     </script>
 </body>
 </html>
+
 
 
