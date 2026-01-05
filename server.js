@@ -497,30 +497,56 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
    ========================================================= */
 
 // NUEVO: GENERAR PDF MASIVO (Concatenado)
+// REEMPLAZA TU ENDPOINT ACTUAL '/api/generar-pdf-masivo' POR ESTE:
+
 app.post('/api/generar-pdf-masivo', async (req, res) => {
   try {
-    const { pedidos } = req.body; // Array de pedidos completos
+    const { pedidos } = req.body; 
+    
     if (!Array.isArray(pedidos) || pedidos.length === 0) {
       return res.status(400).json({ error: 'Lista de pedidos inválida' });
     }
 
-    console.log(`📚 Generando PDF Masivo con ${pedidos.length} pedidos...`);
-    const pdfBuffer = await generarPDFMasivo(pedidos);
-    const fileName = `giant_${Date.now()}.pdf`;
+    console.log(`🚀 Streaming PDF Gigante de ${pedidos.length} pedidos...`);
 
-    // Subir a Supabase
-    const { error: uploadErr } = await supabase.storage.from('pedidos-pdf').upload(fileName, pdfBuffer, { contentType: 'application/pdf', upsert: true });
-    if (uploadErr) return res.status(500).json({ error: 'Error subiendo PDF masivo' });
+    // 1. Configurar cabeceras para que el navegador sepa que es un PDF
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=pedidos_masivos_${Date.now()}.pdf`);
 
-    // Obtener URL firmada (valida por 1 hora)
-    const { data: signed, error: signedErr } = await supabase.storage.from('pedidos-pdf').createSignedUrl(fileName, 3600);
-    if (signedErr) return res.status(500).json({ error: 'Error firmando URL masiva' });
+    const doc = new PDFDocument({
+      size: [267, 862], 
+      margins: { top: 20, bottom: 20, left: 20, right: 20 },
+      autoFirstPage: false
+    });
+    doc.pipe(res);
 
-    res.json({ ok: true, pdf: signed.signedUrl });
+    // 4. Cargar logo una sola vez (caché en memoria de esta petición)
+    let logoBuffer = null;
+    try {
+        const { data: logoBlob } = await supabase.storage.from('imagenes').download('logo.png');
+        if (logoBlob) logoBuffer = Buffer.from(await logoBlob.arrayBuffer());
+    } catch (e) {
+        console.error("No se pudo cargar logo, continuando sin él.");
+    }
+
+    // 5. Iterar y dibujar usando tu función auxiliar existente 'dibujarPedidoEnDoc'
+    for (const pedido of pedidos) {
+        // Añadimos página para este pedido
+        doc.addPage({ size: [267, 862], margins: { top: 20, bottom: 20, left: 20, right: 20 } });
+        
+        await dibujarPedidoEnDoc(doc, pedido, logoBuffer);
+    }
+
+    // 6. Cerrar el documento (esto termina la transmisión al navegador)
+    doc.end();
 
   } catch (err) {
-    console.error('❌ Error generando PDF Masivo:', err);
-    res.status(500).json({ error: err.message });
+    console.error('❌ Error generando PDF Masivo (Stream):', err);
+    if (!res.headersSent) {
+        res.status(500).json({ error: err.message });
+    } else {
+        res.end();
+    }
   }
 });
 
@@ -1024,6 +1050,7 @@ app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
