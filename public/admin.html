@@ -844,21 +844,46 @@
                     const pedidos = this.selectedOrders.map(uid => this.rawPedidos.find(p => p.uid === uid)).filter(Boolean);
                     if (mode === 'pdf-giant') {
                         if(!confirm(`¿Generar UN SOLO PDF con ${pedidos.length} pedidos concatenados?`)) return;
+                        
+                        // Feedback visual simple (opcional, podrías usar tu this.loadingOrders si quieres)
+                        this.showMsg('Generando PDF Gigante...', 'info');
+                    
                         try {
                             const itemsForGiant = pedidos.map(p => ({
-                                user: p.user, items: p.items,
+                                user: p.user, 
+                                items: p.items,
                                 total: p.items.reduce((a,b)=>a+(Number(b.subtotal)||0),0),
-                                fecha: p.fecha || new Date().toISOString(), nombre_negocio: p.nombre_negocio
+                                fecha: p.fecha || new Date().toISOString(), 
+                                nombre_negocio: p.nombre_negocio,
+                                id: p.id // Asegúrate de pasar el ID para que salga en el PDF
                             }));
+                    
+                            // 1. Hacemos el fetch
                             const res = await fetch(`${apiBase}/generar-pdf-masivo`, {
-                                method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ pedidos: itemsForGiant })
+                                method: 'POST', 
+                                headers: {'Content-Type': 'application/json'}, 
+                                body: JSON.stringify({ pedidos: itemsForGiant })
                             });
-                            const data = await res.json();
-                            if(data.pdf) window.open(data.pdf, '_blank');
+                    
+                            if (!res.ok) throw new Error("Error en servidor");
+                    
+                            // 2. RECIBIMOS EL BLOB (ARCHIVO) DIRECTAMENTE
+                            const blob = await res.blob();
+                    
+                            // 3. CREAMOS UNA URL LOCAL Y ABRIMOS
+                            const url = window.URL.createObjectURL(blob);
+                            window.open(url, '_blank');
+                    
+                            // Limpieza de memoria después de un rato
+                            setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+                            
+                            this.showMsg('PDF Generado correctamente', 'success');
+                    
                         } catch (e) {
                             console.error(e);
                             this.showMsg('Error generando PDF Gigante', 'error');
                         }
+                        
                         this.selectedOrders = [];
                         return;
                     }
@@ -888,4 +913,5 @@
     </script>
 </body>
 </html>
+
 
