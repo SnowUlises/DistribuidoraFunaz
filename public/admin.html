@@ -551,14 +551,9 @@
 
                         // --- NUEVO: Generar UIDs y CONGELAR estado Original ---
                         this.rawPedidos.forEach((p, index) => {
-                            // 1. Asignar ID único estable
-                            p.uid = p.id ? String(p.id) : `${p.user}-${index}`;
-
-
-                            if (!this.originalCache[p.uid]) {
-                                this.originalCache[p.uid] = JSON.parse(JSON.stringify(p.items));
-                            }
-                        });
+                        p.uid = p.id ? String(p.id) : `${p.user}-${index}`;
+                        this.originalCache[p.uid] = JSON.parse(JSON.stringify(p.items));
+                    });
                         this.saveStorage(); // Guardamos en localStorage para que dure días/meses
                         // ------------------------------------------------------
 
@@ -711,6 +706,8 @@
                             method: 'PUT', headers: {'Content-Type':'application/json'},
                             body: JSON.stringify({ items: newItems, stockUpdates })
                         });
+                        this.originalCache[uid] = JSON.parse(JSON.stringify(newItems));
+                        this.saveStorage();
                         this.showMsg('Guardado OK', 'success');
                     } catch(e) { this.showMsg('Error guardando', 'error'); }
                 },
@@ -970,3 +967,4 @@
     </script>
 </body>
 </html>
+
