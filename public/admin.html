@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Funaz (Edición Completa)</title>
+    <title>Admin Panel - Funaz (Stock + Original Fix)</title>
     
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -80,20 +80,15 @@
 
         <main class="max-w-[1920px] mx-auto px-6 py-6 space-y-8">
             
-            <transition name="fade">
-                <div v-if="mensaje" :class="`fixed top-24 right-6 z-[100] px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 border-l-4 font-medium text-lg pointer-events-auto ${mensajeTipo === 'error' ? 'bg-white text-red-600 border-red-500' : 'bg-slate-800 text-white border-green-500'}`">
-                    <i :data-lucide="mensajeTipo === 'error' ? 'alert-circle' : 'check-circle'" class="w-6 h-6"></i>
-                    <span>{{ mensaje }}</span>
-                </div>
-            </transition>
+           
 
             <section v-if="focusMode && focusedItem" class="flex justify-center">
                 <div class="w-full max-w-4xl">
                     <div v-if="focusType === 'pedido'" 
                          :class="['bg-white rounded-2xl shadow-2xl border-4 overflow-hidden flex flex-col relative transform scale-100 transition-all', 
                                   getEstado(focusedItem.uid).recibido ? 'border-green-500 bg-green-50/20' : 'border-orange-400 bg-orange-50/20']">
-                         
-                         <div class="p-6 border-b border-slate-200 bg-white flex justify-between items-start relative">
+                          
+                          <div class="p-6 border-b border-slate-200 bg-white flex justify-between items-start relative">
                              <div class="w-full text-center">
                                 <h2 class="text-3xl font-bold text-slate-800">{{ focusedItem.user }}</h2>
                                 <div class="text-slate-500 font-mono mt-1">{{ formatDate(focusedItem.fecha) }}</div>
@@ -110,9 +105,9 @@
                                     <i data-lucide="package-open" class="w-5 h-5"></i>
                                 </button>
                             </div>
-                         </div>
+                          </div>
 
-                         <div class="p-4 bg-white max-h-[50vh] overflow-y-auto custom-scroll">
+                          <div class="p-4 bg-white max-h-[50vh] overflow-y-auto custom-scroll">
                              <div v-for="(item, iIdx) in getItemsToShow(focusedItem)" :key="iIdx" class="flex justify-between items-center py-3 border-b border-dashed border-slate-200 last:border-0 text-lg px-2 group/focus">
                                 <div class="flex-1 pr-4 flex items-center">
                                     <span class="font-bold bg-slate-100 border border-slate-200 px-3 py-1 rounded text-slate-900 mr-3">{{ item.cantidad }}</span>
@@ -127,9 +122,9 @@
                                     </div>
                                 </div>
                              </div>
-                         </div>
-                         
-                         <div class="p-5 bg-slate-50 border-t border-slate-200 space-y-4">
+                          </div>
+                          
+                          <div class="p-5 bg-slate-50 border-t border-slate-200 space-y-4">
                              
                              <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                                 <button @click="guardarCloud(focusedItem)" class="bg-slate-800 text-white py-2 rounded-lg font-bold text-sm hover:bg-slate-900 flex items-center justify-center gap-2">
@@ -174,7 +169,7 @@
                                      <i data-lucide="trash-2" class="w-6 h-6"></i>
                                  </button>
                              </div>
-                         </div>
+                          </div>
                     </div>
                 </div>
             </section>
@@ -296,99 +291,99 @@
                                     <div v-for="(pedido, idx) in getItemsSlice(clientName, orders)" :key="pedido.uid"
                                          :class="['bg-white rounded-xl shadow-sm border-2 transition-all duration-200 overflow-hidden flex flex-col relative', 
                                                   getEstado(pedido.uid).recibido ? 'border-green-500 bg-green-50/20' : 'border-orange-400 bg-orange-50/20']">
-                                        
-                                        <div class="absolute top-2 right-2 z-10 flex gap-2">
-                                            <button @click="toggleDevolucion(pedido.uid)" 
-                                                    :class="['p-1.5 rounded-full shadow border transition-all', getEstado(pedido.uid).modoDevolucion ? 'bg-blue-100 text-blue-600 border-blue-300' : 'bg-white/80 text-slate-300 border-slate-200 hover:text-blue-400']" 
-                                                    title="Modo Devolución (Caja Abierta)">
-                                                <i data-lucide="package-open" class="w-4 h-4"></i>
-                                            </button>
-                                            <button @click="enfocarItem(pedido, 'pedido')" class="p-1.5 bg-white/80 backdrop-blur rounded-full shadow border border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-300 transition" title="Enfocar Pedido">
-                                                <i data-lucide="eye" class="w-4 h-4"></i>
-                                            </button>
-                                        </div>
-
-                                        <div class="p-3 border-b border-slate-100 flex justify-between items-start bg-white/90 backdrop-blur-sm pr-16">
-                                            <div class="flex gap-2 w-full overflow-hidden">
-                                                <input type="checkbox" v-model="selectedOrders" :value="pedido.uid" class="mt-1 w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer shrink-0">
-                                                <div class="flex-1 min-w-0 flex flex-col items-center">
-                                                    <div class="flex flex-wrap gap-1 mb-1 justify-center w-full">
-                                                        <span v-if="pedido.nombre_negocio" class="text-sm font-bold uppercase tracking-wide text-orange-900 bg-orange-50 px-2 py-0.5 rounded truncate max-w-full border border-orange-100 shadow-sm block w-full text-center mb-1">{{ pedido.nombre_negocio }}</span>
-                                                        <span v-if="pedido.user !== clientName" class="text-[9px] font-bold uppercase tracking-wide text-teal-700 bg-teal-100 px-1.5 py-0.5 rounded truncate max-w-full">{{ pedido.user }}</span>
-                                                    </div>
-                                                    <div class="text-[10px] text-slate-500 font-mono mb-0.5">{{ formatDate(pedido.fecha) }}</div>
-                                                    <div class="text-xl font-bold text-slate-800">{{ formatMoney(calculateTotal(pedido)) }}</div>
-                                                </div>
+                                            
+                                            <div class="absolute top-2 right-2 z-10 flex gap-2">
+                                                <button @click="toggleDevolucion(pedido.uid)" 
+                                                        :class="['p-1.5 rounded-full shadow border transition-all', getEstado(pedido.uid).modoDevolucion ? 'bg-blue-100 text-blue-600 border-blue-300' : 'bg-white/80 text-slate-300 border-slate-200 hover:text-blue-400']" 
+                                                        title="Modo Devolución (Caja Abierta)">
+                                                    <i data-lucide="package-open" class="w-4 h-4"></i>
+                                                </button>
+                                                <button @click="enfocarItem(pedido, 'pedido')" class="p-1.5 bg-white/80 backdrop-blur rounded-full shadow border border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-300 transition" title="Enfocar Pedido">
+                                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                                </button>
                                             </div>
-                                        </div>
 
-                                        <div class="px-3 py-2 bg-white/50 border-b border-slate-100 flex justify-between items-center">
-                                            <span :class="['text-[10px] font-bold uppercase', getEstado(pedido.uid).recibido ? 'text-green-700' : 'text-orange-600']">
-                                                {{ getEstado(pedido.uid).recibido ? 'Preparado' : 'Armando' }}
-                                            </span>
-                                            <div class="flex items-center gap-2">
-                                                <i v-if="estadosPedidos[pedido.uid]?.guardado" data-lucide="cloud" class="w-4 h-4 text-blue-500"></i>
-                                                <div class="flex items-center">
-                                                    <input type="checkbox" :id="'sw-'+pedido.uid" class="toggle-input"
-                                                           :checked="getEstado(pedido.uid).recibido"
-                                                           @change="toggleEstado(pedido.uid, $event.target.checked)">
-                                                    <label :for="'sw-'+pedido.uid" class="toggle-switch scale-75 origin-right"></label>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="p-2 flex-1 max-h-[220px] overflow-y-auto custom-scroll bg-white relative">
-                                            <div v-if="loadingOrders[pedido.uid]" class="absolute inset-0 bg-white/80 z-10 flex items-center justify-center">
-                                                <div class="animate-spin text-orange-500"><i data-lucide="loader-2" class="w-6 h-6"></i></div>
-                                            </div>
-                                            <div v-for="(item, iIdx) in getItemsToShow(pedido)" :key="iIdx" class="flex justify-between items-center py-1.5 border-b border-dashed border-slate-100 last:border-0 hover:bg-slate-50 px-1 group/item text-xs">
-                                                <div class="flex-1 pr-2 leading-snug">
-                                                    <div class="font-medium text-slate-700">
-                                                        <span class="bg-slate-100 border border-slate-200 px-1 py-0.5 rounded font-bold text-slate-800 mr-1">{{ item.cantidad }}</span>
-                                                        {{ item.nombre }}
-                                                    </div>
-                                                    <div class="text-[10px] text-slate-400 pl-1 mt-0.5">{{ formatMoney(item.precio_unitario) }} u.</div>
-                                                </div>
-                                                <div class="flex flex-col items-end gap-0.5 shrink-0">
-                                                    <span class="font-bold text-slate-700">{{ formatMoney(item.subtotal) }}</span>
-                                                    <div v-if="!isOriginalView(pedido.uid)" class="flex gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity bg-white shadow-sm rounded border border-slate-100 p-0.5 origin-right">
-                                                        <button @click="modItem(pedido.uid, iIdx, 1)" class="w-4 h-4 flex items-center justify-center bg-green-50 text-green-600 rounded hover:bg-green-100"><i data-lucide="plus" class="w-3 h-3"></i></button>
-                                                        <button @click="modItem(pedido.uid, iIdx, -1)" class="w-4 h-4 flex items-center justify-center bg-orange-50 text-orange-600 rounded hover:bg-orange-100"><i data-lucide="minus" class="w-3 h-3"></i></button>
-                                                        <button @click="delItem(pedido.uid, iIdx)" class="w-4 h-4 flex items-center justify-center bg-red-50 text-red-600 rounded hover:bg-red-100"><i data-lucide="x" class="w-3 h-3"></i></button>
+                                            <div class="p-3 border-b border-slate-100 flex justify-between items-start bg-white/90 backdrop-blur-sm pr-16">
+                                                <div class="flex gap-2 w-full overflow-hidden">
+                                                    <input type="checkbox" v-model="selectedOrders" :value="pedido.uid" class="mt-1 w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer shrink-0">
+                                                    <div class="flex-1 min-w-0 flex flex-col items-center">
+                                                        <div class="flex flex-wrap gap-1 mb-1 justify-center w-full">
+                                                            <span v-if="pedido.nombre_negocio" class="text-sm font-bold uppercase tracking-wide text-orange-900 bg-orange-50 px-2 py-0.5 rounded truncate max-w-full border border-orange-100 shadow-sm block w-full text-center mb-1">{{ pedido.nombre_negocio }}</span>
+                                                            <span v-if="pedido.user !== clientName" class="text-[9px] font-bold uppercase tracking-wide text-teal-700 bg-teal-100 px-1.5 py-0.5 rounded truncate max-w-full">{{ pedido.user }}</span>
+                                                        </div>
+                                                        <div class="text-[10px] text-slate-500 font-mono mb-0.5">{{ formatDate(pedido.fecha) }}</div>
+                                                        <div class="text-xl font-bold text-slate-800">{{ formatMoney(calculateTotal(pedido)) }}</div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        <div class="p-2 bg-slate-50 border-t border-slate-200 space-y-2">
-                                            <div class="grid grid-cols-2 gap-1.5">
-                                                <button @click="guardarCloud(pedido)" class="bg-slate-800 text-white py-1.5 rounded hover:bg-slate-900 transition text-[10px] font-bold flex items-center justify-center gap-1">
-                                                    <i data-lucide="cloud" class="w-3 h-3"></i> Guardar Cloud
-                                                </button>
-                                                <button @click="previewPDF(pedido)" class="bg-orange-500 text-white py-1.5 rounded hover:bg-orange-600 transition text-[10px] font-bold flex items-center justify-center gap-1">
-                                                    <i data-lucide="file-search" class="w-3 h-3"></i> PDF +10%
-                                                </button>
-                                                
-                                                <button @click="openAddModal(pedido.uid)" class="bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 py-1.5 rounded text-[10px] font-bold transition">
-                                                    + Prod
-                                                </button>
-                                                <button @click="toggleOriginal(pedido.uid)" :class="['py-1.5 rounded text-[10px] font-bold transition border', isOriginalView(pedido.uid) ? 'bg-purple-100 text-purple-700 border-purple-300' : 'bg-white text-purple-600 border-purple-200 hover:bg-purple-50']">
-                                                    {{ isOriginalView(pedido.uid) ? 'Volver' : 'Original' }}
-                                                </button>
-                                                
-                                                <button @click="actualizarPrecios(pedido.uid, false)" class="bg-white border border-slate-300 text-slate-600 hover:bg-slate-50 py-1.5 rounded text-[10px] font-bold transition">$ Act</button>
-                                                <button @click="actualizarPrecios(pedido.uid, true)" class="bg-white border border-teal-300 text-teal-600 hover:bg-teal-50 py-1.5 rounded text-[10px] font-bold transition">$ -3%</button>
+                                            <div class="px-3 py-2 bg-white/50 border-b border-slate-100 flex justify-between items-center">
+                                                <span :class="['text-[10px] font-bold uppercase', getEstado(pedido.uid).recibido ? 'text-green-700' : 'text-orange-600']">
+                                                    {{ getEstado(pedido.uid).recibido ? 'Preparado' : 'Armando' }}
+                                                </span>
+                                                <div class="flex items-center gap-2">
+                                                    <i v-if="estadosPedidos[pedido.uid]?.guardado" data-lucide="cloud" class="w-4 h-4 text-blue-500"></i>
+                                                    <div class="flex items-center">
+                                                        <input type="checkbox" :id="'sw-'+pedido.uid" class="toggle-input"
+                                                               :checked="getEstado(pedido.uid).recibido"
+                                                               @change="toggleEstado(pedido.uid, $event.target.checked)">
+                                                        <label :for="'sw-'+pedido.uid" class="toggle-switch scale-75 origin-right"></label>
+                                                    </div>
+                                                </div>
                                             </div>
 
-                                            <div class="flex gap-1 pt-1">
-                                                <button @click="guardarCambios(pedido.uid)" :disabled="isOriginalView(pedido.uid)" class="flex-1 bg-green-600 text-white py-1.5 rounded text-[10px] font-bold hover:bg-green-700 shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed">
-                                                    Confirmar
-                                                </button>
-                                                <button @click="eliminarPedido(pedido)" class="bg-white border border-red-200 text-red-500 hover:bg-red-50 px-2 rounded transition" title="Eliminar Pedido">
-                                                    <i data-lucide="trash-2" class="w-3 h-3"></i>
-                                                </button>
+                                            <div class="p-2 flex-1 max-h-[220px] overflow-y-auto custom-scroll bg-white relative">
+                                                <div v-if="loadingOrders[pedido.uid]" class="absolute inset-0 bg-white/80 z-10 flex items-center justify-center">
+                                                    <div class="animate-spin text-orange-500"><i data-lucide="loader-2" class="w-6 h-6"></i></div>
+                                                </div>
+                                                <div v-for="(item, iIdx) in getItemsToShow(pedido)" :key="iIdx" class="flex justify-between items-center py-1.5 border-b border-dashed border-slate-100 last:border-0 hover:bg-slate-50 px-1 group/item text-xs">
+                                                    <div class="flex-1 pr-2 leading-snug">
+                                                        <div class="font-medium text-slate-700">
+                                                            <span class="bg-slate-100 border border-slate-200 px-1 py-0.5 rounded font-bold text-slate-800 mr-1">{{ item.cantidad }}</span>
+                                                            {{ item.nombre }}
+                                                        </div>
+                                                        <div class="text-[10px] text-slate-400 pl-1 mt-0.5">{{ formatMoney(item.precio_unitario) }} u.</div>
+                                                    </div>
+                                                    <div class="flex flex-col items-end gap-0.5 shrink-0">
+                                                        <span class="font-bold text-slate-700">{{ formatMoney(item.subtotal) }}</span>
+                                                        <div v-if="!isOriginalView(pedido.uid)" class="flex gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity bg-white shadow-sm rounded border border-slate-100 p-0.5 origin-right">
+                                                            <button @click="modItem(pedido.uid, iIdx, 1)" class="w-4 h-4 flex items-center justify-center bg-green-50 text-green-600 rounded hover:bg-green-100"><i data-lucide="plus" class="w-3 h-3"></i></button>
+                                                            <button @click="modItem(pedido.uid, iIdx, -1)" class="w-4 h-4 flex items-center justify-center bg-orange-50 text-orange-600 rounded hover:bg-orange-100"><i data-lucide="minus" class="w-3 h-3"></i></button>
+                                                            <button @click="delItem(pedido.uid, iIdx)" class="w-4 h-4 flex items-center justify-center bg-red-50 text-red-600 rounded hover:bg-red-100"><i data-lucide="x" class="w-3 h-3"></i></button>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
+
+                                            <div class="p-2 bg-slate-50 border-t border-slate-200 space-y-2">
+                                                <div class="grid grid-cols-2 gap-1.5">
+                                                    <button @click="guardarCloud(pedido)" class="bg-slate-800 text-white py-1.5 rounded hover:bg-slate-900 transition text-[10px] font-bold flex items-center justify-center gap-1">
+                                                        <i data-lucide="cloud" class="w-3 h-3"></i> Guardar Cloud
+                                                    </button>
+                                                    <button @click="previewPDF(pedido)" class="bg-orange-500 text-white py-1.5 rounded hover:bg-orange-600 transition text-[10px] font-bold flex items-center justify-center gap-1">
+                                                        <i data-lucide="file-search" class="w-3 h-3"></i> PDF +10%
+                                                    </button>
+                                                    
+                                                    <button @click="openAddModal(pedido.uid)" class="bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 py-1.5 rounded text-[10px] font-bold transition">
+                                                        + Prod
+                                                    </button>
+                                                    <button @click="toggleOriginal(pedido.uid)" :class="['py-1.5 rounded text-[10px] font-bold transition border', isOriginalView(pedido.uid) ? 'bg-purple-100 text-purple-700 border-purple-300' : 'bg-white text-purple-600 border-purple-200 hover:bg-purple-50']">
+                                                        {{ isOriginalView(pedido.uid) ? 'Volver' : 'Original' }}
+                                                    </button>
+                                                    
+                                                    <button @click="actualizarPrecios(pedido.uid, false)" class="bg-white border border-slate-300 text-slate-600 hover:bg-slate-50 py-1.5 rounded text-[10px] font-bold transition">$ Act</button>
+                                                    <button @click="actualizarPrecios(pedido.uid, true)" class="bg-white border border-teal-300 text-teal-600 hover:bg-teal-50 py-1.5 rounded text-[10px] font-bold transition">$ -3%</button>
+                                                </div>
+
+                                                <div class="flex gap-1 pt-1">
+                                                    <button @click="guardarCambios(pedido.uid)" :disabled="isOriginalView(pedido.uid)" class="flex-1 bg-green-600 text-white py-1.5 rounded text-[10px] font-bold hover:bg-green-700 shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed">
+                                                        Confirmar
+                                                    </button>
+                                                    <button @click="eliminarPedido(pedido)" class="bg-white border border-red-200 text-red-500 hover:bg-red-50 px-2 rounded transition" title="Eliminar Pedido">
+                                                        <i data-lucide="trash-2" class="w-3 h-3"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
                                     </div>
                                 </div>
 
@@ -401,7 +396,14 @@
                 </section>
             </div>
         </main>
-
+        <transition name="fade">
+            <div v-if="mensaje" 
+                 style="position: fixed; top: 100px; right: 24px; z-index: 9999;"
+                 :class="`px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 border-l-4 font-medium text-lg pointer-events-auto ${mensajeTipo === 'error' ? 'bg-white text-red-600 border-red-500' : 'bg-slate-800 text-white border-green-500'}`">
+                <i :data-lucide="mensajeTipo === 'error' ? 'alert-circle' : 'check-circle'" class="w-6 h-6"></i>
+                <span>{{ mensaje }}</span>
+            </div>
+        </transition>
         <transition name="fade">
             <div v-if="selectedOrders.length > 0" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl border border-slate-700">
                 <span class="font-bold text-orange-300 text-sm whitespace-nowrap">{{ selectedOrders.length }} seleccionados</span>
@@ -465,7 +467,15 @@
                     
                     // Estado Local
                     estadosPedidos: JSON.parse(localStorage.getItem('estadosPedidos') || '{}'),
+                    
+                    // --- AQUÍ ESTÁ EL CAMBIO CLAVE ---
+                    // originalCache: Solo para VISUAL (Histórico, "Lo viejo")
                     originalCache: JSON.parse(localStorage.getItem('originalPedidosCache') || '{}'),
+                    
+                    // stockReference: Solo para MATEMÁTICA (Lo último guardado en DB)
+                    stockReference: {}, 
+                    // ---------------------------------
+
                     usedButtons: JSON.parse(localStorage.getItem('usedButtons') || '{}'),
                     
                     // UI State
@@ -535,8 +545,9 @@
                 },
                 saveStorage() {
                     localStorage.setItem('estadosPedidos', JSON.stringify(this.estadosPedidos));
-                    localStorage.setItem('originalPedidosCache', JSON.stringify(this.originalCache));
                     localStorage.setItem('usedButtons', JSON.stringify(this.usedButtons));
+                    // Guardamos originalCache para que persista al recargar la página
+                    localStorage.setItem('originalPedidosCache', JSON.stringify(this.originalCache));
                 },
                 
                 // DATA
@@ -553,13 +564,18 @@
                         });
                         parser(this.rawPedidos); parser(this.peticiones);
 
-                        // --- CORRECCIÓN 2: Generar UIDs y solo cachear si NO existe (preserva el original real) ---
+                        // --- LÓGICA DE REFERENCIAS ---
                         this.rawPedidos.forEach((p, index) => {
                             p.uid = p.id ? String(p.id) : `${p.user}-${index}`;
-                            // Si NO existe en cache, lo guardamos. Si ya existe, NO lo sobrescribimos.
+                            
+                            // 1. ORIGINAL VISUAL (Solo se guarda la primera vez, nunca se sobrescribe)
                             if (!this.originalCache[p.uid]) {
                                 this.originalCache[p.uid] = JSON.parse(JSON.stringify(p.items));
                             }
+
+                            // 2. REFERENCIA DE STOCK (Se actualiza siempre que cargamos de la DB)
+                            // Esto es lo que "sabe" la base de datos que tiene actualmente.
+                            this.stockReference[p.uid] = JSON.parse(JSON.stringify(p.items));
                         });
                         this.saveStorage(); 
                         // ------------------------------------------------------
@@ -641,12 +657,14 @@
                 toggleOriginal(uid) {
                     if (!this.estadosPedidos[uid]) this.getEstado(uid); 
                     this.estadosPedidos[uid].viewOriginal = !this.estadosPedidos[uid].viewOriginal;
+                    // Si por alguna razón no existiera el cache, lo crea (fallback)
                     if (this.estadosPedidos[uid].viewOriginal && !this.originalCache[uid]) {
                         const p = this.rawPedidos.find(x => x.uid === uid);
                         if(p) { this.originalCache[uid] = JSON.parse(JSON.stringify(p.items)); this.saveStorage(); }
                     }
                 },
                 getItemsToShow(pedido) {
+                    // Si está activa la vista original Y tenemos datos en cache, mostramos eso. Si no, lo actual.
                     return (this.isOriginalView(pedido.uid) && this.originalCache[pedido.uid]) ? this.originalCache[pedido.uid] : pedido.items;
                 },
                 calculateTotal(pedido) {
@@ -689,11 +707,18 @@
                     const pedido = this.rawPedidos.find(p => p.uid === uid);
                     const estado = this.getEstado(uid);
 
+                    // Aseguramos que existan las referencias (fallback)
+                    if(!this.stockReference[uid]) this.stockReference[uid] = JSON.parse(JSON.stringify(pedido.items));
+                    // Si por casualidad no habia original, lo creamos ahora, pero idealmente se crea en loadAll
                     if(!this.originalCache[uid]) this.originalCache[uid] = JSON.parse(JSON.stringify(pedido.items));
+
                     const deltaMap = new Map();
-                    const oldItems = this.originalCache[uid];
+                    
+                    // CORRECCIÓN: Usamos stockReference para la matemática (Lo último guardado)
+                    const oldItems = this.stockReference[uid]; 
                     const newItems = pedido.items;
                     
+                    // Calculamos diferencias
                     oldItems.forEach(i => deltaMap.set(i.id, (deltaMap.get(i.id)||0) - Number(i.cantidad)));
                     newItems.forEach(i => deltaMap.set(i.id, (deltaMap.get(i.id)||0) + Number(i.cantidad))); 
                     
@@ -712,8 +737,14 @@
                             method: 'PUT', headers: {'Content-Type':'application/json'},
                             body: JSON.stringify({ items: newItems, stockUpdates })
                         });
-                        this.originalCache[uid] = JSON.parse(JSON.stringify(newItems));
-                        this.saveStorage();
+
+                        // AQUÍ ESTÁ LA MAGIA:
+                        // 1. Actualizamos stockReference para que la próxima cuenta sea correcta.
+                        this.stockReference[uid] = JSON.parse(JSON.stringify(newItems));
+                        
+                        // 2. NO tocamos originalCache, así el botón "Ver Original" sigue mostrando lo viejo.
+
+                        this.saveStorage(); 
                         this.showMsg('Guardado OK', 'success');
                     } catch(e) { this.showMsg('Error guardando', 'error'); }
                 },
@@ -953,7 +984,6 @@
                     }
                     this.selectedOrders = [];
                 },
-                // MODIFICADO: AÑADIDO ESTADO DE CARGA MASIVA
                 async procesarPeticionesMasivo(discount) {
                     if (this.selectedPeticiones.length === 0) return;
                     this.isMassProcessing = true;
