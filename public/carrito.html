@@ -115,13 +115,14 @@
 
     .input-group { margin-bottom: 1em; }
     
-    input[type="text"] {
+    /* Estilos generales inputs/selects */
+    input[type="text"], select {
       width: 100%; padding: 12px;
       border: 1px solid #ddd; border-radius: 10px;
       outline: none; font-size: 1em; transition: border 0.2s;
       background: #fafafa;
     }
-    input[type="text"]:focus { border-color: var(--light-green); background: white; }
+    input[type="text"]:focus, select:focus { border-color: var(--light-green); background: white; }
 
     .checkbox-wrapper {
       display: flex; align-items: center; gap: 10px;
@@ -203,13 +204,26 @@
 
     <div class="opciones-container" id="opcionesContainer">
         <h3 style="margin-top:0; font-size:1em; color:var(--text-grey);">Datos del Cliente</h3>
+        
+        <div class="input-group">
+            <label style="font-size:0.85em; color:#666; display:block; margin-bottom:5px;">Seleccionar Cliente (Opcional):</label>
+            <select id="selectorCliente">
+                <option value="">-- Cliente Manual / Nuevo --</option>
+            </select>
+        </div>
+
         <div class="input-group">
             <input type="text" id="nombreCliente" placeholder="Nombre del cliente" />
         </div>
-        <label class="checkbox-wrapper">
+
+        <label class="checkbox-wrapper" style="margin-bottom:1em">
             <input type="checkbox" id="clienteRegular">
             <span>Cliente regular (3% OFF)</span>
         </label>
+
+        <div class="input-group" style="margin-bottom:0">
+            <input type="text" id="nombreNegocio" placeholder="Nombre del Negocio (Opcional)" />
+        </div>
     </div>
 
     <div class="acciones-fixed">
@@ -237,7 +251,6 @@
   </footer>
 
 <script>
-/* Lógica original intacta */
 let productos = [];
 let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
 const usuario = { user: localStorage.getItem('loggedUser') || 'invitado' };
@@ -273,6 +286,41 @@ async function cargarProductos() {
   }
 }
 
+// --- NUEVA FUNCIÓN: CARGAR CLIENTES ---
+async function cargarListaClientes() {
+    try {
+        const r = await fetch(`${apiBase}/lista-clientes`);
+        if (!r.ok) return; // Si falla, seguimos en modo manual sin error visual
+        const clientes = await r.json();
+        
+        const selector = document.getElementById('selectorCliente');
+        const inputNombre = document.getElementById('nombreCliente');
+
+        // Llenar select
+        clientes.forEach(c => {
+            if (!c.name) return;
+            const opt = document.createElement('option');
+            opt.value = c.user_id; // Guardamos el user_id
+            opt.textContent = c.name;
+            selector.appendChild(opt);
+        });
+
+        // Evento cambio
+        selector.addEventListener('change', () => {
+            const idx = selector.selectedIndex;
+            if (idx > 0) {
+                // Si seleccionó alguien, rellenamos el nombre
+                inputNombre.value = selector.options[idx].textContent;
+            } else {
+                // Si vuelve a manual
+                // No borramos el nombre obligatoriamente, pero quitamos la asociación ID
+            }
+        });
+    } catch (err) {
+        console.error("Error cargando clientes:", err);
+    }
+}
+
 function guardarCarrito() {
   localStorage.setItem('carrito', JSON.stringify(carrito));
 }
@@ -286,7 +334,7 @@ function renderizarCarrito() {
     lista.innerHTML = '<div style="text-align:center; padding:3em; color:#999;">🛒<br><br>Tu carrito está vacío.</div>';
     btnMostrarFormulario.style.display = 'none';
     btnGenerarTicket.style.display = 'none';
-    opcionesContainer.style.display = 'none'; // Ocultar opciones si no hay items
+    opcionesContainer.style.display = 'none';
     ocultarFormulario();
     return;
   }
@@ -299,10 +347,9 @@ function renderizarCarrito() {
     if (!p) return;
 
     const div = document.createElement('div');
-    div.className = 'producto-card'; // Clase CSS nueva
+    div.className = 'producto-card';
     const precioPublico = (Number(p.precio || 0) * 1.10);
 
-    // HTML Estructurado al nuevo diseño
     div.innerHTML = `
       <img src="/imagenes/${p.id}.png" alt="${(p.nombre||'').replace(/"/g,'')}" onerror="this.onerror=null; this.src='/imagenes/placeholder.png'"/>
       <div class="producto-info">
@@ -320,7 +367,6 @@ function renderizarCarrito() {
       </div>
     `;
 
-    // handlers
     const btnAumentar = div.querySelector('.btn-aumentar');
     const btnReducir = div.querySelector('.btn-reducir');
     const btnEliminar = div.querySelector('.btn-eliminar');
@@ -354,7 +400,6 @@ function renderizarCarrito() {
   });
 }
 
-// Modal formulario
 function mostrarFormulario() {
   let total = carrito.reduce((acc, item) => {
     const p = productos.find(prod => prod.id == item.id);
@@ -379,12 +424,12 @@ btnMostrarFormulario.addEventListener('click', mostrarFormulario);
 btnCerrarFormulario.addEventListener('click', ocultarFormulario);
 formOverlay.addEventListener('click', e => { if (e.target === formOverlay) ocultarFormulario(); });
 
+// --- LÓGICA DE ENVÍO MODIFICADA ---
 btnConfirmar.addEventListener('click', async () => {
   btnConfirmar.disabled = true;
   btnConfirmar.textContent = 'Procesando...';
 
   const nuevosCarrito = [];
-  const sinStock = [];
   const productosClon = productos.map(p => ({...p}));
 
   for (const item of carrito) {
@@ -412,8 +457,11 @@ btnConfirmar.addEventListener('click', async () => {
     return;
   }
   
+  // Capturamos datos
   const nombreInput = document.getElementById('nombreCliente');
   const nombreCliente = nombreInput.value.trim() || 'cliente';
+  const nombreNegocio = document.getElementById('nombreNegocio').value.trim(); // NUEVO
+  const userId = document.getElementById('selectorCliente').value || null; // NUEVO
   
   try {
     const res = await fetch(`${apiBase}/guardar-pedidos`, {
@@ -421,7 +469,9 @@ btnConfirmar.addEventListener('click', async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         pedido: nuevosCarrito,
-        user: nombreCliente
+        user: nombreCliente,
+        user_id: userId,          // Enviar ID
+        nombre_negocio: nombreNegocio // Enviar Negocio
       })
     });
 
@@ -436,6 +486,10 @@ btnConfirmar.addEventListener('click', async () => {
     ocultarFormulario();
     renderizarCarrito();
     
+    // Resetear formulario visual
+    document.getElementById('selectorCliente').selectedIndex = 0;
+    document.getElementById('nombreNegocio').value = '';
+    
   } catch (err) {
     console.error('Error enviando pedido:', err);
     alert('No se pudo enviar el pedido al servidor. Revisa la consola.');
@@ -449,6 +503,8 @@ btnConfirmar.addEventListener('click', async () => {
 async function generarTicket() {
   const esRegular = document.getElementById('clienteRegular').checked;
   const nombreCliente = document.getElementById('nombreCliente').value.trim() || 'Cliente';
+  const nombreNegocio = document.getElementById('nombreNegocio').value.trim(); // NUEVO
+  
   const items = [];
   let total = 0;
 
@@ -458,7 +514,6 @@ async function generarTicket() {
 
     const factorDescuento = esRegular ? 0.97 : 1;
     const precioUnitarioEnviado = Number(p.precio) * factorDescuento * 1.1;
-    // const precioFinal = precioUnitarioEnviado * 1.1; // Logica original comentada
     const subtotal = item.cantidad * (precioUnitarioEnviado * 1.1);
     total += subtotal;
 
@@ -480,7 +535,8 @@ async function generarTicket() {
     user: nombreCliente,
     items,
     total,
-    fecha: new Date().toISOString()
+    fecha: new Date().toISOString(),
+    nombre_negocio: nombreNegocio // NUEVO para el PDF
   };
 
   try {
@@ -512,8 +568,8 @@ btnGenerarTicket.addEventListener('click', generarTicket);
 // iniciar
 (async function init(){
   await cargarProductos();
+  await cargarListaClientes(); // Cargamos clientes al inicio
 })();
 </script>
 </body>
 </html>
-
