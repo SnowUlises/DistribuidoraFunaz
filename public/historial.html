@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Historial de Stock - Distribuidora Funaz</title>
   <style>
-    /* ... (MANTÉN TUS ESTILOS EXACTAMENTE IGUAL) ... */
+    /* ... (ESTILOS ORIGINALES MANTENIDOS) ... */
     :root { --primary-green: #2E7D32; --light-green: #4CAF50; --soft-green: #E8F5E9; --bg-color: #fcfdfc; --white: #ffffff; --text-dark: #333; --text-grey: #666; --orange: #ff9800; --orange-bg: #fff3e0; --orange-border: #ffb74d; }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg-color); color: var(--text-dark); padding-bottom: 80px; }
@@ -43,6 +43,13 @@
     .tipo-mov { font-size: 0.75em; padding: 3px 6px; border-radius: 4px; background: #eee; color: #666; }
     .btn-cargar-mas { display: block; width: 100%; max-width: 300px; margin: 20px auto; padding: 12px; background: var(--white); border: 1px solid var(--primary-green); color: var(--primary-green); font-weight: bold; border-radius: 25px; cursor: pointer; transition: all 0.2s; }
     .btn-cargar-mas:hover { background: var(--soft-green); }
+    
+    /* Indicador de carga flotante */
+    #loadingIndicator {
+        position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
+        background: rgba(0,0,0,0.8); color: white; padding: 8px 16px;
+        border-radius: 20px; font-size: 0.85em; z-index: 999; display: none;
+    }
   </style>
 </head>
 <body>
@@ -52,6 +59,8 @@
     <h1>Historial de Stock</h1>
     <div style="width: 30px;"></div>
   </header>
+
+  <div id="loadingIndicator">⏳ Cargando datos...</div>
 
   <div class="controles-superiores">
     <div class="fila-controles">
@@ -79,52 +88,98 @@
     <p style="text-align:center; color:#999; margin-top:2em;">Iniciando...</p>
   </main>
   
-<main id="contenedorHistorial">
-    <p style="text-align:center; color:#999; margin-top:2em;">Iniciando...</p>
-  </main>
-  
   <div style="text-align: center; margin-bottom: 50px;">
-      <button id="btnServerLoad" onclick="cargarMesAnterior()" style="
+      <button id="btnServerLoad" onclick="cargarMasAntiguedad()" style="
         background: #333; color: white; border: none; 
         padding: 12px 20px; border-radius: 25px; 
         cursor: pointer; font-weight: bold; display: none;">
-        📂 Descargar 1 mes más de antigüedad
+        📂 Descargar 15 días anteriores
       </button>
   </div>
 
 <script>
 // VARIABLES GLOBALES
-let historialDB = [];         
+let historialDB = [];          
 let filtroActual = 'dia';
-let limiteVisual = 50; // Paginación visual (scroll)
+let limiteVisual = 50; 
 
-// Variables para el control de fechas del servidor
-let fechaMasRecienteCargada = new Date(); // Hoy
-let fechaMasAntiguaCargada = new Date();  // Se calculará al iniciar
+// Control de Fechas (Para paginación segura)
+let fechaLimiteSuperior = new Date(); // La fecha más reciente cargada
+let fechaLimiteInferior = new Date(); // La fecha más antigua cargada
+
+// CONSTANTES DE SEGURIDAD
+const DIAS_POR_LOTE = 5; // Pedimos de 5 en 5 días para no superar los 1000 registros
 
 // --- 1. INICIO ---
 async function iniciar() {
-    // 1. Configurar fechas iniciales: Últimos 3 MESES
-    fechaMasAntiguaCargada.setMonth(fechaMasAntiguaCargada.getMonth() - 3);
+    // Inicializamos: Queremos cargar los últimos 30 días inicialmente
+    // Pero lo haremos en bucle para no saturar la API
+    const hoy = new Date();
+    const haceUnMes = new Date();
+    haceUnMes.setDate(haceUnMes.getDate() - 30);
+
+    // Seteamos los límites globales iniciales
+    fechaLimiteSuperior = hoy;
+    fechaLimiteInferior = hoy; // Se irá restando en el bucle
+
+    console.log(`📅 Iniciando carga escalonada...`);
     
-    console.log(`📅 Iniciando carga desde: ${fechaMasAntiguaCargada.toLocaleDateString()} hasta hoy.`);
+    // Llamamos a la función "Inteligente" que carga por trozos
+    await cargarRangoEscalonado(haceUnMes, hoy);
     
-    await cargarDatosServidor(fechaMasAntiguaCargada.toISOString(), fechaMasRecienteCargada.toISOString(), true);
-    
-    // Mostrar el botón de cargar antiguos
+    // Mostrar botón para cargar más historia
     document.getElementById('btnServerLoad').style.display = 'inline-block';
 }
 
-// --- 2. CARGA DE DATOS (DEL SERVIDOR) ---
-async function cargarDatosServidor(fechaDesde, fechaHasta, esReinicio = false) {
+// --- 2. CARGA ESCALONADA (CORE DEL FIX) ---
+// Esta función divide un rango grande en peticiones pequeñas
+async function cargarRangoEscalonado(fechaObjetivo, fechaInicio) {
     const btn = document.getElementById('btnServerLoad');
-    const textoOriginal = btn.innerText;
-    btn.innerText = "⏳ Descargando del servidor...";
+    const indicador = document.getElementById('loadingIndicator');
+    
     btn.disabled = true;
+    btn.innerText = "⏳ Descargando historial...";
+    indicador.style.display = 'block';
 
+    let cursorFecha = new Date(fechaInicio); // Empezamos desde "hoy" hacia atrás
+
+    // Mientras nuestro cursor sea mayor que la fecha objetivo (ej: hace 1 mes)
+    while (cursorFecha > fechaObjetivo) {
+        
+        // 1. Calculamos el siguiente bloque (ej: 5 días atrás)
+        let bloqueHasta = new Date(cursorFecha);
+        let bloqueDesde = new Date(cursorFecha);
+        bloqueDesde.setDate(bloqueDesde.getDate() - DIAS_POR_LOTE);
+
+        // Si el bloque se pasa de la fecha objetivo, ajustamos
+        if (bloqueDesde < fechaObjetivo) {
+            bloqueDesde = new Date(fechaObjetivo);
+        }
+
+        console.log(`📡 Pidiendo bloque: ${bloqueDesde.toLocaleDateString()} -> ${bloqueHasta.toLocaleDateString()}`);
+
+        // 2. Hacemos la petición SOLO de este bloque pequeño
+        await fetchBloqueUnico(bloqueDesde.toISOString(), bloqueHasta.toISOString());
+
+        // 3. Actualizamos el límite inferior global para saber hasta donde tenemos datos
+        fechaLimiteInferior = bloqueDesde;
+        
+        // 4. Movemos el cursor para la siguiente vuelta
+        cursorFecha = new Date(bloqueDesde);
+        
+        // Pequeña pausa para no saturar red (opcional, 50ms)
+        await new Promise(r => setTimeout(r, 50));
+    }
+
+    btn.disabled = false;
+    btn.innerText = "📂 Descargar 15 días anteriores";
+    indicador.style.display = 'none';
+}
+
+// --- 3. FETCH DE UN SOLO BLOQUE ---
+async function fetchBloqueUnico(desde, hasta) {
     try {
-        // Petición con parámetros de fecha
-        const url = `https://distribuidorafunaz-a2o6.onrender.com/api/historial?desde=${fechaDesde}&hasta=${fechaHasta}`;
+        const url = `https://distribuidorafunaz-a2o6.onrender.com/api/historial?desde=${desde}&hasta=${hasta}`;
         const res = await fetch(url);
         
         if(res.ok) {
@@ -137,46 +192,37 @@ async function cargarDatosServidor(fechaDesde, fechaHasta, esReinicio = false) {
                 sortKey: new Date(h.fecha).getTime()
             }));
 
-            if (esReinicio) {
-                historialDB = nuevosDatos;
-            } else {
-                // Si estamos cargando antiguos, los agregamos AL FINAL de la lista actual
-                // Filtramos para evitar duplicados exactos por ID si se solapan las horas
-                const idsExistentes = new Set(historialDB.map(h => h.id));
-                const limpios = nuevosDatos.filter(d => !idsExistentes.has(d.id));
-                historialDB = [...historialDB, ...limpios];
-            }
+            // Filtrar duplicados (por si las horas se solapan al milisegundo)
+            const idsExistentes = new Set(historialDB.map(h => h.id));
+            const limpios = nuevosDatos.filter(d => !idsExistentes.has(d.id));
+            
+            // Agregar al array principal
+            historialDB = [...historialDB, ...limpios];
 
-            // Ordenar siempre: El más nuevo arriba
+            // Ordenar: Más nuevo arriba
             historialDB.sort((a, b) => b.sortKey - a.sortKey);
             
+            // RENDERIZAR INMEDIATAMENTE (Para que el usuario vea progreso)
             renderizar();
-            console.log(`✅ Total registros cargados: ${historialDB.length}`);
         }
     } catch (err) { 
-        console.error("Error cargando historial:", err);
-        alert("Error de conexión al cargar historial antiguo");
-    } finally {
-        btn.innerText = textoOriginal;
-        btn.disabled = false;
+        console.error("Error en bloque:", err);
     }
 }
 
-// --- 3. CARGAR MES ANTERIOR (BOTÓN NEGRO) ---
-async function cargarMesAnterior() {
-    // Guardamos la fecha antigua actual como el "hasta" del nuevo bloque
-    const hasta = new Date(fechaMasAntiguaCargada);
+// --- 4. BOTÓN CARGAR MÁS ANTIGÜEDAD ---
+async function cargarMasAntiguedad() {
+    // El usuario quiere ver más atrás.
+    // Tomamos la fecha más antigua que tenemos y le restamos 15 días
+    const nuevaMeta = new Date(fechaLimiteInferior);
+    nuevaMeta.setDate(nuevaMeta.getDate() - 15);
     
-    // Restamos 1 mes para el nuevo "desde"
-    fechaMasAntiguaCargada.setMonth(fechaMasAntiguaCargada.getMonth() - 1);
-    
-    console.log(`📂 Pidiendo historial antiguo: ${fechaMasAntiguaCargada.toLocaleDateString()} -> ${hasta.toLocaleDateString()}`);
-    
-    // Llamamos a la API (false para NO borrar lo que ya tenemos)
-    await cargarDatosServidor(fechaMasAntiguaCargada.toISOString(), hasta.toISOString(), false);
+    // Llamamos al cargador escalonado con la nueva meta
+    // El "inicio" es fechaLimiteInferior (donde nos quedamos la última vez)
+    await cargarRangoEscalonado(nuevaMeta, fechaLimiteInferior);
 }
 
-// --- 4. RENDERIZADO (VISUAL) ---
+// --- 5. RENDERIZADO (VISUAL) ---
 function renderizar() {
     const cont = document.getElementById('contenedorHistorial');
     const busq = document.getElementById('buscador').value.toLowerCase();
@@ -190,7 +236,7 @@ function renderizar() {
     });
 
     if(listaFiltrada.length === 0) {
-        cont.innerHTML = '<p style="text-align:center;color:#999">Sin movimientos en las fechas cargadas</p>';
+        cont.innerHTML = '<p style="text-align:center;color:#999;margin-top:20px">No hay movimientos o cargando...</p>';
         return;
     }
 
@@ -248,20 +294,22 @@ function renderizar() {
     if(limiteVisual < listaFiltrada.length) {
         const btn = document.createElement('button');
         btn.className = 'btn-cargar-mas';
-        btn.innerText = 'Ver más movimientos (cargados)';
+        btn.innerText = `Ver siguientes (${listaFiltrada.length - limiteVisual} restantes)`;
         btn.onclick = () => { limiteVisual += 50; renderizar(); };
         cont.appendChild(btn);
     }
 }
 
-// --- 5. FUNCIONES AUXILIARES ---
+// --- 6. FUNCIONES AUXILIARES ---
 async function forzarCheck() {
     const btn = document.querySelector('.btn-check');
     btn.innerText = "⏳..."; btn.disabled = true;
     try {
         await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/forzar-monitor', { method: 'POST' });
-        // Recargamos solo el rango actual para refrescar
-        await cargarDatosServidor(fechaMasAntiguaCargada.toISOString(), new Date().toISOString(), true);
+        // Recargamos solo los ultimos 5 días para actualizar rápido
+        const hoy = new Date();
+        const hace5 = new Date(); hace5.setDate(hoy.getDate() - 5);
+        await fetchBloqueUnico(hace5.toISOString(), hoy.toISOString());
         btn.innerText = "✅";
     } catch (e) { console.error(e); btn.innerText = "❌"; }
     setTimeout(() => { btn.innerText = "↻ Check Ahora"; btn.disabled = false; }, 1000);
@@ -277,7 +325,6 @@ function filtrar(tipo, btn) {
 
 function formatearFecha(f) {
     const d = new Date(f);
-    // Ajuste zona horaria manual si es necesario, o dejar UTC local
     if(filtroActual === 'dia') return d.toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long'});
     if(filtroActual === 'semana') return "Semana del " + d.toLocaleDateString();
     if(filtroActual === 'mes') return d.toLocaleDateString('es-ES', {month:'long', year:'numeric'});
