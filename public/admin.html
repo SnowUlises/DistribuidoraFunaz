@@ -35,8 +35,8 @@
         .toggle-input { display: none; }
 
         /* Animaciones */
-        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease, transform 0.3s ease; }
-        .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(20px); }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
 
         [v-cloak] { display: none; }
     </style>
@@ -80,8 +80,8 @@
 
         <main class="max-w-[1920px] mx-auto px-6 py-6 space-y-8">
             
-            <transition enter-active-class="transition ease-out duration-300" enter-from-class="transform opacity-0 translate-y-2" enter-to-class="transform opacity-100 translate-y-0" leave-active-class="transition ease-in duration-200" leave-from-class="transform opacity-100 translate-y-0" leave-to-class="transform opacity-0 translate-y-2">
-                <div v-if="mensaje" :class="`fixed bottom-6 right-6 z-[100] px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 border-l-4 font-medium text-lg ${mensajeTipo === 'error' ? 'bg-white text-red-600 border-red-500' : 'bg-slate-800 text-white border-green-500'}`">
+            <transition name="fade">
+                <div v-if="mensaje" :class="`fixed top-24 right-6 z-[100] px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 border-l-4 font-medium text-lg pointer-events-auto ${mensajeTipo === 'error' ? 'bg-white text-red-600 border-red-500' : 'bg-slate-800 text-white border-green-500'}`">
                     <i :data-lucide="mensajeTipo === 'error' ? 'alert-circle' : 'check-circle'" class="w-6 h-6"></i>
                     <span>{{ mensaje }}</span>
                 </div>
@@ -296,7 +296,7 @@
                                     <div v-for="(pedido, idx) in getItemsSlice(clientName, orders)" :key="pedido.uid"
                                          :class="['bg-white rounded-xl shadow-sm border-2 transition-all duration-200 overflow-hidden flex flex-col relative', 
                                                   getEstado(pedido.uid).recibido ? 'border-green-500 bg-green-50/20' : 'border-orange-400 bg-orange-50/20']">
-                                         
+                                        
                                         <div class="absolute top-2 right-2 z-10 flex gap-2">
                                             <button @click="toggleDevolucion(pedido.uid)" 
                                                     :class="['p-1.5 rounded-full shadow border transition-all', getEstado(pedido.uid).modoDevolucion ? 'bg-blue-100 text-blue-600 border-blue-300' : 'bg-white/80 text-slate-300 border-slate-200 hover:text-blue-400']" 
@@ -516,6 +516,10 @@
                     return result;
                 }
             },
+            // CORRECCIÓN 3: Hook updated para recargar iconos cuando el DOM cambia dinámicamente
+            updated() {
+                this.$nextTick(() => lucide.createIcons());
+            },
             methods: {
                 // UTILS
                 formatMoney(val) { return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(val || 0); },
@@ -549,12 +553,15 @@
                         });
                         parser(this.rawPedidos); parser(this.peticiones);
 
-                        // --- NUEVO: Generar UIDs y CONGELAR estado Original ---
+                        // --- CORRECCIÓN 2: Generar UIDs y solo cachear si NO existe (preserva el original real) ---
                         this.rawPedidos.forEach((p, index) => {
-                        p.uid = p.id ? String(p.id) : `${p.user}-${index}`;
-                        this.originalCache[p.uid] = JSON.parse(JSON.stringify(p.items));
-                    });
-                        this.saveStorage(); // Guardamos en localStorage para que dure días/meses
+                            p.uid = p.id ? String(p.id) : `${p.user}-${index}`;
+                            // Si NO existe en cache, lo guardamos. Si ya existe, NO lo sobrescribimos.
+                            if (!this.originalCache[p.uid]) {
+                                this.originalCache[p.uid] = JSON.parse(JSON.stringify(p.items));
+                            }
+                        });
+                        this.saveStorage(); 
                         // ------------------------------------------------------
 
                         nextTick(() => lucide.createIcons());
@@ -596,7 +603,7 @@
                     const isPreparado = pedido ? (pedido.estado === 'Preparado') : false;
                     // 4. Retornamos la mezcla para que el HTML no se rompa
                     return {
-                        ...localState,     // Mantiene guardado y modoDevolucion del LS
+                        ...localState,      // Mantiene guardado y modoDevolucion del LS
                         recibido: isPreparado // Sobrescribe recibido con el dato de la DB
                     };
                 },
@@ -622,7 +629,6 @@
                     }
                 },
                 toggleDevolucion(uid) {
-                    // CORREGIDO: Acceso directo reactivo
                     if (!this.estadosPedidos[uid]) {
                         this.estadosPedidos[uid] = { guardado: false, modoDevolucion: false };
                     }
@@ -967,4 +973,3 @@
     </script>
 </body>
 </html>
-
