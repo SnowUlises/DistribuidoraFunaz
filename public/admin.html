@@ -707,14 +707,10 @@
                     const pedido = this.rawPedidos.find(p => p.uid === uid);
                     const estado = this.getEstado(uid);
 
-                    // Aseguramos que existan las referencias (fallback)
-                    if(!this.stockReference[uid]) this.stockReference[uid] = JSON.parse(JSON.stringify(pedido.items));
-                    // Si por casualidad no habia original, lo creamos ahora, pero idealmente se crea en loadAll
                     if(!this.originalCache[uid]) this.originalCache[uid] = JSON.parse(JSON.stringify(pedido.items));
 
                     const deltaMap = new Map();
                     
-                    // CORRECCIÓN: Usamos stockReference para la matemática (Lo último guardado)
                     const oldItems = this.stockReference[uid]; 
                     const newItems = pedido.items;
                     
@@ -1003,3 +999,4 @@
     </script>
 </body>
 </html>
+
