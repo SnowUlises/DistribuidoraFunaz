@@ -464,6 +464,7 @@
                     rawPedidos: [],
                     peticiones: [],
                     productos: [],
+                    savingChanges: {},
                     
                     // Estado Local
                     estadosPedidos: JSON.parse(localStorage.getItem('estadosPedidos') || '{}'),
@@ -704,11 +705,16 @@
                 
                 async guardarCambios(uid) {
                     if(!confirm('¿Guardar cambios permanentemente?')) return;
+                    
+                    // 1. BLOQUEO: Si ya se está guardando, paramos aquí.
+                    if (this.savingChanges[uid]) return; 
+                    this.savingChanges[uid] = true; // Bloqueamos
+                
                     const pedido = this.rawPedidos.find(p => p.uid === uid);
                     const estado = this.getEstado(uid);
-
+                
                     if(!this.originalCache[uid]) this.originalCache[uid] = JSON.parse(JSON.stringify(pedido.items));
-
+                
                     const deltaMap = new Map();
                     
                     const oldItems = this.stockReference[uid]; 
@@ -719,32 +725,32 @@
                     newItems.forEach(i => deltaMap.set(i.id, (deltaMap.get(i.id)||0) + Number(i.cantidad))); 
                     
                     const stockUpdates = [];
-                    // Logica de Devolución
+                    // Logica de Devolución (Tu lógica de negocio validada)
                     for(const [id, delta] of deltaMap.entries()) {
-                         if(delta > 0) {
-                             stockUpdates.push({id, cantidad: delta});
-                         } else if (delta < 0 && estado.modoDevolucion) {
-                             stockUpdates.push({id, cantidad: delta});
-                         }
+                            if(delta > 0) {
+                                stockUpdates.push({id, cantidad: delta});
+                            } else if (delta < 0 && estado.modoDevolucion) {
+                                stockUpdates.push({id, cantidad: delta});
+                            }
                     }
-
+                
                     try {
                         await fetch(`${apiBase}/actualizar-pedido/${pedido.id}`, {
                             method: 'PUT', headers: {'Content-Type':'application/json'},
                             body: JSON.stringify({ items: newItems, stockUpdates })
                         });
-
-                        // AQUÍ ESTÁ LA MAGIA:
-                        // 1. Actualizamos stockReference para que la próxima cuenta sea correcta.
-                        this.stockReference[uid] = JSON.parse(JSON.stringify(newItems));
-                        
-                        // 2. NO tocamos originalCache, así el botón "Ver Original" sigue mostrando lo viejo.
-
+                
+                        // Actualizamos referencia para el futuro
+                        this.stockReference[uid] = JSON.parse(JSON.stringify(newItems));       
                         this.saveStorage(); 
                         this.showMsg('Guardado OK', 'success');
-                    } catch(e) { this.showMsg('Error guardando', 'error'); }
+                
+                    } catch(e) { 
+                        this.showMsg('Error guardando', 'error'); 
+                    } finally {
+                        this.savingChanges[uid] = false;
+                    }
                 },
-
                 async eliminarPedido(pedido) {
                     const estado = this.getEstado(pedido.uid);
                     const msg = estado.recibido 
@@ -999,4 +1005,5 @@
     </script>
 </body>
 </html>
+
 
