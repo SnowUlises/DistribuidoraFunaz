@@ -338,7 +338,7 @@ app.put('/api/actualizar-pedido/:id', async (req, res) => {
                                  items: oldItemsSnapshot, // Ahora esta variable SÍ existe y funcionará
                                  action: `🔄 Sync Pedido: $${montoAnterior} ➔ $${montoNuevo}`
                              });
-                            if (history.length > 50) history.pop();
+                            if (history.length > 500) history.pop();
 
                             // 3. Guardamos TODO (Items nuevos + Historial nuevo)
                             await supabase
@@ -973,98 +973,129 @@ app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
             console.log(`⚠️ Pedido sin user_id. Se omite cobranza.`);
         } else {
             // 🔥 INICIO DE LA COLA
-            runInQueue(pedido.user_id, async () => {
-                
-                // 2. BUSCAR CLIENTE
-                const { data: clientes, error: errBus } = await supabase
-                    .from('clients_v2')
-                    .select('*')
-                    .eq('user_id', pedido.user_id);
-
-                if (clientes && clientes.length > 0) {
-                    const cliente = clientes[0];
-                    console.log(`✅ Sincronizando con cliente: ${cliente.name}`);
-
-                    let items = cliente.data.items || [];
-                    let history = cliente.data.history || []; 
-
-                    // ============================================================
-                    // 🧹 ZONA DE LIMPIEZA
-                    // ============================================================
-                    const fechaLimite = new Date();
-                    fechaLimite.setMonth(fechaLimite.getMonth() - 3);
-
-                    items = items.filter(item => {
-                        if (item.type !== 'debt') return true;
-                        if (!item.date) return true;
-                        const fechaItem = new Date(item.date);
-                        if (isNaN(fechaItem.getTime())) return true;
-                        return (fechaItem > fechaLimite) || ((item.amount - item.paid) > 0);
-                    });
-
-                    // ============================================================
-                    // ➕ AGREGAR NUEVA DEUDA CON HISTORIAL
-                    // ============================================================
-                    const yaExiste = items.find(i => i.id === String(pedido.id));
-
-                    if (!yaExiste) {
-                        // A. TOMAR FOTO (SNAPSHOT) ANTES DE MODIFICAR
-                        const oldItemsSnapshot = JSON.parse(JSON.stringify(items));
-
-                        // B. AGREGAR ITEM (Nota: aquí ya guardabas el negocio en 'notes', eso está bien)
-                        items.unshift({
-                            id: String(pedido.id),
-                            type: 'debt',
-                            amount: Math.round(pedido.total),
-                            paid: 0,
-                            date: pedido.fecha || new Date().toISOString(),
-                            notes: pedido.nombre_negocio || '', 
-                            color: 'orange'
-                        });
-
-                        // --- [AQUÍ ESTÁ EL CAMBIO IMPORTANTE] ---
-                        
-                        // 1. Preparamos los datos para el texto
-                        const idPedido = String(pedido.id).slice(-4);
-                        const nombreNegocio = pedido.nombre_negocio ? ` | ${pedido.nombre_negocio}` : '';
-                        const monto = Math.round(pedido.total).toLocaleString('es-AR'); // Formato de miles
-
-                        // 2. Creamos el mensaje detallado
-                        const mensajeHistorial = `📦 Sync Pedido #${idPedido}${nombreNegocio} ($${monto})`;
-
-                        // C. AGREGAR AL HISTORIAL
-                        history.unshift({
-                            timestamp: Date.now(),
-                            items: oldItemsSnapshot,
-                            action: mensajeHistorial, // <--- USAMOS EL MENSAJE DETALLADO
-                            type: 'debt' // Agregamos el tipo para que el filtro de colores funcione bien
-                        });
-                        
-
-                        // Mantener solo los últimos 50 cambios
-                        if (history.length > 500) history.pop();
-
-                        // 3. Guardar cambios en DB
-                        const nuevoData = { 
-                            ...cliente.data, 
-                            items: items,
-                            history: history 
-                        };
-                        
-                        await supabase
-                            .from('clients_v2')
-                            .update({ data: nuevoData })
-                            .eq('id', cliente.id);
-                        
-                        console.log(`💾 Cliente actualizado: ${mensajeHistorial}`);
-                    } else {
-                        console.log("ℹ️ La deuda ya existía, se omitió.");
-                    }
-                } else {
-                    console.log(`⚠️ No existe perfil de cobranzas para user_id: ${pedido.user_id}`);
-                }
-            });
-            // 🔥 FIN DE LA COLA
+              runInQueue(pedido.user_id, async () => {
+                  
+                  // 2. BUSCAR CLIENTE
+                  const { data: clientes } = await supabase
+                      .from('clients_v2')
+                      .select('*')
+                      .eq('user_id', pedido.user_id);
+              
+                  if (clientes && clientes.length > 0) {
+                      const cliente = clientes[0];
+                      let items = cliente.data.items || [];
+                      let history = cliente.data.history || []; 
+              
+                      // ============================================================
+                      // 🧹 ZONA DE LIMPIEZA
+                      // ============================================================
+                      const fechaLimite = new Date();
+                      fechaLimite.setMonth(fechaLimite.getMonth() - 3);
+              
+                      items = items.filter(item => {
+                          if (item.type !== 'debt') return true;
+                          if (!item.date) return true;
+                          const fechaItem = new Date(item.date);
+                          if (isNaN(fechaItem.getTime())) return true;
+                          return (fechaItem > fechaLimite) || ((item.amount - item.paid) > 0);
+                      });
+              
+                      // ============================================================
+                      // 🧠 LÓGICA INTELIGENTE (CREACIÓN O ACTUALIZACIÓN)
+                      // ============================================================
+                      const indexYaExiste = items.findIndex(i => i.id === String(pedido.id));
+                      const montoNuevo = Math.round(pedido.total);
+                      const idPedido = String(pedido.id).slice(-4);
+                      const nombreNegocio = pedido.nombre_negocio ? ` | ${pedido.nombre_negocio}` : '';
+                      const fecha = pedido.fecha || new Date().toISOString();
+                      
+                      let huboCambios = false;
+                      let mensajeHistorial = '';
+                      let tipoAccion = 'debt'; // Por defecto deuda
+              
+                      if (indexYaExiste === -1) {
+                          // ----------------------------------------------------
+                          // CASO A: ES NUEVO (Crear)
+                          // ----------------------------------------------------
+                          
+                          // Snapshot antes de tocar nada
+                          const oldItemsSnapshot = JSON.parse(JSON.stringify(items));
+              
+                          items.unshift({
+                              id: String(pedido.id),
+                              type: 'debt',
+                              amount: montoNuevo,
+                              paid: 0,
+                              date: fecha,
+                              notes: pedido.nombre_negocio || '', 
+                              color: 'orange'
+                          });
+              
+                          // Mensaje Detallado para Nuevo
+                          mensajeHistorial = `📦 Nuevo Pedido #${idPedido}${nombreNegocio} ($${montoNuevo.toLocaleString('es-AR')})`;
+                          tipoAccion = 'debt';
+                          huboCambios = true;
+              
+                          // Guardar historial del snapshot
+                          history.unshift({
+                              timestamp: Date.now(),
+                              items: oldItemsSnapshot,
+                              action: mensajeHistorial,
+                              type: tipoAccion
+                          });
+              
+                      } else {
+                          // ----------------------------------------------------
+                          // CASO B: YA EXISTE (Verificar si cambió el monto)
+                          // ----------------------------------------------------
+                          const itemExistente = items[indexYaExiste];
+                          const montoViejo = itemExistente.amount;
+              
+                          if (montoViejo !== montoNuevo) {
+                              // Snapshot antes de modificar
+                              const oldItemsSnapshot = JSON.parse(JSON.stringify(items));
+              
+                              // Actualizamos el monto del item existente
+                              items[indexYaExiste].amount = montoNuevo;
+                              // Opcional: Actualizar nota si cambió
+                              if(pedido.nombre_negocio) items[indexYaExiste].notes = pedido.nombre_negocio;
+              
+                              // Mensaje Detallado para Actualización
+                              // Aquí reemplazamos el mensaje genérico "🔄 Sync..." por el que tú quieres
+                              mensajeHistorial = `🔄 Update Pedido #${idPedido}${nombreNegocio} ($${montoViejo.toLocaleString('es-AR')} ➔ $${montoNuevo.toLocaleString('es-AR')})`;
+                              tipoAccion = 'edit';
+                              huboCambios = true;
+              
+                              // Guardar historial
+                              history.unshift({
+                                  timestamp: Date.now(),
+                                  items: oldItemsSnapshot,
+                                  action: mensajeHistorial,
+                                  type: tipoAccion
+                              });
+                          } else {
+                              console.log(`ℹ️ El pedido #${idPedido} ya existe y el monto es igual. No se toca.`);
+                          }
+                      }
+              
+                      // ============================================================
+                      // 💾 GUARDAR SOLO SI HUBO CAMBIOS
+                      // ============================================================
+                      if (huboCambios) {
+                          if (history.length > 500) history.pop(); // Limpieza historial
+              
+                          await supabase
+                              .from('clients_v2')
+                              .update({ data: { ...cliente.data, items, history } })
+                              .eq('id', cliente.id);
+                          
+                          console.log(`✅ Guardado: ${mensajeHistorial}`);
+                      }
+              
+                  } else {
+                      console.log(`⚠️ No existe perfil de cobranzas para user_id: ${pedido.user_id}`);
+                  }
+              });
         }
     }
 
@@ -1079,6 +1110,7 @@ app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
