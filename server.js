@@ -271,7 +271,7 @@ app.put('/api/actualizar-pedido/:id', async (req, res) => {
       return res.status(400).json({ error: 'Items inválidos' });
     }
     
-    // 1. Actualizar stock (Lógica original)
+    // 1. Actualizar stock (Lógica original intacta)
     for (const update of stockUpdates) {
       const { data: prod } = await supabase.from('productos').select('*').eq('id', update.id).single();
       if (prod) {
@@ -300,10 +300,15 @@ app.put('/api/actualizar-pedido/:id', async (req, res) => {
     }
 
     // =========================================================================
-    // --- NUEVO: SINCRONIZAR CON DEUDAS + REGISTRAR HISTORIAL ---
+    // --- NUEVO: SINCRONIZAR CON DEUDAS + REGISTRAR HISTORIAL DETALLADO ---
     // =========================================================================
     try {
-        const { data: pedidoInfo } = await supabase.from('pedidos').select('user_id, estado').eq('id', pedidoId).single();
+        // [CAMBIO 1] Agregamos 'nombre_negocio' al select
+        const { data: pedidoInfo } = await supabase
+            .from('pedidos')
+            .select('user_id, estado, nombre_negocio') 
+            .eq('id', pedidoId)
+            .single();
 
         if (pedidoInfo && pedidoInfo.user_id && pedidoInfo.estado === 'Preparado') {
             
@@ -313,45 +318,62 @@ app.put('/api/actualizar-pedido/:id', async (req, res) => {
                 if (clients && clients.length > 0) {
                     const cliente = clients[0];
                     let deudaItems = cliente.data.items || [];
-               
+                
                     // B. BUSCAR Y ACTUALIZAR
                     const indexDeuda = deudaItems.findIndex(i => i.id === String(pedidoId) && i.type === 'debt');
-                     if (indexDeuda !== -1) {
+                    
+                    if (indexDeuda !== -1) {
                          const montoNuevo = Math.round(total);
                          const montoAnterior = deudaItems[indexDeuda].amount;
                          
                          // Solo si el monto cambió
                          if (montoAnterior !== montoNuevo) {
-                             console.log(`🔄 Actualizando deuda ID ${pedidoId}: $${montoAnterior} -> $${montoNuevo}`);
                              
-                             // --- AGREGAR ESTA LÍNEA AQUÍ ---
-                             const oldItemsSnapshot = JSON.parse(JSON.stringify(deudaItems)); 
+                             // --- PREPARAR DATOS VISUALES ---
+                             const idVis = String(pedidoId).slice(-4);
+                             const negocioStr = pedidoInfo.nombre_negocio ? ` | ${pedidoInfo.nombre_negocio}` : '';
+                             const fmtAnt = montoAnterior.toLocaleString('es-AR');
+                             const fmtNew = montoNuevo.toLocaleString('es-AR');
+                             
+                             const mensajeDetallado = `🔄 Update Pedido #${idVis}${negocioStr} ($${fmtAnt} ➔ $${fmtNew})`;
                              // -------------------------------
-                     
+
+                             console.log(mensajeDetallado);
+                             
+                             // TOMAR SNAPSHOT
+                             const oldItemsSnapshot = JSON.parse(JSON.stringify(deudaItems)); 
+                             
                              // 1. Modificamos el monto en la lista actual
                              deudaItems[indexDeuda].amount = montoNuevo;
-                     
+                             
+                             // [OPCIONAL] Actualizamos también la nota si cambió el nombre del negocio
+                             if(pedidoInfo.nombre_negocio) {
+                                 deudaItems[indexDeuda].notes = pedidoInfo.nombre_negocio;
+                             }
+                      
                              // 2. Preparamos el Historial
                              let history = cliente.data.history || [];
                              history.unshift({
                                  timestamp: Date.now(),
-                                 items: oldItemsSnapshot, // Ahora esta variable SÍ existe y funcionará
-                                 action: `🔄 Sync Pedido: $${montoAnterior} ➔ $${montoNuevo}`
+                                 items: oldItemsSnapshot,
+                                 action: mensajeDetallado, // <--- USAMOS EL MENSAJE DETALLADO
+                                 type: 'edit' // Icono de edición (lápiz o similar)
                              });
-                            if (history.length > 500) history.pop();
 
-                            // 3. Guardamos TODO (Items nuevos + Historial nuevo)
-                            await supabase
-                                .from('clients_v2')
-                                .update({ 
-                                    data: { 
-                                        ...cliente.data, 
-                                        items: deudaItems,
-                                        history: history 
-                                    } 
-                                })
-                                .eq('id', cliente.id);
-                        }
+                             if (history.length > 500) history.pop();
+
+                             // 3. Guardamos TODO
+                             await supabase
+                                 .from('clients_v2')
+                                 .update({ 
+                                     data: { 
+                                         ...cliente.data, 
+                                         items: deudaItems,
+                                         history: history 
+                                     } 
+                                 })
+                                 .eq('id', cliente.id);
+                         }
                     }
                 }
             });
@@ -1110,6 +1132,7 @@ app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
