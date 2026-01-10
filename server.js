@@ -972,7 +972,7 @@ app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
         if (!pedido.user_id) {
             console.log(`⚠️ Pedido sin user_id. Se omite cobranza.`);
         } else {
-            // 🔥 INICIO DE LA COLA: Protege contra clicks rápidos
+            // 🔥 INICIO DE LA COLA
             runInQueue(pedido.user_id, async () => {
                 
                 // 2. BUSCAR CLIENTE
@@ -986,7 +986,6 @@ app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
                     console.log(`✅ Sincronizando con cliente: ${cliente.name}`);
 
                     let items = cliente.data.items || [];
-                    // RECUPERAMOS EL HISTORIAL ACTUAL
                     let history = cliente.data.history || []; 
 
                     // ============================================================
@@ -1012,7 +1011,7 @@ app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
                         // A. TOMAR FOTO (SNAPSHOT) ANTES DE MODIFICAR
                         const oldItemsSnapshot = JSON.parse(JSON.stringify(items));
 
-                        // B. AGREGAR ITEM
+                        // B. AGREGAR ITEM (Nota: aquí ya guardabas el negocio en 'notes', eso está bien)
                         items.unshift({
                             id: String(pedido.id),
                             type: 'debt',
@@ -1023,17 +1022,29 @@ app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
                             color: 'orange'
                         });
 
+                        // --- [AQUÍ ESTÁ EL CAMBIO IMPORTANTE] ---
+                        
+                        // 1. Preparamos los datos para el texto
+                        const idPedido = String(pedido.id).slice(-4);
+                        const nombreNegocio = pedido.nombre_negocio ? ` | ${pedido.nombre_negocio}` : '';
+                        const monto = Math.round(pedido.total).toLocaleString('es-AR'); // Formato de miles
+
+                        // 2. Creamos el mensaje detallado
+                        const mensajeHistorial = `📦 Sync Pedido #${idPedido}${nombreNegocio} ($${monto})`;
+
                         // C. AGREGAR AL HISTORIAL
                         history.unshift({
                             timestamp: Date.now(),
-                            items: oldItemsSnapshot, // Guardamos la foto vieja
-                            action: `🔴 Pedido Agregado: #${String(pedido.id).slice(-4)}`
+                            items: oldItemsSnapshot,
+                            action: mensajeHistorial, // <--- USAMOS EL MENSAJE DETALLADO
+                            type: 'debt' // Agregamos el tipo para que el filtro de colores funcione bien
                         });
                         
-                        // Mantener solo los últimos 50 cambios
-                        if (history.length > 50) history.pop();
 
-                        // 3. Guardar cambios en DB (Incluyendo history)
+                        // Mantener solo los últimos 50 cambios
+                        if (history.length > 500) history.pop();
+
+                        // 3. Guardar cambios en DB
                         const nuevoData = { 
                             ...cliente.data, 
                             items: items,
@@ -1045,7 +1056,7 @@ app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
                             .update({ data: nuevoData })
                             .eq('id', cliente.id);
                         
-                        console.log(`💾 Cliente actualizado (Pedido ${pedido.id} agregado con historial).`);
+                        console.log(`💾 Cliente actualizado: ${mensajeHistorial}`);
                     } else {
                         console.log("ℹ️ La deuda ya existía, se omitió.");
                     }
@@ -1068,6 +1079,7 @@ app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
