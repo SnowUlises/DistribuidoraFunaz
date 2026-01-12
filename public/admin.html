@@ -572,9 +572,7 @@
                         // Obtenemos el estado (mezclando DB y LocalStorage)
                         const st = this.getEstado(p.uid);
                         
-                        // Si está recibido (Preparado) o Null (asumido Preparado) -> Preparados
-                        // Si está !recibido -> Armando
-                        if (st.recibido) {
+                        if (st.recibido || name.toLowerCase() === 'cliente') {
                             if (!preparados[name]) preparados[name] = [];
                             preparados[name].push(p);
                         } else {
@@ -1067,3 +1065,4 @@
     </script>
 </body>
 </html>
+
