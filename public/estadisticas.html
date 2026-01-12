@@ -267,8 +267,8 @@
     </div>
     <div class="chart-box">
         <div class="chart-header">
-          <span class="material-icons-round" style="color:var(--danger)">compare_arrows</span>
-          Pedidos "cliente" (>10k vs &lt;10k)
+          <span class="material-icons-round" style="color:var(--danger)">attach_money</span>
+          Ingresos "cliente" (>10k vs &lt;10k)
         </div>
         <div class="chart-content">
           <canvas id="chartCliente10k"></canvas>
@@ -591,27 +591,29 @@
     });
   }
 
-  // 6. CLIENTE >10k vs <10k (REEMPLAZO DE STOCK)
+  // 6. CLIENTE >10k vs <10k (DINERO)
   function renderChartCliente10k(orders) {
     // Filtrar solo el usuario "cliente" (case insensitive)
     const clienteOrders = orders.filter(p => p.user && p.user.toLowerCase() === 'cliente');
     
-    let less10k = 0;
-    let more10k = 0;
+    let less10kVal = 0;
+    let more10kVal = 0;
 
     clienteOrders.forEach(p => {
         const t = Number(p.total) || 0;
-        if(t > 10000) more10k++;
-        else less10k++;
+        if(t > 10000) more10kVal += t;
+        else less10kVal += t;
     });
+
+    const totalMoney = less10kVal + more10kVal;
 
     const ctx = getChartCtx('chartCliente10k');
     charts['chartCliente10k'] = new Chart(ctx, {
       type: 'pie',
       data: {
-        labels: ['Menos de $10k', 'Más de $10k'],
+        labels: ['Pedidos Menores ($)', 'Pedidos Mayores ($)'],
         datasets: [{
-          data: [less10k, more10k],
+          data: [less10kVal, more10kVal],
           backgroundColor: ['#ef4444', '#10b981'], // Rojo (<10k), Verde (>10k)
           borderWidth: 1
         }]
@@ -621,7 +623,22 @@
         maintainAspectRatio:false, 
         plugins:{
             legend:{position:'right'},
-            title: { display: true, text: `Total Pedidos: ${less10k + more10k}` }
+            title: { 
+              display: true, 
+              text: `Total Generado: ${moneyFmt.format(totalMoney)}` 
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  let label = context.label || '';
+                  if (label) label += ': ';
+                  if (context.parsed !== null) {
+                    label += moneyFmt.format(context.parsed);
+                  }
+                  return label;
+                }
+              }
+            }
         } 
       }
     });
