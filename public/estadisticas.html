@@ -256,7 +256,7 @@
   </div>
   
   <div class="charts-row">
-     <div class="chart-box">
+      <div class="chart-box">
       <div class="chart-header">
         <span class="material-icons-round" style="color:var(--info)">inventory_2</span>
         Top Productos (Unidades)
@@ -267,11 +267,11 @@
     </div>
     <div class="chart-box">
         <div class="chart-header">
-          <span class="material-icons-round" style="color:var(--danger)">pie_chart</span>
-          Salud del Stock
+          <span class="material-icons-round" style="color:var(--danger)">compare_arrows</span>
+          Pedidos "cliente" (>10k vs &lt;10k)
         </div>
         <div class="chart-content">
-          <canvas id="chartStock"></canvas>
+          <canvas id="chartCliente10k"></canvas>
         </div>
       </div>
   </div>
@@ -382,7 +382,6 @@
     });
 
     // 3. Filtrar Pedidos (Mes anterior para comparación)
-    // Calculamos la fecha del mes anterior correctamente (manejando cambio de año)
     const prevDate = new Date(anio, mes - 1, 1); 
     const prevOrders = allPedidos.filter(p => {
       const d = new Date(p.fecha);
@@ -394,12 +393,14 @@
     renderKPIs(currentOrders, prevOrders, mes, anio);
     
     // Gráficos
-    renderChartHourly(currentOrders); // AÑADIDO: Horarios
+    renderChartHourly(currentOrders);
     renderChartDaily(currentOrders, mes, anio);
-    renderChartClients(currentOrders); // MODIFICADO: Solo Users
-    renderChartMoneyProd(currentOrders); // AÑADIDO: Plata
+    renderChartClients(currentOrders);
+    renderChartMoneyProd(currentOrders);
     renderChartQtyProd(currentOrders);
-    renderChartStock(); 
+    
+    // NUEVA GRÁFICA "cliente"
+    renderChartCliente10k(currentOrders); 
 
     // Tablas
     renderTable(currentOrders);
@@ -454,18 +455,18 @@
 
   // --- CHART HELPERS ---
   function getChartCtx(id) {
-    if(charts[id]) charts[id].destroy(); // IMPORTANTE: Destruir antes de crear
+    if(charts[id]) charts[id].destroy(); 
     return document.getElementById(id).getContext('2d');
   }
 
   // --- CHARTS ---
 
-  // 1. HORARIOS (Lo que pediste)
+  // 1. HORARIOS
   function renderChartHourly(orders) {
     const data = new Array(24).fill(0);
     orders.forEach(p => {
       const h = new Date(p.fecha).getHours();
-      data[h] += Number(p.total); // Sumamos dinero, o podría ser cantidad de pedidos (data[h]++)
+      data[h] += Number(p.total); 
     });
     
     const ctx = getChartCtx('chartHourly');
@@ -510,11 +511,10 @@
     });
   }
 
-  // 3. TOP CLIENTES (SOLO USUARIO)
+  // 3. TOP CLIENTES
   function renderChartClients(orders) {
     const map = {};
     orders.forEach(p => {
-      // AQUÍ ESTÁ EL CAMBIO: Usamos solo p.user, ignorando nombre_negocio
       const clientName = p.user || 'Cliente Desconocido';
       map[clientName] = (map[clientName]||0) + Number(p.total);
     });
@@ -536,7 +536,7 @@
     });
   }
 
-  // 4. TOP PRODUCTOS (DINERO) - Lo que pediste
+  // 4. TOP PRODUCTOS (DINERO)
   function renderChartMoneyProd(orders) {
     const map = {};
     orders.forEach(p => {
@@ -591,29 +591,39 @@
     });
   }
 
-  // 6. STOCK (Independiente del filtro de mes)
-  function renderChartStock() {
-    let ok=0, low=0, out=0;
-    allProductos.forEach(p => {
-      const s = Number(p.stock)||0;
-      if(s<=0) out++;
-      else if(s<10) low++;
-      else ok++;
+  // 6. CLIENTE >10k vs <10k (REEMPLAZO DE STOCK)
+  function renderChartCliente10k(orders) {
+    // Filtrar solo el usuario "cliente" (case insensitive)
+    const clienteOrders = orders.filter(p => p.user && p.user.toLowerCase() === 'cliente');
+    
+    let less10k = 0;
+    let more10k = 0;
+
+    clienteOrders.forEach(p => {
+        const t = Number(p.total) || 0;
+        if(t > 10000) more10k++;
+        else less10k++;
     });
 
-    const ctx = getChartCtx('chartStock');
-    charts['chartStock'] = new Chart(ctx, {
+    const ctx = getChartCtx('chartCliente10k');
+    charts['chartCliente10k'] = new Chart(ctx, {
       type: 'pie',
       data: {
-        labels: ['Normal','Bajo','Agotado'],
+        labels: ['Menos de $10k', 'Más de $10k'],
         datasets: [{
-          data: [ok, low, out],
-          backgroundColor: ['#dcfce7','#ffedd5','#fee2e2'],
-          borderColor: ['#166534','#9a3412','#991b1b'],
+          data: [less10k, more10k],
+          backgroundColor: ['#ef4444', '#10b981'], // Rojo (<10k), Verde (>10k)
           borderWidth: 1
         }]
       },
-      options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'right'}} }
+      options: { 
+        responsive:true, 
+        maintainAspectRatio:false, 
+        plugins:{
+            legend:{position:'right'},
+            title: { display: true, text: `Total Pedidos: ${less10k + more10k}` }
+        } 
+      }
     });
   }
 
