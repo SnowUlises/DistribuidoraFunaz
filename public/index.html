@@ -479,7 +479,7 @@ function renderProductos() {
     div.innerHTML = `
       <div class="producto-id">ID: ${p.id}</div>
       <h3>${p.nombre}</h3>
-      <div class="precio">$${(p.precio * 1.10).toFixed(2)}</div>
+      <div class="precio">$${(p.precio * 1.10 * 1.02).toFixed(2)}</div>
       <div class="stock ${p.stock > 0 ? 'con-stock' : 'sin-stock'}">
         ${p.stock > 0 ? 'Disponible: ' + p.stock : 'Sin Stock'}
       </div>
@@ -488,15 +488,10 @@ function renderProductos() {
     div.insertBefore(img, div.firstChild);
     
     div.onclick = (e) => { 
-        // Prevenir navegación si clickea el botón
         if(e.target.tagName !== 'BUTTON') {
             window.location.href = `producto.html?id=${p.id}`; 
         }
     };
-    
-    // El evento onclick del botón ya está definido inline arriba, que pasa al padre por propagación
-    // pero el div.onclick maneja la redirección. 
-    // Para asegurar que el botón funcione bien sin redireccionar:
     const btn = div.querySelector('button.btn-carrito');
     btn.onclick = (event) => {
       event.stopPropagation();
@@ -580,7 +575,7 @@ function renderCarrito() {
     carrito.forEach(item => {
       const prod = productos.find(p => p.id === item.id);
       if (!prod) return;
-      total += (prod.precio * 1.10) * item.cantidad;
+      total += (prod.precio * 1.10 * 1.02) * item.cantidad;
         
       const div = document.createElement('div');
       div.className = 'item-carrito';
@@ -740,3 +735,4 @@ logoImg.src = getImageUrl('logo.png');
 </script>
 </body>
 </html>
+
