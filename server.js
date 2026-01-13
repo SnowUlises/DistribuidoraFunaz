@@ -465,7 +465,6 @@ app.post('/api/guardar-pedidos', async (req, res) => {
         fecha: fechaLocal, 
         items, 
         total,
-        // Aquí insertamos los datos que antes se borraban:
         user_id: userId,
         nombre_negocio: nombreNegocio
     };
@@ -532,12 +531,6 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
   }
 });
 
-/* =========================================================
-   RESTO DE ENDPOINTS (PDF, PETICIONES, LISTADOS)
-   ========================================================= */
-
-// NUEVO: GENERAR PDF MASIVO (Concatenado)
-// REEMPLAZA TU ENDPOINT ACTUAL '/api/generar-pdf-masivo' POR ESTE:
 
 app.post('/api/generar-pdf-masivo', async (req, res) => {
   try {
@@ -593,7 +586,6 @@ app.post('/api/generar-pdf-masivo', async (req, res) => {
 // GENERAR PDF DE PETICIÓN (PREVIEW) - 🔥 AHORA SÍ MUESTRA EL NEGOCIO
 app.post('/api/generar-pdf-peticion', async (req, res) => {
   try {
-    // 1. Recibimos 'nombre_negocio' desde el frontend
     const { user, items, total, fecha, nombre_negocio } = req.body;
 
     if (!user || !Array.isArray(items) || items.length === 0) {
@@ -614,9 +606,6 @@ app.post('/api/generar-pdf-peticion', async (req, res) => {
       })),
       total: Number(total) || 0,
       fecha: fechaLocal || new Date().toISOString(),
-      
-      // 🔥 AQUÍ ESTÁ LA CLAVE: 
-      // Al asignarlo aquí, la función 'generarPDF' verá que existe y lo escribirá en el PDF.
       nombre_negocio: nombre_negocio 
     };
     
@@ -722,7 +711,6 @@ app.get('/api/mis-pedidos', async (req, res) => {
       ...p, tipo: 'pedido', estado_etiqueta: '✅ Preparado', color_estado: '#4CAF50'
     }));
 
-    // Ordenar por fecha (más reciente primero)
     const historial = [...listaPeticiones, ...listaPedidos].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
     res.json(historial);
@@ -755,8 +743,6 @@ app.get('/api/pedidos/:id/pdf', async (req, res) => {
   }
 });
 
-// GUARDAR PETICIÓN (ENVIAR) - 🔥 MODIFICADO: SIN TELÉFONO + NUEVOS CAMPOS
-// GUARDAR PETICIÓN (ENVIAR) - 🔥 CORREGIDO: AHORA SÍ GUARDA EL TELÉFONO
 app.post('/api/Enviar-Peticion', async (req, res) => {
     try {
         console.log('Received payload:', JSON.stringify(req.body, null, 2));
@@ -803,9 +789,6 @@ app.post('/api/Enviar-Peticion', async (req, res) => {
         
         const totalInt = Math.round(total);
         const fechaLocal = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
-        
-        // LIMPIEZA DE TELÉFONO (Para evitar errores con int8)
-        // Esto quita espacios, guiones y paréntesis, dejando solo números.
         let telefonoLimpio = null;
         if (telefono) {
             telefonoLimpio = telefono.toString().replace(/\D/g, ''); 
@@ -840,7 +823,6 @@ app.post('/api/Enviar-Peticion', async (req, res) => {
    GENERADOR DE PDF (LÓGICA COMPARTIDA)
    ========================================================= */
 
-// Función auxiliar para dibujar el contenido de UN pedido en el documento PDF
 async function dibujarPedidoEnDoc(doc, pedido, logoBuffer) {
     if (logoBuffer) {
       doc.image(logoBuffer, 100, 20, { width: 100 });
@@ -924,7 +906,6 @@ async function generarPDF(pedido) {
 // Función para generar PDF MASIVO (concatenado)
 async function generarPDFMasivo(pedidos) {
   return new Promise(async (resolve, reject) => {
-    // autoFirstPage: false permite agregar páginas manualmente en el bucle
     const doc = new PDFDocument({
       size: [267, 862], 
       margins: { top: 20, bottom: 20, left: 20, right: 20 },
@@ -1132,6 +1113,7 @@ app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
