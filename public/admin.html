@@ -758,7 +758,7 @@
                     this.loadingOrders[pedido.uid] = true;
                     try {
                         const itemsModified = pedido.items.map(i => ({
-                            ...i, precio_unitario: i.precio_unitario * 1.10, subtotal: i.subtotal * 1.10
+                            ...i, precio_unitario: i.precio_unitario * 1.10 * 1.02, subtotal: i.subtotal * 1.10 * 1.02
                         }));
                         const payload = {
                             user: pedido.user, items: itemsModified,
@@ -863,7 +863,7 @@
                     
                     const pedido = this.rawPedidos.find(p => p.uid === uid);
                     const precioMap = new Map(this.productos.map(p => [p.id, p.precio]));
-                    const mult = discount ? 1.10 * 0.97 : 1.10;
+                    const mult = discount ? 1.122 * 0.97 : 1.122;
                     pedido.items.forEach(i => {
                         const base = precioMap.get(i.id);
                         if(base) {
@@ -885,7 +885,7 @@
                         const p = this.productos.find(pr => pr.id == idStr);
                         if(p) {
                             addedCount++;
-                            let precio = p.precio * 1.10;
+                            let precio = p.precio * 1.10 * 1.02;
                             if(this.modalApplyDiscount) precio *= 0.97;
                             const qty = parseInt(qtyStr)||1;
                             const exist = pedido.items.find(i => i.id == p.id);
@@ -1065,5 +1065,6 @@
     </script>
 </body>
 </html>
+
 
 
