@@ -348,7 +348,7 @@ function renderizarCarrito() {
 
     const div = document.createElement('div');
     div.className = 'producto-card';
-    const precioPublico = (Number(p.precio || 0) * 1.10);
+    const precioPublico = (Number(p.precio || 0) * 1.10 * 1.02);
 
     div.innerHTML = `
       <img src="/imagenes/${p.id}.png" alt="${(p.nombre||'').replace(/"/g,'')}" onerror="this.onerror=null; this.src='/imagenes/placeholder.png'"/>
@@ -403,7 +403,7 @@ function renderizarCarrito() {
 function mostrarFormulario() {
   let total = carrito.reduce((acc, item) => {
     const p = productos.find(prod => prod.id == item.id);
-    const precioPublico = p ? Number(p.precio || 0) * 1.10 : 0;
+    const precioPublico = p ? Number(p.precio || 0) * 1.10 * 1.02 : 0;
     return acc + (precioPublico * item.cantidad);
   }, 0);
 
@@ -440,7 +440,7 @@ btnConfirmar.addEventListener('click', async () => {
       producto.stock = producto.stock - item.cantidad;
     }
 
-    let precioConRecargo = Number(producto.precio) * 1.10;
+    let precioConRecargo = Number(producto.precio) * 1.10 * 1.02;
     const esRegular = document.getElementById('clienteRegular').checked;
     if (esRegular) precioConRecargo *= 0.97;
 
@@ -573,3 +573,4 @@ btnGenerarTicket.addEventListener('click', generarTicket);
 </script>
 </body>
 </html>
+
