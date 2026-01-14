@@ -40,7 +40,9 @@ app.get('/api/lista-clientes', async (req, res) => {
    ========================================================= */
 
 // 1. REGISTRAR MOVIMIENTO Y ACTUALIZAR SNAPSHOT (Para ventas/modificaciones)
-async function registrarMovimiento(prodId, nombre, cambio, stockAnt, stockNue, tipo, ref) {
+// 1. REGISTRAR MOVIMIENTO Y ACTUALIZAR SNAPSHOT (Para ventas/modificaciones)
+// MODIFICADO: Ahora acepta un parámetro opcional 'razonDetallada'
+async function registrarMovimiento(prodId, nombre, cambio, stockAnt, stockNue, tipo, ref, razonDetallada = null) {
   try {
     // A. Guardamos en la base de datos (Historial oficial)
     await supabase.from('historial_stock').insert([{
@@ -51,11 +53,10 @@ async function registrarMovimiento(prodId, nombre, cambio, stockAnt, stockNue, t
       stock_nuevo: stockNue,
       tipo_movimiento: tipo,
       referencia_id: ref,
+      razon: razonDetallada, // <--- NUEVA COLUMNA CON INFO DETALLADA
       fecha: new Date().toISOString()
     }]);
 
-    // B. ACTUALIZAMOS LA FOTO EN LA TABLA AUXILIAR 'monitor_snapshot'
-    // Esto evita que el monitor detecte este cambio legítimo como un "desajuste"
     const { error } = await supabase
         .from('monitor_snapshot')
         .upsert({ id: prodId, stock: stockNue });
@@ -151,6 +152,7 @@ async function ejecutarLogicaMonitor() {
                     stock_nuevo: stockReal,
                     tipo_movimiento: 'ajuste db',
                     referencia_id: 'MONITOR',
+                    razon: 'Ajuste automático por discrepancia en DB',
                     fecha: new Date().toISOString()
                 }]);
                 
@@ -1155,6 +1157,7 @@ app.post('/api/crear-producto', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
