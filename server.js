@@ -272,8 +272,22 @@ app.put('/api/actualizar-pedido/:id', async (req, res) => {
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Items inválidos' });
     }
+
+    // --- NUEVO: Obtener datos del pedido original para el historial detallado ---
+    const { data: datosPedido } = await supabase
+        .from('pedidos')
+        .select('user, nombre_negocio, fecha')
+        .eq('id', pedidoId)
+        .single();
+
+    const nombreCliente = datosPedido?.user || 'Desconocido';
+    const nombreNegocio = datosPedido?.nombre_negocio || 'Sin Negocio';
+    const fechaPedido = datosPedido?.fecha ? new Date(datosPedido.fecha).toLocaleDateString() : 'Sin Fecha';
     
-    // 1. Actualizar stock (Lógica original intacta)
+    const razonString = `Modif. Pedido #${pedidoId} | Cliente: ${nombreCliente} | Negocio: ${nombreNegocio} | Fecha: ${fechaPedido}`;
+    // --------------------------------------------------------------------------
+    
+    // 1. Actualizar stock
     for (const update of stockUpdates) {
       const { data: prod } = await supabase.from('productos').select('*').eq('id', update.id).single();
       if (prod) {
@@ -285,7 +299,8 @@ app.put('/api/actualizar-pedido/:id', async (req, res) => {
         
         if (updErr) console.error('❌ Error actualizando stock:', updErr);
         else {
-            await registrarMovimiento(update.id, prod.nombre, -cantidadRestada, stockAnterior, newStock, 'MODIF_PEDIDO', pedidoId);
+            // PASAMOS LA RAZÓN DETALLADA AQUI
+            await registrarMovimiento(update.id, prod.nombre, -cantidadRestada, stockAnterior, newStock, 'MODIF_PEDIDO', pedidoId, razonString);
         }
       }
     }
@@ -491,6 +506,7 @@ app.post('/api/guardar-pedidos', async (req, res) => {
 });
 
 /* --- ELIMINAR PEDIDO (RESTAURAR) --- */
+/* --- ELIMINAR PEDIDO (RESTAURAR) --- */
 app.delete('/api/eliminar-pedido/:id', async (req, res) => {
   try {
     const id = req.params.id;
@@ -502,6 +518,8 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
 
     // Restaurar stock si no fue recibido
     if (!recibido) {
+      const razonRestauracion = `Restauración por eliminación de Pedido #${id} (${pedido.user})`; // Info básica
+
       for (const it of pedido.items || []) {
         const prodId = it.id;
         console.log(`🔄 Restaurando stock para producto ${prodId} (+${it.cantidad})`);
@@ -515,8 +533,8 @@ app.delete('/api/eliminar-pedido/:id', async (req, res) => {
           const { error: updErr } = await supabase.from('productos').update({ stock: newStock }).eq('id', prodId);
           
           if (!updErr) {
-             // REGISTRO Y ACTUALIZACION DE SNAPSHOT
-             await registrarMovimiento(prodId, prod.nombre, cantidadRestaurar, stockAnterior, newStock, 'ELIMINAR_PEDIDO', id);
+             // MODIFICADO: Pasamos la razón
+             await registrarMovimiento(prodId, prod.nombre, cantidadRestaurar, stockAnterior, newStock, 'ELIMINAR_PEDIDO', id, razonRestauracion);
           }
         }
       }
@@ -1157,6 +1175,7 @@ app.post('/api/crear-producto', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
