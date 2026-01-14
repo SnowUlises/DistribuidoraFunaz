@@ -35,29 +35,6 @@ app.get('/api/lista-clientes', async (req, res) => {
   }
 });
 
-app.get('/api/analytics/dump', async (req, res) => {
-  try {
-    // 1. Pedidos: Solo necesitamos fecha, total, usuario e items (para categorías)
-    // Usamos .csv() o seleccionamos columnas específicas para reducir peso
-    const { data: pedidos, error: errPed } = await supabase
-      .from('pedidos')
-      .select('id, user, total, fecha, items'); // Solo lo vital
-
-    if (errPed) throw errPed;
-
-    // 2. Productos: Necesario para saber la Categoría de cada item vendido
-    const { data: productos, error: errProd } = await supabase
-      .from('productos')
-      .select('id, nombre, categoria, precio');
-
-    if (errProd) throw errProd;
-
-    res.json({ pedidos, productos });
-  } catch (err) {
-    console.error('❌ Error analytics dump:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
 
 // MODIFICADO: Ahora acepta un parámetro opcional 'razonDetallada'
 async function registrarMovimiento(prodId, nombre, cambio, stockAnt, stockNue, tipo, ref, razonDetallada = null) {
@@ -1193,6 +1170,7 @@ app.post('/api/crear-producto', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
