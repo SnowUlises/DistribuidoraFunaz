@@ -3,244 +3,245 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Funaz Intelligence - BI Panel</title>
+  <title>Funaz Manager - Intelligence</title>
   
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 
   <style>
     :root {
-      --primary: #1a1a1a;
-      --accent: #2e7d32; /* Verde Funaz */
-      --accent-light: #4caf50;
-      --bg: #f4f5f7;
+      --sidebar-bg: #1e1e2d;
+      --sidebar-text: #9899ac;
+      --sidebar-active: #3699ff;
+      --bg-body: #f5f8fa;
       --card-bg: #ffffff;
-      --text: #333;
-      --text-muted: #888;
-      --border: #e0e0e0;
-      --danger: #d32f2f;
-      
-      --sidebar-width: 300px;
+      --text-main: #3f4254;
+      --border: #ebedf3;
+      --success: #1bc5bd;
     }
 
-    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-body); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
 
-    /* LAYOUT */
+    /* --- SIDEBAR --- */
     .sidebar {
-      width: var(--sidebar-width);
-      background: var(--card-bg);
-      border-right: 1px solid var(--border);
+      width: 260px;
+      background: var(--sidebar-bg);
       display: flex; flex-direction: column;
-      padding: 1.5rem;
-      box-shadow: 2px 0 10px rgba(0,0,0,0.05);
-      z-index: 10;
+      flex-shrink: 0;
     }
 
-    .main-content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 2rem;
-      position: relative;
+    .brand {
+      height: 70px; display: flex; align-items: center; padding: 0 25px;
+      color: white; font-weight: 700; font-size: 1.2rem; border-bottom: 1px solid rgba(255,255,255,0.05);
     }
 
-    /* SIDEBAR FILTERS */
-    .sidebar h2 { font-size: 1.2rem; margin: 0 0 1.5rem 0; display: flex; align-items: center; gap: 10px; color: var(--primary); }
+    .nav-menu { padding: 20px 0; list-style: none; margin: 0; flex: 1; }
+    .nav-item {
+      padding: 12px 25px; cursor: pointer; display: flex; align-items: center; gap: 12px;
+      color: var(--sidebar-text); transition: 0.2s; font-weight: 500;
+    }
+    .nav-item:hover { color: white; background: rgba(255,255,255,0.02); }
+    .nav-item.active { background: rgba(54, 153, 255, 0.1); color: var(--sidebar-active); border-right: 3px solid var(--sidebar-active); }
+
+    /* Global Date Filter in Sidebar */
+    .global-filter { padding: 20px; border-top: 1px solid rgba(255,255,255,0.05); }
+    .filter-label { font-size: 0.75rem; text-transform: uppercase; color: #5d5f77; font-weight: 700; margin-bottom: 8px; display: block; }
+    .date-select {
+      width: 100%; background: #151521; border: 1px solid #2b2b40; color: white;
+      padding: 8px; border-radius: 6px; margin-bottom: 10px; outline: none;
+    }
+
+    /* --- MAIN CONTENT --- */
+    .main { flex: 1; overflow-y: auto; padding: 30px; position: relative; }
     
-    .filter-group { margin-bottom: 2rem; }
-    .filter-label { font-weight: 600; font-size: 0.85rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.5rem; display: block; }
+    .section-view { display: none; animation: fadeIn 0.3s ease; }
+    .section-view.active { display: block; }
+    @keyframes fadeIn { from{opacity:0; transform:translateY(5px)} to{opacity:1; transform:translateY(0)} }
+
+    h1 { margin: 0 0 25px 0; font-size: 1.5rem; }
+
+    /* --- CARDS & GRIDS --- */
+    .card { background: var(--card-bg); border-radius: 10px; box-shadow: 0 0 20px 0 rgba(76, 87, 125, 0.02); padding: 25px; margin-bottom: 25px; }
+    .row-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 25px; }
+    .kpi-val { font-size: 2rem; font-weight: 800; color: var(--text-main); margin-top: 5px; }
+    .kpi-title { font-size: 0.9rem; color: #b5b5c3; font-weight: 600; }
+
+    .chart-container { position: relative; height: 350px; width: 100%; }
+
+    /* --- CLIENT FILTER UI --- */
+    .client-control-panel { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; height: 500px; }
+    .client-list-box { border: 1px solid var(--border); border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; }
+    .search-bar { padding: 10px; border-bottom: 1px solid var(--border); }
+    .search-bar input { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; }
     
-    .date-range { display: flex; gap: 5px; }
-    .date-range input { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; }
+    .list-scroll { flex: 1; overflow-y: auto; padding: 5px; }
+    .client-row { display: flex; align-items: center; padding: 8px; cursor: pointer; border-radius: 4px; gap: 8px; font-size: 0.9rem; }
+    .client-row:hover { background: #f0f0f0; }
 
-    /* CLIENT FILTER COMPLEX */
-    .client-filter-box {
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px;
-      background: #fafafa;
-      height: 400px; /* Altura fija para scroll */
-      display: flex; flex-direction: column;
-    }
+    .mode-switch { display: flex; gap: 10px; margin-bottom: 15px; }
+    .btn-mode { flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; text-align: center; font-weight: 600; }
+    .btn-mode.active.include { background: #d7f9f1; color: #00684a; border-color: #d7f9f1; }
+    .btn-mode.active.exclude { background: #ffe2e5; color: #890c18; border-color: #ffe2e5; }
 
-    .search-box {
-      padding: 8px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; width: 100%; box-sizing: border-box;
-    }
+    /* --- HEATMAP --- */
+    .heatmap-grid { display: grid; grid-template-columns: 40px repeat(24, 1fr); gap: 2px; overflow-x: auto; }
+    .hm-cell { height: 35px; border-radius: 4px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; color: transparent; transition: 0.2s; }
+    .hm-cell:hover { color: white; transform: scale(1.1); z-index: 10; cursor: default; }
+    .hm-day { display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; font-weight: 600; font-size: 0.8rem; color: #b5b5c3; }
 
-    .toggle-mode {
-      display: flex; background: #e0e0e0; border-radius: 6px; padding: 2px; margin-bottom: 10px;
-    }
-    .toggle-opt {
-      flex: 1; text-align: center; padding: 6px; font-size: 0.8rem; cursor: pointer; border-radius: 4px; font-weight: 600; transition: all 0.2s;
-    }
-    .toggle-opt.active.whitelist { background: var(--accent); color: white; }
-    .toggle-opt.active.blacklist { background: var(--danger); color: white; }
-
-    .client-list {
-      flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;
-    }
-    .client-item {
-      display: flex; align-items: center; gap: 8px; font-size: 0.9rem; padding: 4px; cursor: pointer; border-radius: 4px;
-    }
-    .client-item:hover { background: #eee; }
-    .client-item input { cursor: pointer; }
-
-    /* BUTTONS */
-    .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; }
-    .btn-primary { background: var(--accent); color: white; width: 100%; }
-    .btn-primary:hover { background: var(--accent-light); }
-    .btn-outline { background: transparent; border: 1px solid var(--text-muted); color: var(--text); }
-
-    /* DASHBOARD GRID */
-    .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-    .kpi-card { background: var(--card-bg); padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
-    .kpi-val { font-size: 2rem; font-weight: 800; margin: 5px 0; color: var(--primary); }
-    .kpi-label { font-size: 0.9rem; color: var(--text-muted); }
-
-    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-    .chart-card { background: var(--card-bg); padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); min-height: 350px; }
-    .chart-header { display: flex; justify-content: space-between; margin-bottom: 1rem; }
-    .chart-title { font-weight: 700; font-size: 1.1rem; }
-
-    /* HEATMAP CSS GRID */
-    .heatmap-container { display: grid; grid-template-columns: 40px repeat(24, 1fr); gap: 2px; overflow-x: auto; padding-bottom: 10px; }
-    .hm-cell { height: 30px; border-radius: 3px; position: relative; }
-    .hm-cell:hover::after {
-      content: attr(data-val); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
-      background: black; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; pointer-events: none; white-space: nowrap; z-index: 100;
-    }
-    .hm-label-y { font-size: 0.7rem; color: var(--text-muted); display: flex; align-items: center; justify-content: flex-end; padding-right: 5px; }
-    .hm-label-x { grid-column-start: 2; grid-column-end: span 24; display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 5px; }
-
-    /* Loading Overlay */
-    #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-    .spinner { width: 40px; height: 40px; border: 4px solid #eee; border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
+    /* --- LOADER --- */
+    #loader { position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 99; display: flex; justify-content: center; align-items: center; flex-direction: column; }
   </style>
 </head>
 <body>
 
 <div id="loader">
-  <div class="spinner"></div>
-  <p style="margin-top:1rem; font-weight:600;">Procesando Inteligencia...</p>
+  <div style="width: 40px; height: 40px; border: 4px solid #ebedf3; border-top-color: var(--sidebar-active); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+  <p style="margin-top: 15px; font-weight: 600; color: var(--text-main);">Cargando Sistema...</p>
 </div>
 
 <div class="sidebar">
-  <h2><span class="material-icons-round">insights</span> Analytics Pro</h2>
+  <div class="brand">FUNAZ BI</div>
   
-  <div class="filter-group">
-    <span class="filter-label">Rango de Fechas</span>
-    <div class="date-range">
-      <input type="date" id="dateStart">
-      <input type="date" id="dateEnd">
-    </div>
+  <ul class="nav-menu">
+    <li class="nav-item active" onclick="switchTab('tab-resumen', this)">
+      <span class="material-icons-round">dashboard</span> Resumen
+    </li>
+    <li class="nav-item" onclick="switchTab('tab-clientes', this)">
+      <span class="material-icons-round">people</span> Clientes & Filtros
+    </li>
+    <li class="nav-item" onclick="switchTab('tab-estacional', this)">
+      <span class="material-icons-round">calendar_month</span> Estacionalidad
+    </li>
+    <li class="nav-item" onclick="switchTab('tab-heatmap', this)">
+      <span class="material-icons-round">local_fire_department</span> Horarios
+    </li>
+  </ul>
+
+  <div class="global-filter">
+    <span class="filter-label">Filtro Global de Tiempo</span>
+    <select id="filterMonth" class="date-select" onchange="updateDashboard()">
+      </select>
+    <select id="filterYear" class="date-select" onchange="updateDashboard()">
+      </select>
+    <small style="color: #5d5f77; display:block; margin-top:5px;">
+      *Nota: "Estacionalidad" ignora el mes.
+    </small>
   </div>
-
-  <div class="filter-group" style="flex:1; display:flex; flex-direction:column; min-height:0;">
-    <span class="filter-label">Filtro Avanzado de Clientes</span>
-    
-    <div class="client-filter-box">
-      <div class="toggle-mode">
-        <div class="toggle-opt active whitelist" id="btnWhitelist" onclick="setFilterMode('include')">
-          <span class="material-icons-round" style="font-size:12px">check</span> Incluir
-        </div>
-        <div class="toggle-opt" id="btnBlacklist" onclick="setFilterMode('exclude')">
-          <span class="material-icons-round" style="font-size:12px">block</span> Excluir
-        </div>
-      </div>
-
-      <input type="text" class="search-box" id="clientSearch" placeholder="Buscar cliente..." onkeyup="renderClientList()">
-
-      <div class="client-list" id="clientListContainer">
-        </div>
-      
-      <div style="margin-top:10px; display:flex; gap:10px; font-size:0.8rem;">
-         <a href="#" onclick="toggleAllClients(true)">Todos</a> | <a href="#" onclick="toggleAllClients(false)">Ninguno</a>
-      </div>
-    </div>
+  
+  <div style="padding: 20px;">
+    <button onclick="location.href='admin.txt'" style="width:100%; padding:10px; background:rgba(255,255,255,0.1); border:none; color:white; cursor:pointer; border-radius:6px;">Volver Admin</button>
   </div>
-
-  <button class="btn btn-primary" onclick="applyFilters()">
-    <span class="material-icons-round" style="vertical-align:middle">filter_alt</span> Aplicar Filtros
-  </button>
-  <button class="btn btn-outline" onclick="location.href='admin.txt'" style="margin-top:10px">Volver al Admin</button>
 </div>
 
-<div class="main-content">
-  
-  <div class="kpi-row">
-    <div class="kpi-card">
-      <div class="kpi-label">Ingresos Totales (Selección)</div>
-      <div class="kpi-val" id="kpiTotal">$0</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Pedidos Totales</div>
-      <div class="kpi-val" id="kpiCount">0</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Ticket Promedio (Selección)</div>
-      <div class="kpi-val" id="kpiAvg">$0</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Mejor Cliente (Volumen)</div>
-      <div class="kpi-val" style="font-size:1.4rem" id="kpiTopClient">--</div>
-    </div>
-  </div>
+<div class="main">
 
-  <div class="charts-grid">
-    <div class="chart-card">
-      <div class="chart-header">
-        <div class="chart-title">Evolución de Ventas</div>
-        <select id="timeScale" onchange="renderTimeChart()" style="padding:4px; border-radius:4px;">
-          <option value="week">Por Semana (Lun-Dom)</option>
-          <option value="month">Por Mes</option>
-        </select>
+  <div id="tab-resumen" class="section-view active">
+    <h1>Resumen del Periodo</h1>
+    
+    <div class="row-kpi">
+      <div class="card">
+        <div class="kpi-title">Facturación Total</div>
+        <div class="kpi-val" id="kpi-total">$0</div>
       </div>
-      <div style="height: 300px;">
-        <canvas id="chartTime"></canvas>
+      <div class="card">
+        <div class="kpi-title">Pedidos Totales</div>
+        <div class="kpi-val" id="kpi-orders">0</div>
+      </div>
+      <div class="card">
+        <div class="kpi-title">Ticket Promedio</div>
+        <div class="kpi-val" id="kpi-ticket">$0</div>
       </div>
     </div>
 
-    <div class="chart-card">
-      <div class="chart-header">
-        <div class="chart-title">Ventas por Categoría</div>
-      </div>
-      <div style="height: 300px;">
-        <canvas id="chartCat"></canvas>
-      </div>
-    </div>
-  </div>
-
-  <div class="chart-card" style="min-height: auto;">
-    <div class="chart-header">
-      <div class="chart-title">
-        <span class="material-icons-round" style="color:red; vertical-align:bottom;">local_fire_department</span>
-        Mapa de Calor: Horarios de Compra
-      </div>
-      <small class="text-muted">Basado en usuarios filtrados (Ej: Solo "cliente" para ver local)</small>
-    </div>
-    <div class="heatmap-container" id="heatmapGrid">
-      </div>
-    <div style="display:flex; justify-content:space-between; margin-top:5px; font-size:0.75rem; color:#888;">
-      <span>00:00hs</span>
-      <span>12:00hs</span>
-      <span>23:00hs</span>
-    </div>
-  </div>
-
-  <div class="charts-grid" style="margin-top: 2rem;">
-    <div class="chart-card">
-        <div class="chart-title" style="margin-bottom:1rem;">Top 10 Productos ($ Generado)</div>
-        <div style="height: 300px;">
-            <canvas id="chartTopProd"></canvas>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
+      <div class="card">
+        <h3 style="margin-top:0">Top Productos (Ingresos $)</h3>
+        <div class="chart-container">
+          <canvas id="chartTopMoney"></canvas>
         </div>
-    </div>
+      </div>
 
-    <div class="chart-card">
-        <div class="chart-title" style="margin-bottom:1rem;">Ticket Promedio (Evolución)</div>
-        <div style="height: 300px;">
-            <canvas id="chartAvgTicket"></canvas>
+      <div class="card">
+        <h3 style="margin-top:0">Evolución Diaria (Mes Seleccionado)</h3>
+        <div class="chart-container">
+          <canvas id="chartDaily"></canvas>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-clientes" class="section-view">
+    <h1>Análisis y Filtro de Clientes</h1>
+    <p style="color:var(--sidebar-text)">Configura aquí a quién ver. Esta configuración afecta a la pestaña "Resumen" y "Horarios".</p>
+
+    <div class="client-control-panel">
+      <div class="card" style="padding:15px; display:flex; flex-direction:column; height:100%; box-sizing:border-box;">
+        <div class="mode-switch">
+          <div class="btn-mode active include" id="btn-include" onclick="setFilterMode('include')">Ver Solo a...</div>
+          <div class="btn-mode" id="btn-exclude" onclick="setFilterMode('exclude')">Ocultar a...</div>
+        </div>
+        
+        <div class="search-bar">
+          <input type="text" id="clientSearch" placeholder="Buscar nombre..." onkeyup="renderClientList()">
+        </div>
+
+        <div class="list-scroll" id="clientListContainer">
+          </div>
+        
+        <div style="margin-top:10px; font-size:0.8rem; display:flex; justify-content:space-between;">
+           <a href="#" onclick="toggleAllClients(true); return false;">Seleccionar Todos</a>
+           <a href="#" onclick="toggleAllClients(false); return false;">Deseleccionar Todos</a>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:20px;">
+        <div class="card" style="flex:1;">
+          <h3 style="margin-top:0">Ticket Promedio por Cliente (Top 10)</h3>
+          <div class="chart-container" style="height: 250px;">
+            <canvas id="chartClientTicket"></canvas>
+          </div>
+        </div>
+        <div class="card" style="flex:1;">
+           <h3 style="margin-top:0">Volumen de Compra ($)</h3>
+           <div class="chart-container" style="height: 250px;">
+             <canvas id="chartClientVolume"></canvas>
+           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-estacional" class="section-view">
+    <h1>Estacionalidad de Producto</h1>
+    <p>Mira cómo se comporta un producto a lo largo de todo el año (Ignora el filtro de Mes).</p>
+    
+    <div class="card">
+      <div style="display:flex; gap:15px; align-items:center; margin-bottom:20px;">
+        <span class="material-icons-round">search</span>
+        <input list="productsList" id="productInput" placeholder="Escribe el nombre del producto (ej: Coca Cola)..." 
+               style="padding:10px; width:300px; border:1px solid #ccc; border-radius:6px;">
+        <datalist id="productsList"></datalist>
+        <button onclick="renderSeasonality()" style="padding:10px 20px; background:var(--sidebar-active); color:white; border:none; border-radius:6px; cursor:pointer;">Analizar</button>
+      </div>
+
+      <div class="chart-container" style="height:400px;">
+        <canvas id="chartSeason"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-heatmap" class="section-view">
+    <h1>Mapa de Calor (Horarios)</h1>
+    <p>Intensidad de ventas según día y hora. (Afectado por filtros de Mes y Clientes).</p>
+    
+    <div class="card">
+      <div class="heatmap-grid" id="heatmapGrid"></div>
+      <div style="display:flex; justify-content:space-between; margin-top:10px; color:#888; font-size:0.8rem;">
+        <span>00:00 hs</span>
+        <span>12:00 hs</span>
+        <span>23:00 hs</span>
+      </div>
     </div>
   </div>
 
@@ -251,399 +252,354 @@
   const API_URL = 'https://distribuidorafunaz-a2o6.onrender.com/api';
   const moneyFmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 });
 
-  // STATE
+  // DATOS GLOBALES
   let RAW_DATA = { pedidos: [], productos: [] };
-  let PROCESSED_DATA = [];
+  let FILTERED_DATA = [];
   
-  // Filter State
-  let filterState = {
-    start: null,
-    end: null,
-    mode: 'include', // 'include' (whitelist) or 'exclude' (blacklist)
-    selectedClients: new Set(), // Nombres de clientes seleccionados
-    allClientNames: [] // Lista maestra
+  // ESTADO DE FILTROS
+  const state = {
+    month: new Date().getMonth(),
+    year: new Date().getFullYear(),
+    clientMode: 'include', // 'include' (whitelist) | 'exclude' (blacklist)
+    selectedClients: new Set(),
+    allClientNames: []
   };
 
-  // CHARTS INSTANCES
-  let charts = {};
+  // CHARTS REF
+  const chartRefs = {};
 
-  // --- INIT ---
+  // --- INICIO ---
   window.addEventListener('DOMContentLoaded', async () => {
-    // Set default dates (This Month)
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    document.getElementById('dateStart').valueAsDate = firstDay;
-    document.getElementById('dateEnd').valueAsDate = now;
-
+    initDateSelects();
     await loadData();
     initClientFilter();
-    applyFilters();
+    updateDashboard(); // Render inicial
   });
 
+  // 1. CARGA DE DATOS
   async function loadData() {
     try {
       const res = await fetch(`${API_URL}/analytics/dump`);
-      if(!res.ok) throw new Error('Error API');
+      if(!res.ok) throw new Error("Error cargando datos");
       RAW_DATA = await res.json();
-      
-      // Preparar lista de clientes únicos
+
+      // Extraer nombres únicos de clientes
       const names = new Set();
       RAW_DATA.pedidos.forEach(p => {
         if(p.user) names.add(p.user.trim());
       });
-      filterState.allClientNames = Array.from(names).sort();
+      state.allClientNames = Array.from(names).sort();
       
-      // Default: Todos seleccionados para Whitelist (ver todo) o Ninguno para Blacklist (ver todo)
-      // Para empezar simple: Mode 'Include' con Todos seleccionados es "Ver Todo"
-      filterState.allClientNames.forEach(n => filterState.selectedClients.add(n));
+      // Default: Seleccionar todos (para que 'include' muestre todo)
+      state.allClientNames.forEach(n => state.selectedClients.add(n));
+
+      // Llenar datalist de productos
+      const dl = document.getElementById('productsList');
+      RAW_DATA.productos.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.nombre;
+        dl.appendChild(opt);
+      });
 
       document.getElementById('loader').style.display = 'none';
     } catch(e) {
-      alert("Error cargando datos: " + e.message);
+      alert("Error: " + e.message);
     }
   }
 
-  // --- FILTER LOGIC ---
+  // 2. LOGICA DE FILTRO CENTRAL
+  function updateDashboard() {
+    // Leer selects fecha
+    state.month = parseInt(document.getElementById('filterMonth').value);
+    state.year = parseInt(document.getElementById('filterYear').value);
+
+    // Filtrar RAW_DATA -> FILTERED_DATA
+    FILTERED_DATA = RAW_DATA.pedidos.filter(p => {
+      const d = new Date(p.fecha);
+      // 1. Filtro Fecha
+      if(d.getMonth() !== state.month) return false;
+      if(d.getFullYear() !== state.year) return false;
+
+      // 2. Filtro Cliente
+      const u = p.user ? p.user.trim() : 'Invitado';
+      const isSelected = state.selectedClients.has(u);
+      
+      if(state.clientMode === 'include') return isSelected; // Whitelist
+      return !isSelected; // Blacklist
+    });
+
+    // Renderizar Vistas
+    renderResumen();
+    renderClientStats(); // Gráficos pestaña clientes
+    renderHeatmap();
+    // Nota: Estacionalidad se renderiza bajo demanda (botón)
+  }
+
+  // --- RENDERIZADORES ---
+
+  function renderResumen() {
+    let total = 0;
+    const prodMap = {};
+    const dailyMap = {}; 
+    const daysInMonth = new Date(state.year, state.month+1, 0).getDate();
+    for(let i=1; i<=daysInMonth; i++) dailyMap[i] = 0;
+
+    FILTERED_DATA.forEach(p => {
+      const t = Number(p.total) || 0;
+      total += t;
+      
+      // Diario
+      const d = new Date(p.fecha).getDate();
+      dailyMap[d] += t;
+
+      // Productos ($)
+      const items = (typeof p.items === 'string') ? JSON.parse(p.items) : p.items;
+      if(Array.isArray(items)) {
+        items.forEach(it => {
+          const sub = (Number(it.cantidad) * Number(it.precio_unitario||it.precio||0));
+          prodMap[it.nombre] = (prodMap[it.nombre] || 0) + sub;
+        });
+      }
+    });
+
+    // KPIs
+    const count = FILTERED_DATA.length;
+    document.getElementById('kpi-total').textContent = moneyFmt.format(total);
+    document.getElementById('kpi-orders').textContent = count;
+    document.getElementById('kpi-ticket').textContent = moneyFmt.format(count ? total/count : 0);
+
+    // Chart: Top Productos
+    const sortedProd = Object.entries(prodMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    createChart('chartTopMoney', 'bar', {
+      labels: sortedProd.map(x=>x[0]),
+      datasets: [{
+        label: 'Ingresos ($)', data: sortedProd.map(x=>x[1]), backgroundColor: '#3699ff', borderRadius: 4
+      }]
+    }, { indexAxis: 'y' });
+
+    // Chart: Diario
+    createChart('chartDaily', 'line', {
+      labels: Object.keys(dailyMap),
+      datasets: [{
+        label: 'Venta Diaria', data: Object.values(dailyMap), borderColor: '#1bc5bd', backgroundColor: 'rgba(27, 197, 189, 0.1)', fill: true, tension: 0.3
+      }]
+    });
+  }
+
+  function renderClientStats() {
+    // Calculos basados en FILTERED_DATA (Lo del mes) o RAW_DATA?
+    // Generalmente para análisis de cliente queremos ver el filtro global. Usamos FILTERED_DATA.
+    
+    const clientMap = {};
+    FILTERED_DATA.forEach(p => {
+      const u = p.user || 'Desc';
+      if(!clientMap[u]) clientMap[u] = { total: 0, count: 0 };
+      clientMap[u].total += Number(p.total);
+      clientMap[u].count++;
+    });
+
+    const list = Object.entries(clientMap).map(([k,v]) => ({
+      user: k, total: v.total, ticket: v.total/v.count
+    }));
+
+    // 1. Chart Ticket Promedio (Top 10 highest tickets)
+    const sortedTicket = [...list].sort((a,b)=>b.ticket - a.ticket).slice(0,10);
+    createChart('chartClientTicket', 'bar', {
+      labels: sortedTicket.map(x=>x.user),
+      datasets: [{ label: 'Ticket Promedio ($)', data: sortedTicket.map(x=>x.ticket), backgroundColor: '#8950fc' }]
+    });
+
+    // 2. Chart Volumen (Top 10 money)
+    const sortedVol = [...list].sort((a,b)=>b.total - a.total).slice(0,10);
+    createChart('chartClientVolume', 'bar', {
+      labels: sortedVol.map(x=>x.user),
+      datasets: [{ label: 'Total Comprado ($)', data: sortedVol.map(x=>x.total), backgroundColor: '#ffa800' }]
+    });
+  }
+
+  function renderSeasonality() {
+    const prodName = document.getElementById('productInput').value.trim();
+    if(!prodName) return;
+
+    // Ignoramos filtro de mes, usamos filtro de AÑO (state.year) y TODOS los meses
+    const months = Array(12).fill(0);
+    
+    RAW_DATA.pedidos.forEach(p => {
+      const d = new Date(p.fecha);
+      if(d.getFullYear() !== state.year) return; // Solo año seleccionado
+
+      const items = (typeof p.items === 'string') ? JSON.parse(p.items) : p.items;
+      if(Array.isArray(items)) {
+        const found = items.find(it => it.nombre.toLowerCase() === prodName.toLowerCase());
+        if(found) {
+          // Sumamos cantidad vendida
+          months[d.getMonth()] += Number(found.cantidad);
+        }
+      }
+    });
+
+    createChart('chartSeason', 'line', {
+      labels: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
+      datasets: [{
+        label: `Unidades vendidas de "${prodName}" (${state.year})`,
+        data: months,
+        borderColor: '#f64e60',
+        backgroundColor: 'rgba(246, 78, 96, 0.1)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 5
+      }]
+    });
+  }
+
+  function renderHeatmap() {
+    const matrix = Array(7).fill(0).map(()=>Array(24).fill(0));
+    let max = 0;
+
+    FILTERED_DATA.forEach(p => {
+      const d = new Date(p.fecha);
+      let day = d.getDay() - 1; if(day===-1) day=6; // 0=Lun
+      const h = d.getHours();
+      matrix[day][h] += Number(p.total);
+      if(matrix[day][h] > max) max = matrix[day][h];
+    });
+
+    const grid = document.getElementById('heatmapGrid');
+    grid.innerHTML = '';
+    const dayLabels = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+
+    // Render Rows
+    for(let d=0; d<7; d++) {
+      // Label
+      const lbl = document.createElement('div');
+      lbl.className = 'hm-day';
+      lbl.textContent = dayLabels[d];
+      grid.appendChild(lbl);
+
+      // Cells
+      for(let h=0; h<24; h++) {
+        const cell = document.createElement('div');
+        cell.className = 'hm-cell';
+        const val = matrix[d][h];
+        const pct = max > 0 ? val/max : 0;
+        
+        // Color scale (Green intensity)
+        cell.style.backgroundColor = val === 0 ? '#f0f2f5' : `rgba(27, 197, 189, ${0.15 + (pct*0.85)})`;
+        if(val > 0) {
+          cell.textContent = moneyFmt.format(val);
+          cell.title = `${dayLabels[d]} ${h}:00hs - ${moneyFmt.format(val)}`;
+        }
+        grid.appendChild(cell);
+      }
+    }
+  }
+
+  // --- UI HELPERS ---
+  
+  function switchTab(tabId, navEl) {
+    document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    navEl.classList.add('active');
+  }
+
+  function createChart(canvasId, type, data, options={}) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    if(chartRefs[canvasId]) chartRefs[canvasId].destroy();
+    
+    chartRefs[canvasId] = new Chart(ctx, {
+      type: type,
+      data: data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: type !== 'bar' && type !== 'line' } }, // Ocultar legend en barras simples
+        ...options
+      }
+    });
+  }
+
+  function initDateSelects() {
+    const selM = document.getElementById('filterMonth');
+    const selY = document.getElementById('filterYear');
+    const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    
+    months.forEach((m,i) => {
+      const opt = document.createElement('option');
+      opt.value = i; opt.text = m;
+      if(i === new Date().getMonth()) opt.selected = true;
+      selM.add(opt);
+    });
+
+    const y = new Date().getFullYear();
+    [y, y-1].forEach(yr => {
+      const opt = document.createElement('option');
+      opt.value = yr; opt.text = yr;
+      selY.add(opt);
+    });
+  }
+
+  // --- CLIENT FILTER LOGIC ---
   function initClientFilter() {
     renderClientList();
   }
 
   function renderClientList() {
     const container = document.getElementById('clientListContainer');
-    const search = document.getElementById('clientSearch').value.toLowerCase();
+    const q = document.getElementById('clientSearch').value.toLowerCase();
     container.innerHTML = '';
 
-    filterState.allClientNames.forEach(name => {
-      if(!name.toLowerCase().includes(search)) return;
-
-      const isChecked = filterState.selectedClients.has(name);
+    state.allClientNames.forEach(name => {
+      if(!name.toLowerCase().includes(q)) return;
       
       const div = document.createElement('div');
-      div.className = 'client-item';
+      div.className = 'client-row';
+      const isChecked = state.selectedClients.has(name);
+      
       div.innerHTML = `
-        <input type="checkbox" ${isChecked ? 'checked' : ''} value="${name}">
+        <input type="checkbox" ${isChecked?'checked':''}>
         <span>${name}</span>
       `;
       
-      // Click event
       div.addEventListener('click', (e) => {
-        // Evitar doble evento si clickea directo el checkbox
         if(e.target.tagName !== 'INPUT') {
           const cb = div.querySelector('input');
           cb.checked = !cb.checked;
           toggleClient(name, cb.checked);
         }
       });
-      div.querySelector('input').addEventListener('change', (e) => {
-        toggleClient(name, e.target.checked);
-      });
-
+      div.querySelector('input').addEventListener('change', (e) => toggleClient(name, e.target.checked));
+      
       container.appendChild(div);
     });
   }
 
-  function toggleClient(name, active) {
-    if(active) filterState.selectedClients.add(name);
-    else filterState.selectedClients.delete(name);
+  function toggleClient(name, checked) {
+    if(checked) state.selectedClients.add(name);
+    else state.selectedClients.delete(name);
+    updateDashboard(); // Recalcular todo en tiempo real
   }
 
-  function toggleAllClients(active) {
-    if(active) {
-      filterState.allClientNames.forEach(n => filterState.selectedClients.add(n));
-    } else {
-      filterState.selectedClients.clear();
-    }
+  function toggleAllClients(check) {
+    if(check) state.allClientNames.forEach(n => state.selectedClients.add(n));
+    else state.selectedClients.clear();
     renderClientList();
-  }
-
-  function setFilterMode(mode) {
-    filterState.mode = mode;
-    document.getElementById('btnWhitelist').classList.toggle('active', mode === 'include');
-    document.getElementById('btnWhitelist').classList.toggle('whitelist', mode === 'include');
-    document.getElementById('btnBlacklist').classList.toggle('active', mode === 'exclude');
-    document.getElementById('btnBlacklist').classList.toggle('blacklist', mode === 'exclude');
-  }
-
-  // --- CORE ENGINE ---
-  function applyFilters() {
-    const dStart = document.getElementById('dateStart').valueAsDate;
-    const dEnd = document.getElementById('dateEnd').valueAsDate;
-    
-    // Ajustar fin del día
-    if(dEnd) dEnd.setHours(23,59,59,999);
-
-    PROCESSED_DATA = RAW_DATA.pedidos.filter(p => {
-      // 1. Fecha
-      const pDate = new Date(p.fecha);
-      if(dStart && pDate < dStart) return false;
-      if(dEnd && pDate > dEnd) return false;
-
-      // 2. Cliente (Logic Whitelist/Blacklist)
-      const user = p.user ? p.user.trim() : 'Invitado';
-      const isSelected = filterState.selectedClients.has(user);
-
-      if(filterState.mode === 'include') {
-        return isSelected; // Solo si está en la lista
-      } else {
-        return !isSelected; // Solo si NO está en la lista
-      }
-    });
-
     updateDashboard();
   }
 
-  function updateDashboard() {
-    calculateKPIs();
-    renderTimeChart();
-    renderCategoryChart();
-    renderHeatmap();
-    renderTopProdChart();
-    renderAvgTicketChart();
+  function setFilterMode(mode) {
+    state.clientMode = mode;
+    document.getElementById('btn-include').classList.toggle('active', mode==='include');
+    document.getElementById('btn-exclude').classList.toggle('active', mode==='exclude');
+    updateDashboard();
   }
 
-  // --- CALCULATIONS & RENDERING ---
+  // Animación loader
+  const styleSheet = document.createElement("style");
+  styleSheet.innerText = `@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`;
+  document.head.appendChild(styleSheet);
 
-  function calculateKPIs() {
-    let total = 0;
-    let count = PROCESSED_DATA.length;
-    let clientSales = {};
-
-    PROCESSED_DATA.forEach(p => {
-      const t = Number(p.total) || 0;
-      total += t;
-      const u = p.user || 'Desconocido';
-      clientSales[u] = (clientSales[u] || 0) + t;
-    });
-
-    const avg = count > 0 ? total / count : 0;
-    
-    // Top Client
-    let topClient = '--';
-    let topVal = 0;
-    Object.entries(clientSales).forEach(([k,v]) => {
-      if(v > topVal) { topVal = v; topClient = k; }
-    });
-
-    document.getElementById('kpiTotal').textContent = moneyFmt.format(total);
-    document.getElementById('kpiCount').textContent = count;
-    document.getElementById('kpiAvg').textContent = moneyFmt.format(avg);
-    document.getElementById('kpiTopClient').textContent = topClient;
-  }
-
-  // 1. CHART: TIME EVOLUTION
-  function renderTimeChart() {
-    const scale = document.getElementById('timeScale').value; // 'week' or 'month'
-    const grouped = {};
-
-    PROCESSED_DATA.forEach(p => {
-        const d = new Date(p.fecha);
-        let key;
-        
-        if (scale === 'month') {
-            // Clave: "2023-01" (Año-Mes)
-            key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-        } else {
-            // Clave: Semana ISO
-            const onejan = new Date(d.getFullYear(), 0, 1);
-            const week = Math.ceil((((d - onejan) / 86400000) + onejan.getDay() + 1) / 7);
-            key = `${d.getFullYear()}-W${String(week).padStart(2,'0')}`;
-        }
-
-        grouped[key] = (grouped[key] || 0) + Number(p.total);
-    });
-
-    // Ordenar claves cronológicamente
-    const keys = Object.keys(grouped).sort();
-    const values = keys.map(k => grouped[k]);
-
-    const ctx = getCtx('chartTime');
-    if(charts['time']) charts['time'].destroy();
-
-    charts['time'] = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: keys,
-            datasets: [{
-                label: 'Ventas ($)',
-                data: values,
-                borderColor: '#2e7d32',
-                backgroundColor: 'rgba(46,125,50,0.1)',
-                fill: true,
-                tension: 0.3
-            }]
-        },
-        options: { responsive:true, maintainAspectRatio:false }
-    });
-  }
-
-  // 2. CHART: CATEGORÍAS
-  function renderCategoryChart() {
-    // Mapa rápido id -> categoria
-    const prodCatMap = {};
-    RAW_DATA.productos.forEach(prod => prodCatMap[prod.id] = prod.categoria || 'Sin Categoría');
-
-    const catTotals = {};
-
-    PROCESSED_DATA.forEach(p => {
-        const items = (typeof p.items === 'string') ? JSON.parse(p.items) : p.items;
-        if(Array.isArray(items)) {
-            items.forEach(it => {
-                const cat = prodCatMap[it.id] || 'Otros';
-                // Calculamos monto aproximado del item
-                const sub = (Number(it.cantidad) * Number(it.precio_unitario || 0));
-                catTotals[cat] = (catTotals[cat] || 0) + sub;
-            });
-        }
-    });
-
-    const labels = Object.keys(catTotals);
-    const data = Object.values(catTotals);
-
-    const ctx = getCtx('chartCat');
-    if(charts['cat']) charts['cat'].destroy();
-
-    charts['cat'] = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: data,
-                backgroundColor: ['#4caf50', '#2196f3', '#ff9800', '#f44336', '#9c27b0', '#607d8b']
-            }]
-        },
-        options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'right'}} }
-    });
-  }
-
-  // 3. HEATMAP (Custom HTML Grid)
-  function renderHeatmap() {
-    // Matriz 7 dias x 24 horas
-    const matrix = Array(7).fill(0).map(() => Array(24).fill(0));
-    let maxVal = 0;
-
-    PROCESSED_DATA.forEach(p => {
-        const d = new Date(p.fecha);
-        // getDay(): 0=Domingo ... 6=Sabado. 
-        // Lo mapeamos a 0=Lunes ... 6=Domingo para mejor visualización
-        let day = d.getDay() - 1; 
-        if(day === -1) day = 6; 
-        
-        const hour = d.getHours();
-        const total = Number(p.total) || 0;
-        
-        matrix[day][hour] += total;
-        if(matrix[day][hour] > maxVal) maxVal = matrix[day][hour];
-    });
-
-    const grid = document.getElementById('heatmapGrid');
-    grid.innerHTML = '';
-    
-    // Header labels (Hours) - Simplified
-    // HTML structure: Rows are Days
-    const days = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-
-    // Para la grid CSS, queremos columnas = Horas, Filas = Días
-    // Primero el header de horas (opcional, o simplificado)
-    
-    days.forEach((dayLabel, dIdx) => {
-        // Label Dia
-        const lbl = document.createElement('div');
-        lbl.className = 'hm-label-y';
-        lbl.textContent = dayLabel;
-        grid.appendChild(lbl);
-
-        // Celdas Horas
-        for(let h=0; h<24; h++) {
-            const val = matrix[dIdx][h];
-            const cell = document.createElement('div');
-            cell.className = 'hm-cell';
-            
-            // Color Scale (White to Red/Green)
-            const intensity = maxVal > 0 ? val / maxVal : 0;
-            // Usaremos opacidad de verde
-            cell.style.backgroundColor = `rgba(46, 125, 50, ${intensity * 0.9 + 0.1})`;
-            if(val === 0) cell.style.backgroundColor = '#f0f0f0';
-            
-            cell.dataset.val = `${dayLabel} ${h}hs: ${moneyFmt.format(val)}`;
-            grid.appendChild(cell);
-        }
-    });
-  }
-
-  // 4. CHART: TOP PRODUCTOS
-  function renderTopProdChart() {
-    const prodSales = {};
-    PROCESSED_DATA.forEach(p => {
-        const items = (typeof p.items === 'string') ? JSON.parse(p.items) : p.items;
-        if(Array.isArray(items)) {
-            items.forEach(it => {
-                const sub = (Number(it.cantidad) * Number(it.precio_unitario || 0));
-                prodSales[it.nombre] = (prodSales[it.nombre] || 0) + sub;
-            });
-        }
-    });
-
-    const sorted = Object.entries(prodSales).sort((a,b) => b[1] - a[1]).slice(0, 10);
-    
-    const ctx = getCtx('chartTopProd');
-    if(charts['topProd']) charts['topProd'].destroy();
-
-    charts['topProd'] = new Chart(ctx, {
-        type: 'bar',
-        indexAxis: 'y',
-        data: {
-            labels: sorted.map(x => x[0]),
-            datasets: [{
-                label: 'Ingresos ($)',
-                data: sorted.map(x => x[1]),
-                backgroundColor: '#1976d2',
-                borderRadius: 4
-            }]
-        },
-        options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }
-    });
-  }
-
-  // 5. CHART: AVG TICKET EVOLUCION
-  function renderAvgTicketChart() {
-    const grouped = {}; // Key: Month, Val: {total:0, count:0}
-
-    PROCESSED_DATA.forEach(p => {
-        const d = new Date(p.fecha);
-        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-        
-        if(!grouped[key]) grouped[key] = {total:0, count:0};
-        grouped[key].total += Number(p.total);
-        grouped[key].count += 1;
-    });
-
-    const keys = Object.keys(grouped).sort();
-    const avgs = keys.map(k => grouped[k].count ? grouped[k].total / grouped[k].count : 0);
-
-    const ctx = getCtx('chartAvgTicket');
-    if(charts['avgTick']) charts['avgTick'].destroy();
-
-    charts['avgTick'] = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: keys,
-            datasets: [{
-                label: 'Ticket Promedio ($)',
-                data: avgs,
-                borderColor: '#ff9800',
-                backgroundColor: 'rgba(255, 152, 0, 0.1)',
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: { responsive:true, maintainAspectRatio:false }
-    });
-  }
-
-  function getCtx(id) {
-    return document.getElementById(id).getContext('2d');
-  }
 </script>
-
 </body>
 </html>
