@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Funaz - Analytics v2</title>
+  <title>Dashboard Funaz - Analytics v2.1</title>
   
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
@@ -128,11 +128,16 @@
     }
     select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--accent); }
     
-    /* SELECTOR CLIENTE ESPECIFICO */
+    /* SELECTOR CLIENTE */
     .client-selector {
         width: 100%; max-width: 400px;
         font-size: 1.1rem; padding: 10px;
         border: 2px solid var(--primary);
+    }
+    
+    /* MINI SELECTOR (Para gráficos) */
+    .mini-select {
+        padding: 4px 8px; font-size: 0.8rem; border-radius: 4px; border-color: #e5e7eb; margin-left: auto;
     }
 
     /* KPIs */
@@ -400,8 +405,14 @@
           <div class="charts-row">
               <div class="chart-box">
                   <div class="chart-header">
-                      <span class="material-icons-round" style="color:var(--primary)">calendar_month</span>
-                      Historial de Compras (Por Mes)
+                      <div style="display:flex; align-items:center; gap:8px">
+                          <span class="material-icons-round" style="color:var(--primary)">calendar_month</span>
+                          Historial de Compras
+                      </div>
+                      <select id="histGroup" class="mini-select" onchange="updateClientHistoryChart()">
+                          <option value="month">Por Mes</option>
+                          <option value="week">Por Semana</option>
+                      </select>
                   </div>
                   <div class="chart-content">
                       <canvas id="cliChartHistory"></canvas>
@@ -582,26 +593,50 @@
       document.getElementById('cli-last').textContent = `Última compra: ${lastDate}`;
 
       // 3. Renderizar Gráficos Cliente
-      renderCliHistory(cliOrders);
+      updateClientHistoryChart(cliOrders); // Llama a la funcion que chequea el selector Mes/Semana
       renderCliTopProds(cliOrders, totalSpent);
   }
 
-  function renderCliHistory(orders) {
-      // Agrupar por Mes-Año
+  // Wrapper para llamar al gráfico con los datos correctos
+  function updateClientHistoryChart(ordersParam) {
+      // Si se llama desde el Select (onchange), no tenemos ordersParam, hay que buscarlos de nuevo
+      let orders = ordersParam;
+      if(!orders) {
+          const clientName = document.getElementById('clientSelect').value;
+          if(!clientName) return;
+          orders = allPedidos.filter(p => p.user === clientName);
+      }
+
+      const mode = document.getElementById('histGroup').value; // 'month' o 'week'
+      renderCliHistory(orders, mode);
+  }
+
+  function renderCliHistory(orders, mode) {
       const map = {};
+      
       orders.forEach(p => {
           const d = new Date(p.fecha);
           if(isNaN(d.getTime())) return;
-          const key = `${d.getMonth()+1}/${d.getFullYear()}`; // e.g. "1/2025"
-          // Usamos una clave ordenable internamente YYYYMM
-          const sortKey = d.getFullYear() * 100 + (d.getMonth()+1);
           
-          if(!map[sortKey]) map[sortKey] = { label: key, total: 0 };
-          map[sortKey].total += Number(p.total);
+          let key, label;
+
+          if (mode === 'month') {
+              // Agrupar por Mes: "MM/YYYY"
+              key = d.getFullYear() * 100 + (d.getMonth()+1); // Sort key: 202501
+              label = `${d.getMonth()+1}/${d.getFullYear()}`;
+          } else {
+              // Agrupar por Semana (Lunes de esa semana)
+              const monday = getMonday(d);
+              key = monday.getTime(); // Sort key: timestamp
+              label = `Sem ${monday.getDate()}/${monday.getMonth()+1}`;
+          }
+          
+          if(!map[key]) map[key] = { label: label, total: 0 };
+          map[key].total += Number(p.total);
       });
 
       // Convertir a array y ordenar cronológicamente
-      const sortedKeys = Object.keys(map).sort();
+      const sortedKeys = Object.keys(map).sort((a,b) => a - b);
       const labels = sortedKeys.map(k => map[k].label);
       const values = sortedKeys.map(k => map[k].total);
 
@@ -611,14 +646,23 @@
           data: {
               labels: labels,
               datasets: [{
-                  label: 'Gasto Mensual ($)',
+                  label: 'Facturación ($)',
                   data: values,
-                  backgroundColor: '#2e7d32',
+                  backgroundColor: mode === 'month' ? '#2e7d32' : '#8b5cf6', // Verde si es mes, Violeta si es semana
                   borderRadius: 4
               }]
           },
           options: { responsive:true, maintainAspectRatio:false }
       });
+  }
+
+  function getMonday(d) {
+      d = new Date(d);
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+      const mon = new Date(d.setDate(diff));
+      mon.setHours(0,0,0,0);
+      return mon;
   }
 
   function renderCliTopProds(orders, totalSpentGrand) {
