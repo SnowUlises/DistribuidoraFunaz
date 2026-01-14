@@ -1109,10 +1109,53 @@ app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
   }
 });
 
+
+/* --- NUEVO: CREAR PRODUCTO --- */
+app.post('/api/crear-producto', async (req, res) => {
+  try {
+    const { nombre, precio, categoria, stock, link } = req.body;
+
+    const { data, error } = await supabase
+      .from('productos')
+      .insert([{
+        nombre,
+        precio,
+        categoria,
+        stock,
+        link,
+        sku: null,       // Solicitado null
+        stock_leo: null, // Solicitado null
+        imagen: null     // Se actualizará en el paso 2
+      }])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    const nuevoId = data.id;
+    const nombreImagen = `imagenes/${nuevoId}.png`;
+
+    // 2. Actualizamos la imagen con la ID generada
+    const { error: updateError } = await supabase
+      .from('productos')
+      .update({ imagen: nombreImagen })
+      .eq('id', nuevoId);
+
+    if (updateError) throw updateError;
+
+    res.json({ ok: true, mensaje: 'Producto creado', id: nuevoId, imagen: nombreImagen });
+
+  } catch (err) {
+    console.error('❌ Error creando producto:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ⚠️ PUERTO CONFIGURADO PARA RENDER
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
