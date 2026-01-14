@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cargar Stock | Minimal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        lime: {
+                            50: '#f7fee7',
+                            100: '#ecfccb',
+                            400: '#a3e635',
+                            500: '#84cc16',
+                            600: '#65a30d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .input-smooth {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        /* Ocultar flechas de input number */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-4xl bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
+        
+        <div class="bg-lime-500 p-6 flex justify-between items-center text-white">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight">Nuevo Producto</h1>
+                <p class="text-lime-100 text-sm opacity-90">Base de datos: Tabla Productos</p>
+            </div>
+            <div class="bg-white/20 p-3 rounded-xl">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+            </div>
+        </div>
+
+        <div class="p-8">
+
+            <div id="lastAddedCard" class="hidden mb-8 bg-lime-50 border border-lime-200 rounded-2xl p-4 flex items-center justify-between animate-fade-in-down transition-all duration-500">
+                <div class="flex items-center gap-4">
+                    <div class="bg-lime-500 text-white p-2 rounded-full">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <div>
+                        <p class="text-xs text-lime-700 font-bold uppercase tracking-wider">Último Agregado con Éxito</p>
+                        <h3 id="lastAddedName" class="text-lg font-bold text-gray-800 leading-tight">...</h3>
+                        <p class="text-sm text-gray-500">ID: <span id="lastAddedId">...</span> • img: <span id="lastAddedImg">...</span></p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <span class="block text-xs text-gray-400">Precio Base</span>
+                    <span id="lastAddedPrice" class="text-xl font-bold text-lime-600">...</span>
+                </div>
+            </div>
+            <form id="prodForm" class="space-y-6">
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Nombre del Producto</label>
+                        <input type="text" id="nombre" required placeholder="Ej. Coca Cola 2.25L"
+                            class="input-smooth w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-lime-500 focus:ring-4 focus:ring-lime-500/20 outline-none text-lg placeholder-gray-300">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Categoría</label>
+                        <div class="relative">
+                            <select id="categoria" required
+                                class="input-smooth w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-lime-500 focus:ring-4 focus:ring-lime-500/20 outline-none text-lg appearance-none cursor-pointer">
+                                <option value="" disabled selected>Seleccionar</option>
+                                <option value="Alimentos">Alimentos</option>
+                                <option value="Accesorios">Accesorios</option>
+                                <option value="Limpieza">Limpieza</option>
+                                <option value="Perfumeria">Perfumeria</option>
+                                <option value="Analgesicos">Analgesicos</option>
+                                <option value="Encendedores">Encendedores</option>
+                                <option value="Cremas">Cremas</option>
+                                <option value="Desodorantes">Desodorantes</option>
+                                <option value="Galletas y Golosinas">Galletas y Golosinas</option>
+                                <option value="Jugos">Jugos</option>
+                                <option value="Papeles y Bolsas">Papeles y Bolsas</option>
+                                <option value="Pegamentos">Pegamentos</option>
+                                <option value="Repelentes">Repelentes</option>
+                                <option value="Shampo y Enjuage">Shampo y Enjuage</option>
+                                <option value="Tinturas Nantyr">Tinturas Nantyr</option>
+                                <option value="Tinturas Issue">Tinturas Issue</option>
+                            </select>
+                            <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-lime-500">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="h-px bg-gray-100 my-4"></div>
+
+                <div class="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                    <div class="flex items-center gap-2 mb-4">
+                        <svg class="w-5 h-5 text-lime-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <h3 class="text-sm font-bold text-gray-500 uppercase">Calculadora de Precios</h3>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="relative">
+                            <label class="block text-xs font-bold text-gray-400 mb-1 text-center">PRECIO REAL (DB)</label>
+                            <input type="number" id="precio" step="0.01" required placeholder="0.00"
+                                class="w-full text-center py-3 rounded-xl border-2 border-gray-200 focus:border-lime-500 focus:ring-0 outline-none text-2xl font-bold text-gray-700 bg-white">
+                        </div>
+
+                        <div class="relative">
+                            <label class="block text-xs font-bold text-lime-600 mb-1 text-center">+ 10%</label>
+                            <input type="number" id="precio10" step="0.01" placeholder="0.00"
+                                class="w-full text-center py-3 rounded-xl border border-lime-200 focus:border-lime-500 focus:ring-0 outline-none text-2xl font-bold text-lime-600 bg-lime-50/50">
+                        </div>
+
+                        <div class="relative">
+                            <label class="block text-xs font-bold text-lime-700 mb-1 text-center">+ 12%</label>
+                            <input type="number" id="precio12" step="0.01" placeholder="0.00"
+                                class="w-full text-center py-3 rounded-xl border border-lime-300 focus:border-lime-600 focus:ring-0 outline-none text-2xl font-bold text-lime-700 bg-lime-100/50">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Stock Inicial</label>
+                        <input type="number" id="stock" required placeholder="0" min="0"
+                            class="input-smooth w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-lime-500 focus:ring-4 focus:ring-lime-500/20 outline-none text-lg font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Link (Opcional)</label>
+                        <input type="text" id="link" placeholder="https://..."
+                            class="input-smooth w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-lime-500 focus:ring-4 focus:ring-lime-500/20 outline-none text-lg text-blue-500">
+                    </div>
+                </div>
+
+                <button type="submit" id="btnGuardar"
+                    class="w-full py-4 mt-4 bg-lime-500 hover:bg-lime-600 text-white font-bold text-xl rounded-xl shadow-lg shadow-lime-500/40 transition-all transform active:scale-95 flex justify-center items-center gap-2">
+                    <span>Guardar Producto</span>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                </button>
+
+            </form>
+        </div>
+    </div>
+
+    <script>
+        /* -----------------------------------------------------
+           LOGICA DE PRECIOS SINCRONIZADOS
+           ----------------------------------------------------- */
+        const pBase = document.getElementById('precio');
+        const p10 = document.getElementById('precio10');
+        const p12 = document.getElementById('precio12');
+
+        function updateFromBase() {
+            const val = parseFloat(pBase.value);
+            if (!isNaN(val)) {
+                p10.value = (val * 1.10).toFixed(2);
+                p12.value = (val * 1.12).toFixed(2);
+            } else { p10.value = ''; p12.value = ''; }
+        }
+
+        function updateFrom10() {
+            const val = parseFloat(p10.value);
+            if (!isNaN(val)) {
+                const base = val / 1.10;
+                pBase.value = base.toFixed(2);
+                p12.value = (base * 1.12).toFixed(2);
+            }
+        }
+
+        function updateFrom12() {
+            const val = parseFloat(p12.value);
+            if (!isNaN(val)) {
+                const base = val / 1.12;
+                pBase.value = base.toFixed(2);
+                p10.value = (base * 1.10).toFixed(2);
+            }
+        }
+
+        pBase.addEventListener('input', updateFromBase);
+        p10.addEventListener('input', updateFrom10);
+        p12.addEventListener('input', updateFrom12);
+
+        /* -----------------------------------------------------
+           LOGICA DE ENVÍO
+           ----------------------------------------------------- */
+        const form = document.getElementById('prodForm');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnGuardar');
+            const originalText = btn.innerHTML;
+            
+            // Estado Loading
+            btn.disabled = true;
+            btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Guardando...`;
+
+            const payload = {
+                nombre: document.getElementById('nombre').value,
+                categoria: document.getElementById('categoria').value,
+                stock: document.getElementById('stock').value,
+                precio: document.getElementById('precio').value, // Siempre enviamos el precio BASE
+                link: document.getElementById('link').value
+            };
+
+            try {
+                // ⚠️ AJUSTA LA URL si usas otro puerto o dominio en producción
+                const res = await fetch('http://localhost:3000/api/crear-producto', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+
+                if (data.ok) {
+                    // 1. Mostrar "Último Agregado"
+                    const card = document.getElementById('lastAddedCard');
+                    document.getElementById('lastAddedName').textContent = data.producto.nombre;
+                    document.getElementById('lastAddedId').textContent = data.producto.id;
+                    document.getElementById('lastAddedImg').textContent = data.producto.imagen;
+                    document.getElementById('lastAddedPrice').textContent = '$' + parseFloat(data.producto.precio).toFixed(2);
+                    
+                    card.classList.remove('hidden');
+
+                    // 2. Limpiar Formulario
+                    form.reset();
+                    
+                    // 3. Foco en nombre para seguir cargando rápido
+                    document.getElementById('nombre').focus();
+
+                } else {
+                    alert('Error del servidor: ' + data.error);
+                }
+
+            } catch (err) {
+                console.error(err);
+                alert('No se pudo conectar con el servidor.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        });
+    </script>
+</body>
+</html>
