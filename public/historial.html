@@ -3,337 +3,373 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Historial de Stock - Distribuidora Funaz</title>
-  <style>
-    /* ... (ESTILOS ORIGINALES MANTENIDOS) ... */
-    :root { --primary-green: #2E7D32; --light-green: #4CAF50; --soft-green: #E8F5E9; --bg-color: #fcfdfc; --white: #ffffff; --text-dark: #333; --text-grey: #666; --orange: #ff9800; --orange-bg: #fff3e0; --orange-border: #ffb74d; }
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg-color); color: var(--text-dark); padding-bottom: 80px; }
-    header { background: var(--primary-green); color: var(--white); padding: 1em; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    header h1 { margin: 0; font-size: 1.2em; font-weight: 600; }
-    .btn-volver { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 0.9em; display:flex; gap:5px; align-items:center; }
-    .controles-superiores { padding: 10px 1em; background: var(--white); display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid #f0f0f0; }
-    .fila-controles { display: flex; gap: 10px; align-items: center; justify-content: space-between; width: 100%; }
-    .buscador-container { flex-grow: 1; }
-    .input-buscador { width: 100%; padding: 8px 12px; border-radius: 20px; border: 1px solid #ddd; outline: none; font-size: 0.95em; }
-    .input-buscador:focus { border-color: var(--primary-green); }
-    .btn-check { background: var(--text-dark); color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 0.85em; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
-    .btn-check:active { transform: scale(0.95); }
-    .toggle-orange { display: flex; align-items: center; gap: 5px; font-size: 0.85em; color: #e65100; font-weight: bold; cursor: pointer; }
-    .toggle-orange input { accent-color: var(--orange); transform: scale(1.2); }
-    .filtros { display: flex; gap: 10px; padding: 10px 1em; overflow-x: auto; white-space: nowrap; background: var(--white); border-bottom: 1px solid #eee; }
-    .filtros button { padding: 6px 14px; border: 1px solid #ddd; background: var(--white); border-radius: 20px; color: var(--text-grey); font-weight: 500; cursor: pointer; transition: all 0.2s; font-size: 0.9em; }
-    .filtros button.active { background: var(--soft-green); border-color: var(--primary-green); color: var(--primary-green); font-weight: bold; }
-    main { max-width: 800px; margin: 0 auto; padding: 1em; }
-    .fecha-grupo { margin-bottom: 2em; }
-    .fecha-header { font-size: 0.9em; text-transform: uppercase; color: var(--text-grey); margin-bottom: 10px; font-weight: bold; letter-spacing: 1px; border-bottom: 2px solid #eee; padding-bottom: 5px; }
-    .card { background: var(--white); border-radius: 12px; padding: 1em; margin-bottom: 10px; border: 1px solid #f0f0f0; box-shadow: 0 2px 8px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 8px; }
-    .card.normal { border-left: 4px solid var(--light-green); }
-    .card.ajuste { border-left: 4px solid var(--orange); background: var(--orange-bg); border-color: var(--orange-border); }
-    .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
-    .prod-nombre { font-weight: bold; font-size: 1.1em; color: var(--text-dark); }
-    .hora { font-size: 0.8em; color: var(--text-grey); }
-    .card-body { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
-    .stock-flow { display: flex; align-items: center; gap: 8px; font-family: monospace; font-size: 1.1em; color: #555; }
-    .arrow { color: #999; }
-    .cambio-badge { padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em; }
-    .negativo { background: #ffebee; color: #d32f2f; }
-    .positivo { background: #e8f5e9; color: #2e7d32; }
-    .neutro { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
-    .tipo-mov { font-size: 0.75em; padding: 3px 6px; border-radius: 4px; background: #eee; color: #666; }
-    .btn-cargar-mas { display: block; width: 100%; max-width: 300px; margin: 20px auto; padding: 12px; background: var(--white); border: 1px solid var(--primary-green); color: var(--primary-green); font-weight: bold; border-radius: 25px; cursor: pointer; transition: all 0.2s; }
-    .btn-cargar-mas:hover { background: var(--soft-green); }
-    
-    /* Indicador de carga flotante */
-    #loadingIndicator {
-        position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
-        background: rgba(0,0,0,0.8); color: white; padding: 8px 16px;
-        border-radius: 20px; font-size: 0.85em; z-index: 999; display: none;
+  <title>Historial - Distribuidora Funaz</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4d7c0f', // Verde tipo lima oscuro (lime-700)
+            secondary: '#ecfccb', // Verde lima muy claro (lime-100)
+            accent: '#84cc16', // Verde lima vibrante (lime-500)
+            dark: '#1f2937',
+          }
+        }
+      }
     }
-  </style>
-</head>
-<body>
+  </script>
 
-  <header>
-    <a href="admin.html" class="btn-volver">⬅ Admin</a>
-    <h1>Historial de Stock</h1>
-    <div style="width: 30px;"></div>
+  <style>
+    /* Estilos extra para scrollbar oculta y detalles finos */
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+  </style>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="bg-gray-50 text-gray-800 font-sans pb-24">
+
+  <header class="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-100">
+    <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="admin.html" class="flex items-center text-primary font-semibold hover:text-accent transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+        </svg>
+        Admin
+      </a>
+      <h1 class="text-lg font-bold text-gray-800 tracking-tight">Historial de Stock</h1>
+      <div class="w-16"></div> </div>
   </header>
 
-  <div id="loadingIndicator">⏳ Cargando datos...</div>
+  <div id="loadingIndicator" class="hidden fixed top-20 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg z-50 animate-pulse">
+    ⏳ Sincronizando datos...
+  </div>
 
-  <div class="controles-superiores">
-    <div class="fila-controles">
-        <div class="buscador-container">
-            <input type="text" id="buscador" class="input-buscador" placeholder="🔍 Buscar producto..." onkeyup="renderizar()">
+  <div class="max-w-3xl mx-auto">
+    
+    <div class="bg-white p-4 border-b border-gray-100">
+      <div class="flex gap-3 mb-3">
+        <div class="relative flex-grow">
+          <input type="text" id="buscador" onkeyup="renderizar()" 
+            class="w-full bg-gray-100 text-gray-700 rounded-full py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-all"
+            placeholder="Buscar producto...">
+          <span class="absolute left-3 top-2.5 text-gray-400">🔍</span>
         </div>
-        <button class="btn-check" onclick="forzarCheck()">↻ Check Ahora</button>
-    </div>
-    <div class="fila-controles">
-        <label class="toggle-orange">
-            <input type="checkbox" id="checkManual" onchange="renderizar()">
-            Solo Ajustes DB
+        <button onclick="forzarCheck()" class="btn-check bg-primary hover:bg-green-800 text-white px-4 py-2 rounded-full text-sm font-bold shadow-sm active:scale-95 transition-transform flex items-center gap-1">
+          <span>↻</span> <span class="hidden sm:inline">Check</span>
+        </button>
+      </div>
+
+      <div class="flex items-center justify-end">
+        <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-orange-600 bg-orange-50 px-3 py-1 rounded-full border border-orange-100 hover:bg-orange-100 transition-colors">
+          <input type="checkbox" id="checkManual" onchange="renderizar()" class="accent-orange-500 w-4 h-4">
+          Solo Ajustes Automáticos
         </label>
+      </div>
     </div>
-  </div>
 
-  <div class="filtros">
-    <button class="active" onclick="filtrar('dia', this)">Por Día</button>
-    <button onclick="filtrar('semana', this)">Semana</button>
-    <button onclick="filtrar('mes', this)">Mes</button>
-    <button onclick="filtrar('anio', this)">Año</button>
-  </div>
+    <div class="flex gap-2 p-3 overflow-x-auto hide-scrollbar bg-white border-b border-gray-100 filtros sticky top-[60px] z-40">
+      <button onclick="filtrar('dia', this)" class="active filter-btn px-4 py-1.5 rounded-full text-sm font-medium border border-gray-200 text-gray-500 whitespace-nowrap transition-all hover:bg-gray-50">Por Día</button>
+      <button onclick="filtrar('semana', this)" class="filter-btn px-4 py-1.5 rounded-full text-sm font-medium border border-gray-200 text-gray-500 whitespace-nowrap transition-all hover:bg-gray-50">Semana</button>
+      <button onclick="filtrar('mes', this)" class="filter-btn px-4 py-1.5 rounded-full text-sm font-medium border border-gray-200 text-gray-500 whitespace-nowrap transition-all hover:bg-gray-50">Mes</button>
+      <button onclick="filtrar('anio', this)" class="filter-btn px-4 py-1.5 rounded-full text-sm font-medium border border-gray-200 text-gray-500 whitespace-nowrap transition-all hover:bg-gray-50">Año</button>
+    </div>
 
-  <main id="contenedorHistorial">
-    <p style="text-align:center; color:#999; margin-top:2em;">Iniciando...</p>
-  </main>
-  
-  <div style="text-align: center; margin-bottom: 50px;">
-      <button id="btnServerLoad" onclick="cargarMasAntiguedad()" style="
-        background: #333; color: white; border: none; 
-        padding: 12px 20px; border-radius: 25px; 
-        cursor: pointer; font-weight: bold; display: none;">
-        📂 Descargar 15 días anteriores
-      </button>
+    <main id="contenedorHistorial" class="p-4 space-y-6 min-h-[50vh]">
+      <div class="flex flex-col items-center justify-center py-10 text-gray-400">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
+        <p class="text-sm">Cargando movimientos...</p>
+      </div>
+    </main>
+
+    <div class="text-center pb-10 pt-4">
+        <button id="btnServerLoad" onclick="cargarMasAntiguedad()" 
+          class="hidden bg-white border border-primary text-primary px-6 py-3 rounded-full text-sm font-bold shadow-sm hover:bg-secondary transition-all active:scale-95">
+          📂 Cargar 15 días anteriores
+        </button>
+    </div>
+
   </div>
 
 <script>
-// VARIABLES GLOBALES
-let historialDB = [];          
-let filtroActual = 'dia';
-let limiteVisual = 50; 
+    // ==========================================
+    // ESTILOS DINÁMICOS PARA FILTROS
+    // ==========================================
+    const styleActive = "bg-secondary border-primary text-primary font-bold shadow-sm";
+    const styleInactive = "bg-white border-gray-200 text-gray-500 hover:bg-gray-50";
 
-// Control de Fechas (Para paginación segura)
-let fechaLimiteSuperior = new Date(); // La fecha más reciente cargada
-let fechaLimiteInferior = new Date(); // La fecha más antigua cargada
-
-// CONSTANTES DE SEGURIDAD
-const DIAS_POR_LOTE = 5; // Pedimos de 5 en 5 días para no superar los 1000 registros
-
-// --- 1. INICIO ---
-async function iniciar() {
-    // Inicializamos: Queremos cargar los últimos 30 días inicialmente
-    // Pero lo haremos en bucle para no saturar la API
-    const hoy = new Date();
-    const haceUnMes = new Date();
-    haceUnMes.setDate(haceUnMes.getDate() - 30);
-
-    // Seteamos los límites globales iniciales
-    fechaLimiteSuperior = hoy;
-    fechaLimiteInferior = hoy; // Se irá restando en el bucle
-
-    console.log(`📅 Iniciando carga escalonada...`);
-    
-    // Llamamos a la función "Inteligente" que carga por trozos
-    await cargarRangoEscalonado(haceUnMes, hoy);
-    
-    // Mostrar botón para cargar más historia
-    document.getElementById('btnServerLoad').style.display = 'inline-block';
-}
-
-// --- 2. CARGA ESCALONADA (CORE DEL FIX) ---
-// Esta función divide un rango grande en peticiones pequeñas
-async function cargarRangoEscalonado(fechaObjetivo, fechaInicio) {
-    const btn = document.getElementById('btnServerLoad');
-    const indicador = document.getElementById('loadingIndicator');
-    
-    btn.disabled = true;
-    btn.innerText = "⏳ Descargando historial...";
-    indicador.style.display = 'block';
-
-    let cursorFecha = new Date(fechaInicio); // Empezamos desde "hoy" hacia atrás
-
-    // Mientras nuestro cursor sea mayor que la fecha objetivo (ej: hace 1 mes)
-    while (cursorFecha > fechaObjetivo) {
-        
-        // 1. Calculamos el siguiente bloque (ej: 5 días atrás)
-        let bloqueHasta = new Date(cursorFecha);
-        let bloqueDesde = new Date(cursorFecha);
-        bloqueDesde.setDate(bloqueDesde.getDate() - DIAS_POR_LOTE);
-
-        // Si el bloque se pasa de la fecha objetivo, ajustamos
-        if (bloqueDesde < fechaObjetivo) {
-            bloqueDesde = new Date(fechaObjetivo);
-        }
-
-        console.log(`📡 Pidiendo bloque: ${bloqueDesde.toLocaleDateString()} -> ${bloqueHasta.toLocaleDateString()}`);
-
-        // 2. Hacemos la petición SOLO de este bloque pequeño
-        await fetchBloqueUnico(bloqueDesde.toISOString(), bloqueHasta.toISOString());
-
-        // 3. Actualizamos el límite inferior global para saber hasta donde tenemos datos
-        fechaLimiteInferior = bloqueDesde;
-        
-        // 4. Movemos el cursor para la siguiente vuelta
-        cursorFecha = new Date(bloqueDesde);
-        
-        // Pequeña pausa para no saturar red (opcional, 50ms)
-        await new Promise(r => setTimeout(r, 50));
-    }
-
-    btn.disabled = false;
-    btn.innerText = "📂 Descargar 15 días anteriores";
-    indicador.style.display = 'none';
-}
-
-// --- 3. FETCH DE UN SOLO BLOQUE ---
-async function fetchBloqueUnico(desde, hasta) {
-    try {
-        const url = `https://distribuidorafunaz-a2o6.onrender.com/api/historial?desde=${desde}&hasta=${hasta}`;
-        const res = await fetch(url);
-        
-        if(res.ok) {
-            let nuevosDatos = await res.json();
-            
-            // Procesar datos
-            nuevosDatos = nuevosDatos.map(h => ({
-                ...h, 
-                esAjuste: h.tipo_movimiento === 'AJUSTE_DETECTADO_DB' || h.tipo_movimiento === 'AJUSTE_MANUAL',
-                sortKey: new Date(h.fecha).getTime()
-            }));
-
-            // Filtrar duplicados (por si las horas se solapan al milisegundo)
-            const idsExistentes = new Set(historialDB.map(h => h.id));
-            const limpios = nuevosDatos.filter(d => !idsExistentes.has(d.id));
-            
-            // Agregar al array principal
-            historialDB = [...historialDB, ...limpios];
-
-            // Ordenar: Más nuevo arriba
-            historialDB.sort((a, b) => b.sortKey - a.sortKey);
-            
-            // RENDERIZAR INMEDIATAMENTE (Para que el usuario vea progreso)
-            renderizar();
-        }
-    } catch (err) { 
-        console.error("Error en bloque:", err);
-    }
-}
-
-// --- 4. BOTÓN CARGAR MÁS ANTIGÜEDAD ---
-async function cargarMasAntiguedad() {
-    // El usuario quiere ver más atrás.
-    // Tomamos la fecha más antigua que tenemos y le restamos 15 días
-    const nuevaMeta = new Date(fechaLimiteInferior);
-    nuevaMeta.setDate(nuevaMeta.getDate() - 15);
-    
-    // Llamamos al cargador escalonado con la nueva meta
-    // El "inicio" es fechaLimiteInferior (donde nos quedamos la última vez)
-    await cargarRangoEscalonado(nuevaMeta, fechaLimiteInferior);
-}
-
-// --- 5. RENDERIZADO (VISUAL) ---
-function renderizar() {
-    const cont = document.getElementById('contenedorHistorial');
-    const busq = document.getElementById('buscador').value.toLowerCase();
-    const soloAjuste = document.getElementById('checkManual').checked;
-
-    cont.innerHTML = '';
-
-    // Filtrado en memoria
-    const listaFiltrada = historialDB.filter(i => {
-        return i.producto_nombre.toLowerCase().includes(busq) && (!soloAjuste || i.esAjuste);
-    });
-
-    if(listaFiltrada.length === 0) {
-        cont.innerHTML = '<p style="text-align:center;color:#999;margin-top:20px">No hay movimientos o cargando...</p>';
-        return;
-    }
-
-    // Paginación VISUAL (Para no trabar el navegador al hacer scroll)
-    const visible = listaFiltrada.slice(0, limiteVisual);
-    
-    const grupos = {};
-    visible.forEach(i => {
-        const k = formatearFecha(i.fecha);
-        if(!grupos[k]) grupos[k] = [];
-        grupos[k].push(i);
-    });
-
-    Object.keys(grupos).forEach(fecha => {
-        const div = document.createElement('div');
-        div.className = 'fecha-grupo';
-        div.innerHTML = `<div class="fecha-header">${fecha}</div>`;
-        
-        grupos[fecha].forEach(item => {
-            const esAjuste = item.esAjuste;
-            const signo = item.cantidad_cambio > 0 ? '+' : '';
-            const colorBadge = esAjuste ? 'neutro' : (item.cantidad_cambio > 0 ? 'positivo' : 'negativo');
-            const hora = new Date(item.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-
-            const card = document.createElement('div');
-            card.className = `card ${esAjuste ? 'ajuste' : 'normal'}`;
-            
-            card.innerHTML = `
-                <div class="card-header">
-                    <div class="prod-nombre">${item.producto_nombre}</div>
-                    <div class="hora">${hora}</div>
-                </div>
-                <div class="card-body">
-                    <div class="stock-flow">
-                        <span>${item.stock_anterior}</span>
-                        <span class="arrow">➝</span>
-                        <span>${item.stock_nuevo}</span>
-                    </div>
-                    <div class="cambio-badge ${colorBadge}">
-                        ${signo}${item.cantidad_cambio}
-                    </div>
-                </div>
-                <div style="margin-top:5px">
-                    <span class="tipo-mov">
-                        ${item.tipo_movimiento.replace(/_/g,' ')}
-                    </span>
-                </div>
-            `;
-            div.appendChild(card);
+    function updateFilterStyles(activeBtn) {
+        document.querySelectorAll('.filter-btn').forEach(b => {
+            b.className = `filter-btn px-4 py-1.5 rounded-full text-sm font-medium border whitespace-nowrap transition-all ${styleInactive}`;
         });
-        cont.appendChild(div);
-    });
-
-    // Botón "Ver más" (Paginación local)
-    if(limiteVisual < listaFiltrada.length) {
-        const btn = document.createElement('button');
-        btn.className = 'btn-cargar-mas';
-        btn.innerText = `Ver siguientes (${listaFiltrada.length - limiteVisual} restantes)`;
-        btn.onclick = () => { limiteVisual += 50; renderizar(); };
-        cont.appendChild(btn);
+        activeBtn.className = `filter-btn px-4 py-1.5 rounded-full text-sm font-medium border whitespace-nowrap transition-all ${styleActive}`;
     }
-}
+    // Inicializar primer botón como activo
+    updateFilterStyles(document.querySelector('.filter-btn'));
 
-// --- 6. FUNCIONES AUXILIARES ---
-async function forzarCheck() {
-    const btn = document.querySelector('.btn-check');
-    btn.innerText = "⏳..."; btn.disabled = true;
-    try {
-        await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/forzar-monitor', { method: 'POST' });
-        // Recargamos solo los ultimos 5 días para actualizar rápido
+
+    // ==========================================
+    // LÓGICA PRINCIPAL (MANTENIDA DEL ORIGINAL)
+    // ==========================================
+    let historialDB = [];          
+    let filtroActual = 'dia';
+    let limiteVisual = 50; 
+
+    let fechaLimiteSuperior = new Date(); 
+    let fechaLimiteInferior = new Date(); 
+
+    const DIAS_POR_LOTE = 5; 
+
+    // --- 1. INICIO ---
+    async function iniciar() {
         const hoy = new Date();
-        const hace5 = new Date(); hace5.setDate(hoy.getDate() - 5);
-        await fetchBloqueUnico(hace5.toISOString(), hoy.toISOString());
-        btn.innerText = "✅";
-    } catch (e) { console.error(e); btn.innerText = "❌"; }
-    setTimeout(() => { btn.innerText = "↻ Check Ahora"; btn.disabled = false; }, 1000);
-}
+        const haceUnMes = new Date();
+        haceUnMes.setDate(haceUnMes.getDate() - 30);
 
-function filtrar(tipo, btn) {
-    filtroActual = tipo;
-    document.querySelectorAll('.filtros button').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    limiteVisual = 50;
-    renderizar();
-}
+        fechaLimiteSuperior = hoy;
+        fechaLimiteInferior = hoy;
 
-function formatearFecha(f) {
-    const d = new Date(f);
-    if(filtroActual === 'dia') return d.toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long'});
-    if(filtroActual === 'semana') return "Semana del " + d.toLocaleDateString();
-    if(filtroActual === 'mes') return d.toLocaleDateString('es-ES', {month:'long', year:'numeric'});
-    if(filtroActual === 'anio') return d.getFullYear();
-}
+        console.log(`📅 Iniciando carga escalonada...`);
+        await cargarRangoEscalonado(haceUnMes, hoy);
+        document.getElementById('btnServerLoad').style.display = 'inline-block';
+    }
 
-// Iniciar al cargar
-iniciar();
+    // --- 2. CARGA ESCALONADA ---
+    async function cargarRangoEscalonado(fechaObjetivo, fechaInicio) {
+        const btn = document.getElementById('btnServerLoad');
+        const indicador = document.getElementById('loadingIndicator');
+        
+        btn.disabled = true;
+        btn.innerHTML = `<span class="opacity-50">⏳</span> Descargando...`;
+        indicador.classList.remove('hidden');
 
+        let cursorFecha = new Date(fechaInicio);
+
+        while (cursorFecha > fechaObjetivo) {
+            let bloqueHasta = new Date(cursorFecha);
+            let bloqueDesde = new Date(cursorFecha);
+            bloqueDesde.setDate(bloqueDesde.getDate() - DIAS_POR_LOTE);
+
+            if (bloqueDesde < fechaObjetivo) {
+                bloqueDesde = new Date(fechaObjetivo);
+            }
+
+            console.log(`📡 Pidiendo: ${bloqueDesde.toLocaleDateString()} -> ${bloqueHasta.toLocaleDateString()}`);
+            await fetchBloqueUnico(bloqueDesde.toISOString(), bloqueHasta.toISOString());
+
+            fechaLimiteInferior = bloqueDesde;
+            cursorFecha = new Date(bloqueDesde);
+            await new Promise(r => setTimeout(r, 50));
+        }
+
+        btn.disabled = false;
+        btn.innerText = "📂 Cargar 15 días anteriores";
+        indicador.classList.add('hidden');
+    }
+
+    // --- 3. FETCH BLOQUE ÚNICO ---
+    async function fetchBloqueUnico(desde, hasta) {
+        try {
+            const url = `https://distribuidorafunaz-a2o6.onrender.com/api/historial?desde=${desde}&hasta=${hasta}`;
+            const res = await fetch(url);
+            
+            if(res.ok) {
+                let nuevosDatos = await res.json();
+                
+                nuevosDatos = nuevosDatos.map(h => ({
+                    ...h, 
+                    esAjuste: h.tipo_movimiento === 'ajuste db' || h.tipo_movimiento === 'AJUSTE_DETECTADO_DB',
+                    sortKey: new Date(h.fecha).getTime()
+                }));
+
+                const idsExistentes = new Set(historialDB.map(h => h.id));
+                const limpios = nuevosDatos.filter(d => !idsExistentes.has(d.id));
+                
+                historialDB = [...historialDB, ...limpios];
+                historialDB.sort((a, b) => b.sortKey - a.sortKey);
+                
+                renderizar();
+            }
+        } catch (err) { 
+            console.error("Error en bloque:", err);
+        }
+    }
+
+    // --- 4. CARGAR MÁS ---
+    async function cargarMasAntiguedad() {
+        const nuevaMeta = new Date(fechaLimiteInferior);
+        nuevaMeta.setDate(nuevaMeta.getDate() - 15);
+        await cargarRangoEscalonado(nuevaMeta, fechaLimiteInferior);
+    }
+
+    // --- 5. RENDERIZADO (AQUÍ ESTÁ LA MAGIA VISUAL NUEVA) ---
+    function renderizar() {
+        const cont = document.getElementById('contenedorHistorial');
+        const busq = document.getElementById('buscador').value.toLowerCase();
+        const soloAjuste = document.getElementById('checkManual').checked;
+
+        cont.innerHTML = '';
+
+        const listaFiltrada = historialDB.filter(i => {
+            return i.producto_nombre.toLowerCase().includes(busq) && (!soloAjuste || i.esAjuste);
+        });
+
+        if(listaFiltrada.length === 0) {
+            cont.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-12 text-gray-400 opacity-60">
+                    <span class="text-4xl mb-2">📭</span>
+                    <p>No se encontraron movimientos.</p>
+                </div>`;
+            return;
+        }
+
+        const visible = listaFiltrada.slice(0, limiteVisual);
+        
+        const grupos = {};
+        visible.forEach(i => {
+            const k = formatearFecha(i.fecha);
+            if(!grupos[k]) grupos[k] = [];
+            grupos[k].push(i);
+        });
+
+        Object.keys(grupos).forEach(fecha => {
+            // Header de fecha
+            const section = document.createElement('div');
+            section.className = "mb-6";
+            section.innerHTML = `
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1 border-b border-gray-100 pb-1">
+                    ${fecha}
+                </h3>
+            `;
+            
+            const grid = document.createElement('div');
+            grid.className = "space-y-3"; // Espacio entre tarjetas
+
+            grupos[fecha].forEach(item => {
+                const esAjuste = item.esAjuste;
+                const esNegativo = item.cantidad_cambio < 0;
+                const signo = item.cantidad_cambio > 0 ? '+' : '';
+                
+                // Colores dinámicos según el tipo de movimiento
+                let colorClass = "bg-secondary text-primary border-primary"; // Positivo (Verde)
+                let icon = "📈";
+
+                if (esNegativo) {
+                    colorClass = "bg-red-50 text-red-600 border-red-200"; // Negativo (Rojo)
+                    icon = "📉";
+                }
+                if (esAjuste) {
+                    colorClass = "bg-orange-50 text-orange-600 border-orange-200"; // Ajuste (Naranja)
+                    icon = "⚠️";
+                }
+
+                const hora = new Date(item.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+                // --- INFO DE LA RAZÓN ---
+                // Si existe 'razon', la usamos. Si no, usamos 'tipo_movimiento'
+                let razonTexto = item.razon || item.tipo_movimiento.replace(/_/g, ' ');
+                // Si es muy largo, Tailwind se encarga del wrap, pero podemos darle estilo
+                
+                const card = document.createElement('div');
+                card.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative overflow-hidden";
+                if(esAjuste) card.classList.add('border-l-4', 'border-l-orange-400'); // Borde naranja a la izquierda si es ajuste
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <div class="font-bold text-gray-800 text-lg leading-tight">
+                                ${item.producto_nombre}
+                            </div>
+                            <div class="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                                <span>🕐 ${hora}</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <span class="text-xs text-gray-400 mb-1">Stock</span>
+                            <div class="flex items-center gap-1 font-mono text-sm text-gray-600 bg-gray-50 px-2 py-1 rounded-md">
+                                <span class="${esNegativo ? 'text-gray-400' : ''}">${item.stock_anterior}</span>
+                                <span class="text-gray-300">➜</span>
+                                <span class="font-bold ${esNegativo ? 'text-red-500' : 'text-primary'}">${item.stock_nuevo}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-2 border-t border-gray-50 mt-2">
+                        <div class="flex-1 pr-4">
+                            <p class="text-xs text-gray-500 leading-snug break-words">
+                                ${razonTexto}
+                            </p>
+                        </div>
+
+                        <div class="px-3 py-1 rounded-lg border text-sm font-bold shadow-sm whitespace-nowrap ${colorClass}">
+                            ${signo}${item.cantidad_cambio}
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            section.appendChild(grid);
+            cont.appendChild(section);
+        });
+
+        // Botón Ver más local
+        if(limiteVisual < listaFiltrada.length) {
+            const btnDiv = document.createElement('div');
+            btnDiv.className = "text-center pt-4";
+            
+            const btn = document.createElement('button');
+            btn.className = "text-primary text-sm font-semibold hover:underline";
+            btn.innerText = `👇 Ver siguientes (${listaFiltrada.length - limiteVisual} restantes)`;
+            btn.onclick = () => { limiteVisual += 50; renderizar(); };
+            
+            btnDiv.appendChild(btn);
+            cont.appendChild(btnDiv);
+        }
+    }
+
+    // --- 6. HELPERS ---
+    async function forzarCheck() {
+        const btn = document.querySelector('.btn-check');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = `<span>⏳</span>`; 
+        btn.disabled = true;
+        try {
+            await fetch('https://distribuidorafunaz-a2o6.onrender.com/api/forzar-monitor', { method: 'POST' });
+            const hoy = new Date();
+            const hace5 = new Date(); hace5.setDate(hoy.getDate() - 5);
+            await fetchBloqueUnico(hace5.toISOString(), hoy.toISOString());
+            btn.innerHTML = `<span>✅</span>`;
+        } catch (e) { console.error(e); btn.innerHTML = `<span>❌</span>`; }
+        setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 1500);
+    }
+
+    function filtrar(tipo, btn) {
+        filtroActual = tipo;
+        updateFilterStyles(btn);
+        limiteVisual = 50;
+        renderizar();
+    }
+
+    function formatearFecha(f) {
+        const d = new Date(f);
+        // Capitalizamos primera letra
+        const options = { weekday: 'long', day: 'numeric', month: 'long' };
+        if(filtroActual === 'semana') return "Semana del " + d.toLocaleDateString();
+        if(filtroActual === 'mes') return d.toLocaleDateString('es-ES', {month:'long', year:'numeric'});
+        if(filtroActual === 'anio') return d.getFullYear();
+        
+        let s = d.toLocaleDateString('es-ES', options);
+        return s.charAt(0).toUpperCase() + s.slice(1);
+    }
+
+    iniciar();
 </script>
+
 </body>
 </html>
