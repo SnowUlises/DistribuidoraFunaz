@@ -422,8 +422,6 @@ app.post('/api/guardar-pedidos', async (req, res) => {
     // Capturamos el nombre de usuario (fallback a 'usuario' o 'invitado')
     const usuarioPedido = req.body.user || req.body.usuario || 'invitado';
     
-    // 🔥 CORRECCIÓN CLAVE: Capturar IDs y Datos de Negocio
-    // Agregamos fallbacks por si el frontend los envía con otros nombres comunes (uid, negocio)
     const userId = req.body.user_id || req.body.uid || null;
     const nombreNegocio = req.body.nombre_negocio || req.body.negocio || null; 
 
@@ -849,7 +847,6 @@ app.post('/api/Enviar-Peticion', async (req, res) => {
 /* =========================================================
    GENERADOR DE PDF (LÓGICA COMPARTIDA)
    ========================================================= */
-
 async function dibujarPedidoEnDoc(doc, pedido, logoBuffer) {
     if (logoBuffer) {
       doc.image(logoBuffer, 100, 20, { width: 100 });
@@ -1004,8 +1001,6 @@ app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
         } else {
             // 🔥 INICIO DE LA COLA
               runInQueue(pedido.user_id, async () => {
-                  
-                  // 2. BUSCAR CLIENTE
                   const { data: clientes } = await supabase
                       .from('clients_v2')
                       .select('*')
@@ -1030,9 +1025,6 @@ app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
                           return (fechaItem > fechaLimite) || ((item.amount - item.paid) > 0);
                       });
               
-                      // ============================================================
-                      // 🧠 LÓGICA INTELIGENTE (CREACIÓN O ACTUALIZACIÓN)
-                      // ============================================================
                       const indexYaExiste = items.findIndex(i => i.id === String(pedido.id));
                       const montoNuevo = Math.round(pedido.total);
                       const idPedido = String(pedido.id).slice(-4);
@@ -1044,9 +1036,7 @@ app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
                       let tipoAccion = 'debt'; // Por defecto deuda
               
                       if (indexYaExiste === -1) {
-                          // ----------------------------------------------------
                           // CASO A: ES NUEVO (Crear)
-                          // ----------------------------------------------------
                           const oldItemsSnapshot = JSON.parse(JSON.stringify(items));
               
                           items.unshift({
@@ -1071,9 +1061,7 @@ app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
                           });
               
                       } else {
-                          // ----------------------------------------------------
                           // CASO B: YA EXISTE (Verificar si cambió el monto)
-                          // ----------------------------------------------------
                           const itemExistente = items[indexYaExiste];
                           const montoViejo = itemExistente.amount;
               
@@ -1225,6 +1213,7 @@ app.post('/api/crear-producto', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
