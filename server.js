@@ -258,7 +258,7 @@ app.put('/api/historial-check/:id', async (req, res) => {
   }
 });
 
-/* --- ACTUALIZAR PEDIDO (MODIFICAR) --- */
+/* --- ACTUALIZAR PEDIDO (MODIFICAR) Y SINCRONIZAR DEUDA --- */
 app.put('/api/actualizar-pedido/:id', async (req, res) => {
   try {
     const pedidoId = req.params.id;
@@ -268,21 +268,21 @@ app.put('/api/actualizar-pedido/:id', async (req, res) => {
       return res.status(400).json({ error: 'Items inválidos' });
     }
 
-    // --- NUEVO: Obtener datos del pedido original para el historial detallado ---
+    // --- 1. Obtener datos originales para Historial y Verificaciones ---
     const { data: datosPedido } = await supabase
         .from('pedidos')
-        .select('user, nombre_negocio, fecha')
+        .select('user_id, estado, user, nombre_negocio, fecha')
         .eq('id', pedidoId)
         .single();
 
-    const nombreCliente = datosPedido?.user || 'Desconocido';
-    const nombreNegocio = datosPedido?.nombre_negocio || 'Sin Negocio';
-    const fechaPedido = datosPedido?.fecha ? new Date(datosPedido.fecha).toLocaleDateString() : 'Sin Fecha';
-    
+    if (!datosPedido) return res.status(404).json({ error: 'Pedido no encontrado' });
+
+    const nombreCliente = datosPedido.user || 'Desconocido';
+    const nombreNegocio = datosPedido.nombre_negocio || 'Sin Negocio';
+    const fechaPedido = datosPedido.fecha ? new Date(datosPedido.fecha).toLocaleDateString() : 'Sin Fecha';
     const razonString = `Modif. Pedido #${pedidoId} | Cliente: ${nombreCliente} | Negocio: ${nombreNegocio} | Fecha: ${fechaPedido}`;
-    // --------------------------------------------------------------------------
-    
-    // 1. Actualizar stock
+
+    // --- 2. Actualizar Stock (Lógica original intacta) ---
     for (const update of stockUpdates) {
       const { data: prod } = await supabase.from('productos').select('*').eq('id', update.id).single();
       if (prod) {
@@ -294,125 +294,149 @@ app.put('/api/actualizar-pedido/:id', async (req, res) => {
         
         if (updErr) console.error('❌ Error actualizando stock:', updErr);
         else {
-            // PASAMOS LA RAZÓN DETALLADA AQUI
-            await registrarMovimiento(update.id, prod.nombre, -cantidadRestada, stockAnterior, newStock, 'MODIF_PEDIDO', pedidoId, razonString);
+           // Registramos movimiento en historial
+           await registrarMovimiento(update.id, prod.nombre, -cantidadRestada, stockAnterior, newStock, 'MODIF_PEDIDO', pedidoId, razonString);
         }
       }
     }
     
-    // 2. Calcular nuevo total
+    // --- 3. Calcular nuevo total y actualizar tabla 'pedidos' ---
     const total = items.reduce((sum, item) => sum + (item.cantidad * item.precio_unitario), 0);
     
-    // 3. Actualizar tabla 'pedidos'
     const { error } = await supabase.from('pedidos').update({ items, total }).eq('id', pedidoId);
     
     if (error) {
       console.error('❌ Error actualizando pedido:', error);
       return res.status(500).json({ error: `Error al actualizar el pedido: ${error.message}` });
     }
+    if (datosPedido.user_id && datosPedido.estado === 'Preparado') {
+        
+        // Ejecutamos en cola para evitar conflictos de escritura
+        runInQueue(datosPedido.user_id, async () => {
+            const { data: clients } = await supabase.from('clients_v2').select('*').eq('user_id', datosPedido.user_id);
 
-    // =========================================================================
-    // --- NUEVO: SINCRONIZAR CON DEUDAS + REGISTRAR HISTORIAL DETALLADO ---
-    // =========================================================================
-    try {
-        // [CAMBIO 1] Agregamos 'nombre_negocio' al select
-        const { data: pedidoInfo } = await supabase
-            .from('pedidos')
-            .select('user_id, estado, nombre_negocio') 
-            .eq('id', pedidoId)
-            .single();
+            if (clients && clients.length > 0) {
+                const cliente = clients[0];
+                let deudaItems = cliente.data.items || [];            
+                // Buscamos el item de deuda correspondiente a este pedido
+                const indexDeuda = deudaItems.findIndex(i => i.id === String(pedidoId) && i.type === 'debt');
+                if (indexDeuda !== -1) {
+                    const montoNuevo = Math.round(total);
+                    const itemDeuda = deudaItems[indexDeuda];
+                    const montoAnterior = itemDeuda.amount;
+                    const pagadoAnterior = itemDeuda.paid || 0;
 
-        if (pedidoInfo && pedidoInfo.user_id && pedidoInfo.estado === 'Preparado') {
-            
-            runInQueue(pedidoInfo.user_id, async () => {
-    const { data: clients } = await supabase.from('clients_v2').select('*').eq('user_id', pedidoInfo.user_id);
+                    // Solo actuamos si el monto total cambió
+                    if (montoAnterior !== montoNuevo) {
+                        const oldItemsSnapshot = JSON.parse(JSON.stringify(deudaItems)); // Foto para historial
+                        
+                        // Actualizamos el monto total del item
+                        deudaItems[indexDeuda].amount = montoNuevo;
+                        let mensajeRebalse = "";
+                        let sobrante = 0;
 
-    if (clients && clients.length > 0) {
-        const cliente = clients[0];
-        let deudaItems = cliente.data.items || [];
-        const indexDeuda = deudaItems.findIndex(i => i.id === String(pedidoId) && i.type === 'debt');
+                        // --- DETECCIÓN DE SOBRANTE ---
+                        if (pagadoAnterior > montoNuevo) {
+                            sobrante = Math.round(pagadoAnterior - montoNuevo);
+                            
+                            // Ajustamos el pago de ESTE item al máximo posible (que es el nuevo total)
+                            deudaItems[indexDeuda].paid = montoNuevo; 
+                            
+                            console.log(`💰 Sobrante detectado de $${sobrante}. Iniciando redistribución...`);
 
-        if (indexDeuda !== -1) {
-            const montoNuevo = Math.round(total);
-            const montoAnterior = deudaItems[indexDeuda].amount;
+                            // --- REDISTRIBUCIÓN ---
+                            
+                            // Función auxiliar para aplicar pago a un índice
+                            const aplicarPago = (idx) => {
+                                if (idx === indexDeuda) return; // No pagarse a sí mismo (ya está topeado)
+                                if (deudaItems[idx].type !== 'debt') return; // Solo pagar deudas
+                                
+                                const deudaPendiente = Math.max(0, deudaItems[idx].amount - (deudaItems[idx].paid || 0));
+                                if (deudaPendiente > 0) {
+                                    const pago = Math.min(sobrante, deudaPendiente);
+                                    deudaItems[idx].paid = Math.round((deudaItems[idx].paid || 0) + pago);
+                                    sobrante -= pago;
+                                    console.log(`   -> Pagados $${pago} al item index ${idx} (${deudaItems[idx].notes || 'Sin nota'})`);
+                                }
+                            };
 
-            if (montoAnterior !== montoNuevo) {
-                const oldItemsSnapshot = JSON.parse(JSON.stringify(deudaItems));
-                
-                // 1. Actualizar monto y calcular sobrante inicial
-                deudaItems[indexDeuda].amount = montoNuevo;
-                let mensajeRebalse = "";
+                            // A. Definir límites de la SECCIÓN actual
+                            let startIdx = 0;
+                            let endIdx = deudaItems.length;
+                            
+                            // Buscar divisor hacia arriba
+                            for (let i = indexDeuda - 1; i >= 0; i--) { 
+                                if (deudaItems[i].type === 'divider') { startIdx = i + 1; break; } 
+                            }
+                            // Buscar divisor hacia abajo
+                            for (let i = indexDeuda + 1; i < deudaItems.length; i++) { 
+                                if (deudaItems[i].type === 'divider') { endIdx = i; break; } 
+                            }
 
-                if (deudaItems[indexDeuda].paid > montoNuevo) {
-                    let sobrante = Math.round(deudaItems[indexDeuda].paid - montoNuevo);
-                    deudaItems[indexDeuda].paid = montoNuevo; // Reset al tope máximo
-                    
-                    // --- REDISTRIBUCIÓN ---
-                    // A. Límites de sección
-                    let startIdx = 0;
-                    let endIdx = deudaItems.length;
-                    for (let i = indexDeuda - 1; i >= 0; i--) {
-                        if (deudaItems[i].type === 'divider') { startIdx = i + 1; break; }
-                    }
-                    for (let i = indexDeuda + 1; i < deudaItems.length; i++) {
-                        if (deudaItems[i].type === 'divider') { endIdx = i; break; }
-                    }
-
-                    const aplicarPago = (idx) => {
-                        if (idx === indexDeuda || deudaItems[idx].type !== 'debt') return;
-                        const deudaPendiente = Math.max(0, deudaItems[idx].amount - deudaItems[idx].paid);
-                        if (deudaPendiente > 0) {
-                            const pago = Math.min(sobrante, deudaPendiente);
-                            deudaItems[idx].paid = Math.round(deudaItems[idx].paid + pago);
-                            sobrante -= pago;
+                            // FASE 1: Pagar deudas en la MISMA SECCIÓN
+                            // Recorremos la sección para tapar huecos cercanos
+                            for (let i = startIdx; i < endIdx; i++) {
+                                if (sobrante <= 0) break;
+                                aplicarPago(i);
+                            }
+                            if (sobrante > 0) {
+                                for (let i = deudaItems.length - 1; i >= 0; i--) {
+                                    if (sobrante <= 0) break;
+                                    // Saltamos los que ya revisamos en la fase de sección para no repetir lógica
+                                    if (i >= startIdx && i < endIdx) continue;
+                                    aplicarPago(i);
+                                }
+                            }
+                            
+                            const redistribuido = Math.round(pagadoAnterior - montoNuevo - sobrante); // Lo que logramos ubicar
+                            if (redistribuido > 0) {
+                                mensajeRebalse = ` (+$${redistribuido.toLocaleString()} redistribuidos)`;
+                            }
                         }
-                    };
+                        deudaItems = deudaItems.map(item => {
+                            if (item.type === 'debt' && item.paid > item.amount) {
+                                item.paid = item.amount;
+                            }
+                            return item;
+                        });
 
-                    // Fase 1: Misma sección (de más nuevo a más viejo dentro de la sección)
-                    for (let i = startIdx; i < endIdx; i++) {
-                        if (sobrante <= 0) break;
-                        aplicarPago(i);
-                    }
+                        // --- GUARDAR HISTORIAL EN CLIENTE ---
+                        const idVis = String(pedidoId).slice(-4);
+                        const mensajeDetallado = `🔄 Modif. #${idVis} | $${montoAnterior.toLocaleString()} ➔ $${montoNuevo.toLocaleString()}${mensajeRebalse}`;
 
-                    // Fase 2: Global (de más viejo a más nuevo)
-                    if (sobrante > 0) {
-                        for (let i = deudaItems.length - 1; i >= 0; i--) {
-                            if (sobrante <= 0) break;
-                            if (i >= startIdx && i < endIdx) continue;
-                            aplicarPago(i);
-                        }
+                        let history = cliente.data.history || [];
+                        history.unshift({
+                            timestamp: Date.now(),
+                            items: oldItemsSnapshot,
+                            action: mensajeDetallado,
+                            type: 'edit'
+                        });
+                        if (history.length > 500) history.pop();
+
+                        // Actualizar DB
+                        const { error: updateClientErr } = await supabase.from('clients_v2').update({
+                            data: { ...cliente.data, items: deudaItems, history: history }
+                        }).eq('id', cliente.id);
+
+                        if(updateClientErr) console.error("❌ Error actualizando cliente:", updateClientErr);
+                        else console.log("✅ Cliente actualizado con redistribución de deuda.");
                     }
-                    mensajeRebalse = ` (+$${(oldItemsSnapshot[indexDeuda].paid - montoNuevo).toLocaleString()} redistribuidos)`;
                 }
-
-                // --- VALIDACIÓN DE SEGURIDAD FINAL ---
-                // Recorremos TODO para asegurar que ningún item quedó con pagado > monto por error de cálculo
-                deudaItems = deudaItems.map(item => {
-                    if (item.type === 'debt' && item.paid > item.amount) {
-                        item.paid = item.amount;
-                    }
-                    return item;
-                });
-
-                // 2. Historial
-                const idVis = String(pedidoId).slice(-4);
-                const mensajeDetallado = `🔄 Modif. #${idVis} | $${montoAnterior.toLocaleString()} ➔ $${montoNuevo.toLocaleString()}${mensajeRebalse}`;
-
-                let history = cliente.data.history || [];
-                history.unshift({
-                    timestamp: Date.now(),
-                    items: oldItemsSnapshot,
-                    action: mensajeDetallado,
-                    type: 'edit'
-                });
-                if (history.length > 500) history.pop();
-
-                await supabase.from('clients_v2').update({
-                    data: { ...cliente.data, items: deudaItems, history: history }
-                }).eq('id', cliente.id);
+            } else {
+                console.log("⚠️ No se encontró cliente para sincronizar deuda.");
             }
-        }
+        });
+    } else {
+        console.log(`ℹ️ Pedido actualizado, pero no se tocó deuda (Estado: ${datosPedido.estado}, UserID: ${datosPedido.user_id})`);
     }
+
+    // Responder al frontend
+    res.json({ ok: true, mensaje: 'Pedido actualizado correctamente' });
+
+  } catch (err) {
+    console.error('❌ Exception en actualizar-pedido:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 /* --- GUARDAR PEDIDO (VENTA / ACEPTAR PETICIÓN) --- */
@@ -1225,6 +1249,7 @@ app.post('/api/crear-producto', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
