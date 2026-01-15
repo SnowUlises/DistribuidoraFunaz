@@ -238,11 +238,16 @@
                     
                     card.classList.remove('hidden');
 
-                    // 2. Limpiar Formulario
-                    form.reset();
+                    // 2. Limpieza INTELIGENTE (Mantener datos, borrar solo Link)
+                    // form.reset(); <--- ESTO SE ELIMINÓ
                     
-                    // 3. Foco en nombre para seguir cargando rápido
-                    document.getElementById('nombre').focus();
+                    document.getElementById('link').value = ''; // Solo borramos el link
+                    
+                    // 3. Foco y SELECCIÓN del nombre
+                    // Al seleccionar el texto, si escribes se borra todo, si haces clic puedes editar.
+                    const inputNombre = document.getElementById('nombre');
+                    inputNombre.focus();
+                    inputNombre.select(); 
 
                 } else {
                     alert('Error del servidor: ' + data.error);
