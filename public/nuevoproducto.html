@@ -160,6 +160,7 @@
     </div>
 
     <script>
+        const apiBase = 'https://distribuidorafunaz-a2o6.onrender.com/api';
         /* -----------------------------------------------------
            LOGICA DE PRECIOS SINCRONIZADOS
            ----------------------------------------------------- */
@@ -220,7 +221,7 @@
             };
 
             try {
-                const res = await fetch('/api/crear-producto', {
+                const res = await fetch(`${apiBase}/crear-producto`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
