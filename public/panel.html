@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#84cc16', // Lime-500
+                        primaryDark: '#65a30d', // Lime-600
+                        primaryLight: '#ecfccb', // Lime-100
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 h-screen flex flex-col">
+
+    <nav class="w-full bg-white border-b border-gray-200 py-4 px-8 flex justify-between items-center shadow-sm">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold">
+                P
+            </div>
+            <span class="font-semibold text-xl tracking-tight text-gray-700">Panel de Control</span>
+        </div>
+        <div class="text-sm text-gray-500">
+            Administrador
+        </div>
+    </nav>
+
+    <main class="flex-grow flex items-center justify-center p-6">
+        <div class="w-full max-w-5xl">
+            
+            <header class="mb-10 text-center">
+                <h1 class="text-3xl font-light text-gray-800 mb-2">Bienvenido de nuevo</h1>
+                <p class="text-gray-500">Selecciona una operación para comenzar</p>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <a href="historial.html" class="group bg-white p-8 rounded-2xl shadow-sm border border-transparent hover:border-primary hover:shadow-lg transition-all duration-300 flex items-start gap-5 cursor-pointer">
+                    <div class="p-4 rounded-xl bg-gray-50 text-gray-400 group-hover:bg-primary group-hover:text-white transition-colors duration-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-800 group-hover:text-primaryDark transition-colors">Historial</h2>
+                        <p class="text-sm text-gray-500 mt-2 leading-relaxed">Consulta el registro histórico y movimientos de todos tus productos.</p>
+                    </div>
+                </a>
+
+                <a href="estadisticas.html" class="group bg-white p-8 rounded-2xl shadow-sm border border-transparent hover:border-primary hover:shadow-lg transition-all duration-300 flex items-start gap-5 cursor-pointer">
+                    <div class="p-4 rounded-xl bg-gray-50 text-gray-400 group-hover:bg-primary group-hover:text-white transition-colors duration-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-800 group-hover:text-primaryDark transition-colors">Estadísticas</h2>
+                        <p class="text-sm text-gray-500 mt-2 leading-relaxed">Analiza métricas de ventas, rendimiento y datos de clientes.</p>
+                    </div>
+                </a>
+
+                <a href="nuevoproducto.html" class="group bg-white p-8 rounded-2xl shadow-sm border border-transparent hover:border-primary hover:shadow-lg transition-all duration-300 flex items-start gap-5 cursor-pointer">
+                    <div class="p-4 rounded-xl bg-gray-50 text-gray-400 group-hover:bg-primary group-hover:text-white transition-colors duration-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-800 group-hover:text-primaryDark transition-colors">Nuevo Producto</h2>
+                        <p class="text-sm text-gray-500 mt-2 leading-relaxed">Añade nuevos artículos al inventario y configura sus detalles.</p>
+                    </div>
+                </a>
+
+                <a href="actualizarprecios.html" class="group bg-white p-8 rounded-2xl shadow-sm border border-transparent hover:border-primary hover:shadow-lg transition-all duration-300 flex items-start gap-5 cursor-pointer">
+                    <div class="p-4 rounded-xl bg-gray-50 text-gray-400 group-hover:bg-primary group-hover:text-white transition-colors duration-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-800 group-hover:text-primaryDark transition-colors">Actualizar Precios</h2>
+                        <p class="text-sm text-gray-500 mt-2 leading-relaxed">Modifica los costos de venta y ajusta los márgenes de ganancia.</p>
+                    </div>
+                </a>
+
+            </div>
+        </div>
+    </main>
+
+    <footer class="text-center py-6 text-gray-400 text-sm">
+        &copy; 2024 Gestión de Inventario
+    </footer>
+
+</body>
+</html>
