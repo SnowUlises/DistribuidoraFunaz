@@ -1205,21 +1205,26 @@ app.put('/api/actualizar-estado-pedido/:id', async (req, res) => {
 });
 
 /* --- NUEVO: CREAR PRODUCTO --- */
+/* --- NUEVO: CREAR PRODUCTO (CORREGIDO) --- */
 app.post('/api/crear-producto', async (req, res) => {
   try {
     const { nombre, precio, categoria, stock, link } = req.body;
 
+    // Validación básica
+    if (!nombre) return res.status(400).json({ error: 'Falta el nombre' });
+
+    // 1. Insertar en Supabase
     const { data, error } = await supabase
       .from('productos')
       .insert([{
         nombre,
-        precio,
+        precio: parseFloat(precio),
         categoria,
-        stock,
+        stock: parseInt(stock),
         link,
-        sku: null,       // Solicitado null
-        stock_leo: null, // Solicitado null
-        imagen: null     // Se actualizará en el paso 2
+        sku: null,
+        stock_leo: null,
+        imagen: null // Se actualiza luego
       }])
       .select()
       .single();
@@ -1229,7 +1234,7 @@ app.post('/api/crear-producto', async (req, res) => {
     const nuevoId = data.id;
     const nombreImagen = `imagenes/${nuevoId}.png`;
 
-    // 2. Actualizamos la imagen con la ID generada
+    // 2. Actualizar imagen
     const { error: updateError } = await supabase
       .from('productos')
       .update({ imagen: nombreImagen })
@@ -1237,18 +1242,28 @@ app.post('/api/crear-producto', async (req, res) => {
 
     if (updateError) throw updateError;
 
-    res.json({ ok: true, mensaje: 'Producto creado', id: nuevoId, imagen: nombreImagen });
+    res.json({ 
+        ok: true, 
+        mensaje: 'Producto creado', 
+        producto: {
+            id: nuevoId,
+            nombre: nombre,
+            imagen: nombreImagen,
+            precio: precio,
+            stock: stock
+        }
+    });
 
   } catch (err) {
     console.error('❌ Error creando producto:', err);
     res.status(500).json({ error: err.message });
   }
 });
-
 // ⚠️ PUERTO CONFIGURADO PARA RENDER
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
