@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Precios Minimalista</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        lime: {
+                            400: '#a3e635',
+                            500: '#84cc16',
+                            600: '#65a30d',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Estilos específicos para la vista previa simulando A4 */
+        .a4-page {
+            width: 210mm;
+            height: 297mm;
+            background: white;
+            margin: 0 auto;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            padding: 10mm; /* Margen de impresión seguro */
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Grid dinámico */
+        .labels-grid {
+            display: grid;
+            width: 100%;
+            height: 100%;
+            border: 1px solid #000; /* Borde exterior general */
+        }
+
+        /* Estilo de cada etiqueta para impresión (Blanco y Negro estricto) */
+        .label-item {
+            border: 1px dashed #000; /* Guía de corte */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 1rem;
+            overflow: hidden;
+            background: white;
+            color: black;
+        }
+
+        .label-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            /* Limitar a 2 líneas */
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.2;
+        }
+
+        .label-price {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        /* Ajustes de tamaño de fuente según el grid */
+        .grid-2x2 .label-name { font-size: 2rem; }
+        .grid-2x2 .label-price { font-size: 5rem; }
+
+        .grid-3x3 .label-name { font-size: 1.5rem; }
+        .grid-3x3 .label-price { font-size: 3.5rem; }
+
+        .grid-4x4 .label-name { font-size: 1rem; }
+        .grid-4x4 .label-price { font-size: 2rem; }
+
+        /* Ocultar elementos al generar PDF si es necesario, aunque html2pdf selecciona el elemento específico */
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col lg:flex-row">
+
+    <aside class="w-full lg:w-1/3 p-8 bg-white border-r border-gray-200 flex flex-col h-auto lg:h-screen sticky top-0 overflow-y-auto z-10">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Etiquetas<span class="text-lime-500">Pro</span></h1>
+            <p class="text-sm text-gray-400 mt-1">Generador de precios minimalista</p>
+        </div>
+
+        <div class="mb-8">
+            <label class="block text-sm font-medium text-gray-700 mb-3">Distribución (Grid)</label>
+            <div class="grid grid-cols-3 gap-2">
+                <button onclick="setGrid(2)" id="btn-2" class="grid-btn px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium hover:border-lime-500 hover:text-lime-600 transition bg-lime-50 border-lime-500 text-lime-600">
+                    2x2 (4)
+                </button>
+                <button onclick="setGrid(3)" id="btn-3" class="grid-btn px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium hover:border-lime-500 hover:text-lime-600 transition">
+                    3x3 (9)
+                </button>
+                <button onclick="setGrid(4)" id="btn-4" class="grid-btn px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium hover:border-lime-500 hover:text-lime-600 transition">
+                    4x4 (16)
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-gray-50 p-6 rounded-xl border border-gray-100 mb-6 shadow-sm">
+            <div class="mb-4">
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Producto</label>
+                <input type="text" id="inputName" placeholder="Ej. Café Molido 500g" 
+                    class="w-full px-4 py-3 rounded-lg border-gray-200 border focus:border-lime-500 focus:ring-2 focus:ring-lime-200 outline-none transition"
+                    onkeypress="handleEnter(event)">
+            </div>
+            <div class="mb-4">
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Precio</label>
+                <div class="relative">
+                    <span class="absolute left-4 top-3.5 text-gray-400">$</span>
+                    <input type="number" id="inputPrice" placeholder="1500" 
+                        class="w-full pl-8 pr-4 py-3 rounded-lg border-gray-200 border focus:border-lime-500 focus:ring-2 focus:ring-lime-200 outline-none transition"
+                        onkeypress="handleEnter(event)">
+                </div>
+            </div>
+            <button onclick="addLabel()" class="w-full bg-black text-white py-3 rounded-lg font-medium hover:bg-gray-800 transition flex items-center justify-center gap-2">
+                <span>Agregar Etiqueta</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+        </div>
+
+        <div class="mt-auto flex flex-col gap-3">
+             <div class="flex justify-between items-center text-sm text-gray-500 mb-2">
+                <span id="counter">0 etiquetas</span>
+                <button onclick="clearLabels()" class="text-red-500 hover:text-red-700 font-medium text-xs uppercase">Borrar todo</button>
+            </div>
+            <button onclick="generatePDF()" class="w-full bg-lime-500 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-lime-200 hover:bg-lime-600 hover:shadow-xl transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                Descargar PDF
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 bg-gray-200 overflow-auto p-8 flex justify-center items-start min-h-screen">
+        
+        <div id="print-area" class="a4-page">
+            <div id="grid-container" class="labels-grid grid-2x2">
+                </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Estado
+        let labels = [];
+        let currentGridSize = 2; // Default 2x2
+
+        // Configuración inicial
+        function setGrid(size) {
+            currentGridSize = size;
+            
+            // Actualizar botones visuales
+            document.querySelectorAll('.grid-btn').forEach(btn => {
+                btn.classList.remove('bg-lime-50', 'border-lime-500', 'text-lime-600');
+                btn.classList.add('border-gray-200');
+            });
+            document.getElementById(`btn-${size}`).classList.add('bg-lime-50', 'border-lime-500', 'text-lime-600');
+            document.getElementById(`btn-${size}`).classList.remove('border-gray-200');
+
+            // Actualizar CSS del Grid Container
+            const container = document.getElementById('grid-container');
+            container.className = `labels-grid grid-${size}x${size}`;
+            container.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+            container.style.gridTemplateRows = `repeat(${size}, 1fr)`;
+
+            renderLabels();
+        }
+
+        // Manejar Enter en inputs
+        function handleEnter(e) {
+            if (e.key === 'Enter') addLabel();
+        }
+
+        // Agregar Etiqueta
+        function addLabel() {
+            const nameInput = document.getElementById('inputName');
+            const priceInput = document.getElementById('inputPrice');
+            const name = nameInput.value.trim();
+            const price = priceInput.value.trim();
+
+            if (!name || !price) return; // Validación simple
+
+            // Límite basado en grid actual
+            const maxLabels = currentGridSize * currentGridSize;
+            if (labels.length >= maxLabels) {
+                alert(`El grid de ${currentGridSize}x${currentGridSize} está lleno. Borra etiquetas o cambia el tamaño.`);
+                return;
+            }
+
+            labels.push({ name, price });
+            
+            // Limpiar inputs y refocalizar nombre
+            nameInput.value = '';
+            priceInput.value = '';
+            nameInput.focus();
+
+            renderLabels();
+        }
+
+        // Borrar todo
+        function clearLabels() {
+            if(confirm('¿Borrar todas las etiquetas?')) {
+                labels = [];
+                renderLabels();
+            }
+        }
+
+        // Renderizar (Visualizador en tiempo real)
+        function renderLabels() {
+            const container = document.getElementById('grid-container');
+            container.innerHTML = ''; // Limpiar
+
+            const maxCells = currentGridSize * currentGridSize;
+            const counter = document.getElementById('counter');
+            counter.innerText = `${labels.length} / ${maxCells} etiquetas`;
+
+            // Rellenar con etiquetas existentes
+            labels.forEach((label, index) => {
+                const div = document.createElement('div');
+                div.className = 'label-item relative group cursor-pointer hover:bg-red-50 transition';
+                div.onclick = () => removeLabel(index);
+                div.title = "Haz clic para eliminar";
+                
+                div.innerHTML = `
+                    <div class="label-name">${label.name}</div>
+                    <div class="label-price">$${label.price}</div>
+                    <div class="absolute inset-0 flex items-center justify-center bg-red-500 bg-opacity-0 group-hover:bg-opacity-10 text-transparent group-hover:text-red-600 font-bold transition">Eliminar</div>
+                `;
+                container.appendChild(div);
+            });
+
+            // Rellenar espacios vacíos para mantener la estructura del grid visualmente
+            const emptySlots = maxCells - labels.length;
+            for (let i = 0; i < emptySlots; i++) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'label-item border-gray-100 text-gray-200';
+                emptyDiv.innerHTML = `<span class="text-xs">Vacío</span>`;
+                container.appendChild(emptyDiv);
+            }
+        }
+
+        // Eliminar etiqueta individual
+        function removeLabel(index) {
+            labels.splice(index, 1);
+            renderLabels();
+        }
+
+        // Generar PDF
+        function generatePDF() {
+            const element = document.getElementById('print-area');
+            
+            // Opciones de configuración para html2pdf
+            const opt = {
+                margin:       0, // El margen ya lo maneja el CSS del .a4-page
+                filename:     'precios.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true }, // Scale 2 mejora la calidad del texto
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Ejecutar conversión
+            html2pdf().set(opt).from(element).save();
+        }
+
+        // Iniciar
+        setGrid(2); // Iniciar en 2x2
+    </script>
+</body>
+</html>
