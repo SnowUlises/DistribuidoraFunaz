@@ -20,51 +20,50 @@
     </script>
 
     <style>
+        /* Contenedor A4 Horizontal */
         .a4-page {
             width: 297mm;
             height: 210mm;
             background: white;
-            margin: 0 auto;
-            /* Espacio de seguridad para la impresora (Bleedzone) */
-            padding: 15mm; 
+            padding: 12mm; /* Bleedzone / Margen de seguridad */
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
+            position: relative;
+            overflow: hidden;
         }
 
         .labels-grid {
             display: grid;
             width: 100%;
             height: 100%;
-            /* Espacio en blanco entre etiquetas para el recorte */
-            gap: 8mm; 
+            gap: 6mm; /* Espacio blanco para corte */
         }
 
         .label-item {
-            /* Bordes más gruesos y negros */
-            border: 4px solid #000; 
+            border: 5px solid #000; /* Borde más ancho */
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
             text-align: center;
-            padding: 1.5rem;
+            padding: 1.2rem;
             background: white;
             color: black;
-            position: relative;
         }
 
+        /* Logo un poco más chico */
         .logo-img {
-            height: 40px; /* Tamaño ajustable del logo */
+            height: 30px; 
             width: auto;
             object-fit: contain;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.2rem;
         }
 
         .label-name {
-            font-weight: 700; /* Letra un poco más gruesa */
+            font-weight: 700;
             text-transform: uppercase;
-            line-height: 1.1;
+            line-height: 1;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
@@ -72,67 +71,67 @@
         }
 
         .label-price {
-            font-weight: 900; /* Grosor máximo para el precio */
-            line-height: 1;
+            font-weight: 900;
+            line-height: 0.9;
         }
 
-        /* Tamaños adaptativos */
-        .grid-2x2 .label-name { font-size: 2.5rem; }
-        .grid-2x2 .label-price { font-size: 7rem; }
-        .grid-2x2 .logo-img { height: 80px; }
+        /* Tamaños de texto dinámicos según el grid */
+        .grid-2x2 .label-name { font-size: 2.8rem; }
+        .grid-2x2 .label-price { font-size: 7.5rem; }
+        .grid-2x2 .logo-img { height: 50px; }
 
         .grid-3x3 .label-name { font-size: 1.8rem; }
-        .grid-3x3 .label-price { font-size: 4.5rem; }
-        .grid-3x3 .logo-img { height: 50px; }
+        .grid-3x3 .label-price { font-size: 4.8rem; }
+        .grid-3x3 .logo-img { height: 35px; }
 
-        .grid-4x4 .label-name { font-size: 1.3rem; }
+        .grid-4x4 .label-name { font-size: 1.2rem; }
         .grid-4x4 .label-price { font-size: 3rem; }
-        .grid-4x4 .logo-img { height: 35px; }
+        .grid-4x4 .logo-img { height: 25px; }
 
-        /* Estilo para edición en pantalla */
+        /* Estilos UI */
         .label-filled:hover {
-            background-color: #f7fee7; /* Verde lima muy suave */
+            background-color: #f7fee7;
             cursor: pointer;
             border-color: #84cc16;
         }
     </style>
 </head>
-<body class="bg-gray-100 font-sans min-h-screen flex flex-col lg:flex-row">
+<body class="bg-gray-100 font-sans min-h-screen flex flex-col lg:flex-row overflow-x-hidden">
 
-    <aside class="w-full lg:w-1/4 p-6 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0 z-10">
-        <div class="mb-6 text-center lg:text-left">
+    <aside class="w-full lg:w-80 p-6 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0 z-20">
+        <div class="mb-6">
             <h1 class="text-2xl font-black text-gray-900">Etiquetas<span class="text-lime-500">Editor</span></h1>
-            <p class="text-xs text-gray-400">Logo + Edición en Tiempo Real</p>
+            <p class="text-xs text-gray-400">A4 Horizontal • 2026 Ready</p>
         </div>
 
         <div class="mb-6">
-            <label class="block text-xs font-bold text-gray-500 uppercase mb-2 text-center lg:text-left">Grid de Impresión</label>
-            <div class="grid grid-cols-3 gap-2">
-                <button onclick="setGrid(2)" id="btn-2" class="px-2 py-2 rounded border text-sm transition font-bold">2x2</button>
-                <button onclick="setGrid(3)" id="btn-3" class="px-2 py-2 rounded border text-sm transition font-bold">3x3</button>
-                <button onclick="setGrid(4)" id="btn-4" class="px-2 py-2 rounded border text-sm transition font-bold">4x4</button>
+            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2">Formato de Hoja</label>
+            <div class="grid grid-cols-3 gap-1">
+                <button onclick="setGrid(2)" id="btn-2" class="py-2 rounded border text-xs font-bold transition">2x2</button>
+                <button onclick="setGrid(3)" id="btn-3" class="py-2 rounded border text-xs font-bold transition">3x3</button>
+                <button onclick="setGrid(4)" id="btn-4" class="py-2 rounded border text-xs font-bold transition">4x4</button>
             </div>
         </div>
 
-        <div class="bg-lime-50 p-4 rounded-xl border border-lime-100 mb-6">
+        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6">
             <input type="hidden" id="editingIndex" value="-1">
             <div class="mb-3">
-                <label class="block text-[10px] font-black text-lime-700 uppercase">Producto</label>
-                <input type="text" id="inputName" placeholder="NOMBRE PRODUCTO" class="w-full px-3 py-2 rounded border-gray-200 border focus:border-lime-500 outline-none">
+                <label class="block text-[10px] font-black text-gray-500 uppercase">Producto</label>
+                <input type="text" id="inputName" placeholder="EJ. NARANJAS 1KG" class="w-full px-3 py-2 rounded border-gray-200 border focus:border-lime-500 outline-none text-sm">
             </div>
             <div class="mb-4">
-                <label class="block text-[10px] font-black text-lime-700 uppercase">Precio</label>
-                <input type="number" id="inputPrice" placeholder="0.00" class="w-full px-3 py-2 rounded border-gray-200 border focus:border-lime-500 outline-none">
+                <label class="block text-[10px] font-black text-gray-500 uppercase">Precio</label>
+                <input type="number" id="inputPrice" placeholder="00" class="w-full px-3 py-2 rounded border-gray-200 border focus:border-lime-500 outline-none text-sm">
             </div>
-            <button onclick="saveLabel()" id="saveBtn" class="w-full bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition">
-                Agregar Etiqueta
+            <button onclick="saveLabel()" id="saveBtn" class="w-full bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition text-sm">
+                Añadir Etiqueta
             </button>
         </div>
 
-        <div class="mt-auto space-y-3">
-            <div class="flex justify-between text-[10px] font-bold text-gray-400 px-1">
+        <div class="mt-auto space-y-4">
+            <div class="flex justify-between items-center text-[10px] font-bold text-gray-400">
                 <span id="counter">0/4</span>
-                <button onclick="clearAll()" class="hover:text-red-500">LIMPIAR TODO</button>
+                <button onclick="clearAll()" class="text-red-400 hover:text-red-600">BORRAR TODO</button>
             </div>
             <button onclick="generatePDF()" class="w-full bg-lime-500 text-white py-4 rounded-xl font-black text-lg shadow-lg hover:bg-lime-600 transition flex items-center justify-center gap-2">
                 DESCARGAR PDF
@@ -140,8 +139,8 @@
         </div>
     </aside>
 
-    <main class="flex-1 overflow-auto p-4 lg:p-12 flex justify-center items-center bg-gray-200">
-        <div class="transform scale-[0.35] md:scale-[0.5] lg:scale-[0.6] xl:scale-[0.85] 2xl:scale-100 origin-center">
+    <main class="flex-1 overflow-auto p-4 lg:p-8 flex justify-center bg-gray-200 items-center">
+        <div class="scale-[0.3] md:scale-[0.45] lg:scale-[0.6] xl:scale-[0.75] 2xl:scale-[0.9] origin-center">
             <div id="print-area" class="a4-page shadow-2xl">
                 <div id="grid-container" class="labels-grid">
                     </div>
@@ -150,23 +149,20 @@
     </main>
 
     <script>
-        const SUPABASE_URL = 'https://slroycxifwezthdomkny.supabase.co';
-        const logoUrl = `${SUPABASE_URL}/storage/v1/object/public/imagenes/logo.png`;
-        
+        const logoUrl = 'https://slroycxifwezthdomkny.supabase.co/storage/v1/object/public/imagenes/logo.png';
         let labels = [];
         let currentGridSize = 2;
 
         function setGrid(size) {
             currentGridSize = size;
             document.querySelectorAll('button[id^="btn-"]').forEach(btn => {
-                btn.className = "px-2 py-2 rounded border text-sm transition font-bold bg-white text-gray-400";
+                btn.className = "py-2 rounded border text-xs font-bold transition bg-white text-gray-400 border-gray-200";
             });
-            document.getElementById(`btn-${size}`).className = "px-2 py-2 rounded border border-lime-500 bg-lime-500 text-white text-sm font-bold";
+            document.getElementById(`btn-${size}`).className = "py-2 rounded border border-lime-500 bg-lime-500 text-white text-xs font-bold";
             
             const container = document.getElementById('grid-container');
             container.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
             container.style.gridTemplateRows = `repeat(${size}, 1fr)`;
-            container.className = `labels-grid grid-${size}x${size}`;
             render();
         }
 
@@ -180,10 +176,10 @@
             if (editIdx > -1) {
                 labels[editIdx] = { name, price };
                 document.getElementById('editingIndex').value = "-1";
-                document.getElementById('saveBtn').innerText = "Agregar Etiqueta";
-                document.getElementById('saveBtn').className = "w-full bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition";
+                document.getElementById('saveBtn').innerText = "Añadir Etiqueta";
+                document.getElementById('saveBtn').classList.replace('bg-lime-600', 'bg-black');
             } else {
-                if (labels.length >= currentGridSize * currentGridSize) return alert("Grid lleno");
+                if (labels.length >= currentGridSize * currentGridSize) return;
                 labels.push({ name, price });
             }
 
@@ -197,13 +193,13 @@
             document.getElementById('inputName').value = label.name;
             document.getElementById('inputPrice').value = label.price;
             document.getElementById('editingIndex').value = index;
-            document.getElementById('saveBtn').innerText = "Actualizar Etiqueta";
-            document.getElementById('saveBtn').className = "w-full bg-lime-600 text-white py-3 rounded-lg font-bold transition";
+            document.getElementById('saveBtn').innerText = "Actualizar Item";
+            document.getElementById('saveBtn').classList.replace('bg-black', 'bg-lime-600');
             document.getElementById('inputName').focus();
         }
 
         function clearAll() {
-            if (confirm("¿Borrar todo?")) { labels = []; render(); }
+            if (confirm("¿Limpiar toda la hoja?")) { labels = []; render(); }
         }
 
         function render() {
@@ -226,25 +222,35 @@
 
             for (let i = labels.length; i < max; i++) {
                 const div = document.createElement('div');
-                div.className = "label-item border-dashed border-gray-200 opacity-30";
-                div.innerHTML = `<span class="text-xs font-bold text-gray-300 uppercase">Disponible</span>`;
+                div.className = "label-item border-dashed border-gray-100 opacity-20";
+                div.innerHTML = `<span class="text-[10px] font-bold text-gray-400">VACÍO</span>`;
                 container.appendChild(div);
             }
         }
 
         function generatePDF() {
             const element = document.getElementById('print-area');
+            
+            // Forzamos el scroll a 0 antes de capturar para evitar el desplazamiento hacia abajo
+            window.scrollTo(0,0);
+
             const opt = {
                 margin: 0,
-                filename: 'etiquetas.pdf',
-                image: { type: 'jpeg', quality: 1 },
-                html2canvas: { scale: 3, useCORS: true, letterRendering: true },
+                filename: 'etiquetas_precios.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { 
+                    scale: 3, 
+                    useCORS: true, 
+                    scrollY: 0, // Crítico para evitar que el PDF salga movido
+                    logging: false 
+                },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
             };
+            
+            // Añadimos una clase temporal si fuera necesario, pero con scrollY: 0 debería bastar
             html2pdf().set(opt).from(element).save();
         }
 
-        // Init
         setGrid(2);
     </script>
 </body>
