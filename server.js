@@ -18,6 +18,24 @@ const PDF_PATH = path.join(process.cwd(), 'public', 'pedidos-pdf');
 if (!fs.existsSync(PDF_PATH)) fs.mkdirSync(PDF_PATH, { recursive: true });
 
 
+app.post('/api/verificar-stock', async (req, res) => {
+    try {
+        const { ids } = req.body;
+        if (!ids || !Array.isArray(ids)) return res.status(400).json({ error: 'IDs inválidos' });
+
+        const { data, error } = await supabase
+            .from('productos')
+            .select('id, nombre, stock, stock_leo')
+            .in('id', ids);
+
+        if (error) throw error;
+        res.json(data);
+    } catch (err) {
+        console.error('❌ Error verificando stock:', err);
+        res.status(500).json({ error: 'Error interno verificando stock' });
+    }
+});
+
 /* --- NUEVO: OBTENER LISTA SIMPLE DE CLIENTES PARA EL CARRITO --- */
 app.get('/api/lista-clientes', async (req, res) => {
   try {
@@ -1263,6 +1281,7 @@ app.post('/api/crear-producto', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server escuchando en http://localhost:${PORT}`);
 });
+
 
 
 
