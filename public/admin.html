@@ -198,6 +198,9 @@
                                     <button @click="copiarFaltantesPeticionesMasivo" class="bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg font-bold text-xs shadow-sm transition flex items-center gap-1">
                                         <i data-lucide="copy" class="w-3 h-3"></i> Copiar Faltantes
                                     </button>
+                                    <button @click="generarPDFMasivoPeticiones" class="bg-white border border-purple-200 text-purple-600 hover:bg-purple-50 px-3 py-1.5 rounded-lg font-bold text-xs shadow-sm transition flex items-center gap-1">
+                                        <i data-lucide="file-plus" class="w-3 h-3"></i> PDF Gigante
+                                    </button>
                                     <button @click="procesarPeticionesMasivo(false)" :disabled="isMassProcessing" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg font-bold text-xs shadow-sm transition flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed">
                                         <i v-if="!isMassProcessing" data-lucide="check" class="w-3 h-3"></i> 
                                         <i v-else data-lucide="loader-2" class="w-3 h-3 animate-spin"></i>
@@ -1003,6 +1006,68 @@
                     this.showMsg('Faltantes Masivos Copiados', 'success');
                 },
 
+                async generarPDFMasivoPeticiones() {
+                    // 1. Validar selección
+                    if (this.selectedPeticiones.length === 0) return;
+                    
+                    const selected = this.peticiones.filter(p => this.selectedPeticiones.includes(p.id));
+                
+                    if (!confirm(`¿Generar UN SOLO PDF con ${selected.length} solicitudes concatenadas?`)) return;
+                
+                    // 2. Abrir ventana de carga
+                    const pdfWindow = window.open('', '_blank');
+                    if (pdfWindow) {
+                        pdfWindow.document.write(`
+                            <div style="font-family:sans-serif;text-align:center;margin-top:20%;">
+                                <h1>⏳ Generando PDF de Solicitudes...</h1>
+                                <p>Procesando ${selected.length} items.</p>
+                            </div>
+                        `);
+                    } else {
+                        alert("⚠️ Habilita las ventanas emergentes.");
+                        return;
+                    }
+                
+                    try {
+                        // 3. Mapear los datos al formato que espera el endpoint
+                        const itemsForGiant = selected.map(p => {
+                            const itemsParsed = this.parseItems(p.items);
+                            return {
+                                user: p.nombre, // En peticiones se usa 'nombre'
+                                items: itemsParsed,
+                                total: itemsParsed.reduce((a, b) => a + (Number(b.subtotal) || 0), 0),
+                                fecha: p.fecha || new Date().toISOString(),
+                                nombre_negocio: p.nombre_negocio,
+                                id: p.id
+                            };
+                        });
+                
+                        // 4. Enviar al mismo endpoint que usas para los pedidos
+                        const res = await fetch(`${apiBase}/generar-pdf-masivo`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ pedidos: itemsForGiant })
+                        });
+                
+                        if (!res.ok) throw new Error("Error generando PDF en servidor");
+                
+                        const blob = await res.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        
+                        if (pdfWindow) {
+                            pdfWindow.location.href = url;
+                        }
+                
+                        // Limpiar selección
+                        this.selectedPeticiones = [];
+                
+                    } catch (e) {
+                        console.error(e);
+                        this.showMsg('Error: ' + e.message, 'error');
+                        if (pdfWindow) pdfWindow.close();
+                    }
+                },
+                
                 // MASIVO
                 async accionMasivaPedidos(mode) {
                     if(!this.selectedOrders.length) return;
@@ -1089,3 +1154,4 @@
     </script>
 </body>
 </html>
+
