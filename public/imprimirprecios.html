@@ -25,7 +25,6 @@
             height: 210mm;
             background: white;
             margin: 0 auto;
-            /* Bleedzone: Espacio blanco externo para seguridad de impresora */
             padding: 15mm; 
             box-sizing: border-box;
             display: flex;
@@ -37,7 +36,6 @@
             display: grid;
             width: 100%;
             height: 100%;
-            /* Espacio blanco INTERNO entre etiquetas para recortar */
             gap: 6mm; 
         }
 
@@ -45,21 +43,18 @@
             border: 5px solid #000; 
             display: flex;
             flex-direction: column;
-            /* Justify start para tener control, usaremos margin auto para centrar contenido */
             justify-content: flex-start; 
             align-items: center;
             text-align: center;
-            padding: 10px; /* Padding reducido para aprovechar espacio */
+            padding: 10px;
             background: white;
             color: black;
             overflow: hidden;
         }
 
-        /* LOGO PEQUEÑO */
         .logo-img {
             object-fit: contain;
             margin-bottom: 5px;
-            /* El tamaño se define en los media queries del grid abajo */
         }
 
         .label-content {
@@ -87,24 +82,23 @@
             letter-spacing: -2px;
         }
 
-        /* === TAMAÑOS DE FUENTE Y LOGO (Restaurados a GIGANTES) === */
+        /* === TAMAÑOS REAJUSTADOS (Punto medio) === */
         
-        /* 2x2: Logo chico, Texto ENORME */
-        .grid-2x2 .logo-img { height: 40px; } /* Antes 80px */
-        .grid-2x2 .label-name { font-size: 3.5rem; margin-bottom: 10px; }
-        .grid-2x2 .label-price { font-size: 10rem; } /* Super grande */
+        /* 2x2 */
+        .grid-2x2 .logo-img { height: 35px; } 
+        .grid-2x2 .label-name { font-size: 2.2rem; margin-bottom: 8px; } /* Ajustado */
+        .grid-2x2 .label-price { font-size: 7rem; } /* Ajustado */
 
         /* 3x3 */
         .grid-3x3 .logo-img { height: 25px; }
-        .grid-3x3 .label-name { font-size: 2rem; }
-        .grid-3x3 .label-price { font-size: 5.5rem; }
+        .grid-3x3 .label-name { font-size: 1.4rem; } /* Ajustado */
+        .grid-3x3 .label-price { font-size: 4rem; } /* Ajustado */
 
         /* 4x4 */
         .grid-4x4 .logo-img { height: 20px; }
-        .grid-4x4 .label-name { font-size: 1.4rem; }
-        .grid-4x4 .label-price { font-size: 3.5rem; }
+        .grid-4x4 .label-name { font-size: 1rem; } /* Ajustado */
+        .grid-4x4 .label-price { font-size: 2.5rem; } /* Ajustado */
 
-        /* Estilo Hover edición */
         .label-filled:hover {
             background-color: #f7fee7;
             border-color: #84cc16;
@@ -251,8 +245,6 @@
 
         function generatePDF() {
             const element = document.getElementById('print-area');
-            
-            // 1. Scroll al inicio para evitar el bug de "movido hacia abajo"
             window.scrollTo(0, 0);
 
             const opt = {
@@ -262,7 +254,7 @@
                 html2canvas: { 
                     scale: 3, 
                     useCORS: true, 
-                    scrollY: 0, // 2. Forzar coordenada Y a 0
+                    scrollY: 0, 
                     scrollX: 0
                 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
